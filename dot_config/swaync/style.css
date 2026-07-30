@@ -1,0 +1,277 @@
+@define-color bg      #1d2021;
+@define-color surface #3c3836;
+@define-color fg      #ebdbb2;
+@define-color gray    #928374;
+@define-color red     #fb4934;
+@define-color green   #b8bb26;
+@define-color yellow  #fabd2f;
+@define-color blue    #83a598;
+
+* {
+  font-family: "BerkeleyMono Nerd Font", "Symbols Nerd Font", monospace;
+  font-size: 13px;
+  font-weight: normal;
+}
+
+.control-center {
+  background: @bg;
+  border-radius: 16px;
+  border: 1px solid @surface;
+  padding: 10px;
+}
+
+.control-center-list,
+.control-center-list-placeholder {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+scrolledwindow,
+scrolledwindow > viewport,
+scrolledwindow > viewport > box {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+/* ── Title ───────────────────────────────────────────────────────── */
+
+.widget-title {
+  padding: 4px 2px 10px;
+  border-bottom: 1px solid @surface;
+  margin-bottom: 8px;
+}
+
+.widget-title > label {
+  color: @fg;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.widget-title > button {
+  background: @surface;
+  color: @gray;
+  border: none;
+  border-radius: 20px;
+  padding: 3px 12px;
+  font-size: 11px;
+  font-weight: normal;
+  min-height: 0;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.widget-title > button:hover {
+  background: #504945;
+  color: @fg;
+}
+
+/* ── DND ─────────────────────────────────────────────────────────── */
+
+.widget-dnd {
+  padding: 6px 2px;
+  border-bottom: 1px solid @surface;
+  margin-bottom: 8px;
+}
+
+.widget-dnd > label {
+  color: @fg;
+  font-size: 13px;
+  font-weight: normal;
+}
+
+.widget-dnd > switch {
+  border-radius: 20px;
+  background: @surface;
+  border: 1px solid #504945;
+  min-width: 38px;
+  min-height: 20px;
+  transition: background 150ms ease;
+}
+
+.widget-dnd > switch:checked {
+  background: @red;
+  border-color: @red;
+}
+
+.widget-dnd > switch slider {
+  background: @fg;
+  border-radius: 20px;
+  min-width: 14px;
+  min-height: 14px;
+}
+
+/* ── MPRIS ───────────────────────────────────────────────────────── */
+
+.widget-mpris {
+  background: #282828;
+  border-radius: 12px;
+  border: 1px solid @surface;
+  padding: 10px;
+  margin-bottom: 8px;
+}
+
+.widget-mpris .widget-mpris-album-art {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+.widget-mpris .widget-mpris-title {
+  font-weight: bold;
+  color: @fg;
+  font-size: 13px;
+}
+
+.widget-mpris .widget-mpris-subtitle {
+  color: @gray;
+  font-size: 12px;
+}
+
+.widget-mpris .mpris-overlay > box > button {
+  background: @surface;
+  color: @fg;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  margin: 0 2px;
+  font-size: 13px;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.widget-mpris .mpris-overlay > box > button:hover {
+  background: #504945;
+  color: @yellow;
+}
+
+/* ── Empty placeholder ───────────────────────────────────────────── */
+
+.control-center-list-placeholder,
+.control-center-list-placeholder > box,
+.control-center-list-placeholder image {
+  opacity: 0;
+  min-height: 0;
+}
+
+.control-center-list-placeholder > label {
+  color: #504945;
+  font-size: 12px;
+  opacity: 1;
+}
+
+/* ── Notifications ───────────────────────────────────────────────── */
+
+.notification-row:focus,
+.notification-row:hover {
+  opacity: 1;
+}
+
+.notification {
+  background: #282828;
+  border-radius: 12px;
+  border: 1px solid @surface;
+  border-left: 3px solid @blue;
+  padding: 12px;
+  margin: 6px 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.notification-default-action {
+  border-radius: 12px;
+  padding: 0;
+  transition: background 150ms ease;
+}
+
+.notification-default-action:hover {
+  background: @surface;
+}
+
+.close-button {
+  background: transparent;
+  color: #665c54;
+  border-radius: 50%;
+  border: none;
+  padding: 2px 5px;
+  min-width: 20px;
+  min-height: 20px;
+  font-size: 12px;
+  opacity: 0;
+  transition: background 150ms ease, color 150ms ease, opacity 150ms ease;
+}
+
+.notification-row:hover .close-button {
+  opacity: 1;
+}
+
+.close-button:hover {
+  background: @red;
+  color: @bg;
+}
+
+.notification-action {
+  background: @surface;
+  color: @fg;
+  border: none;
+  border-radius: 8px;
+  margin: 4px 2px 0;
+  padding: 4px 10px;
+  font-size: 12px;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.notification-action:hover {
+  background: #504945;
+  color: @yellow;
+}
+
+.summary {
+  color: @fg;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.time {
+  color: #665c54;
+  font-size: 11px;
+}
+
+.body {
+  color: #a89984;
+  font-size: 12px;
+}
+
+/* ── Urgency levels ──────────────────────────────────────────────── */
+
+.critical .notification {
+  border-left-color: @red;
+  background: #2a1f1f;
+}
+
+.low .notification {
+  border-left-color: @green;
+}
+
+/* ── App icon badge overlaid on the image ────────────────────────── */
+
+.notification-content .app-icon {
+  opacity: 0;
+}
+
+/* ── Floating popups ─────────────────────────────────────────────── */
+
+.floating-notifications .notification {
+  background: @bg;
+  margin: 6px 10px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.55);
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────── */
+
+scrollbar {
+  background: transparent;
+}
+
+scrollbar slider {
+  background: @surface;
+  border-radius: 10px;
+  min-width: 4px;
+}

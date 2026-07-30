@@ -1,0 +1,129 @@
+# ── History ───────────────────────────────────────────────────────────
+HISTFILE="$XDG_STATE_HOME/zsh/history"
+HISTSIZE=50000
+SAVEHIST=50000
+
+setopt SHARE_HISTORY
+setopt HIST_IGNORE_ALL_DUPS
+setopt HIST_IGNORE_SPACE
+setopt HIST_REDUCE_BLANKS
+setopt HIST_VERIFY
+setopt HIST_FIND_NO_DUPS
+setopt EXTENDED_HISTORY
+
+# ── Shell options ─────────────────────────────────────────────────────
+setopt AUTO_PUSHD PUSHD_IGNORE_DUPS PUSHD_SILENT
+setopt INTERACTIVE_COMMENTS
+setopt EXTENDED_GLOB
+bindkey -e
+export GPG_TTY=$(tty)
+
+# ── Completion ────────────────────────────────────────────────────────
+autoload -Uz compinit
+compinit -d "$XDG_CACHE_HOME/zsh/zcompdump-$ZSH_VERSION"
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+
+# ── Prompt / navigation ───────────────────────────────────────────────
+if [[ "$TERM_PROGRAM" != "Apple_Terminal" ]]; then
+  eval "$(oh-my-posh init zsh --config $XDG_CONFIG_HOME/ohmyposh/config.toml)"
+fi
+eval "$(zoxide init zsh)"
+
+# ── Plugins ───────────────────────────────────────────────────────────
+{{- if eq .chezmoi.os "darwin" }}
+[ -r /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh ] && source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+[ -r /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ] && source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+{{- else }}
+[ -r /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ] && source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+[ -r /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ] && source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+{{- end }}
+
+# ── fzf ───────────────────────────────────────────────────────────────
+export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude .git'
+export FZF_DEFAULT_OPTS="
+  --color=bg+:#3c3836,bg:#282828,spinner:#fb4934,hl:#928374
+  --color=fg:#ebdbb2,header:#928374,info:#8ec07c,pointer:#fb4934
+  --color=marker:#fb4934,fg+:#ebdbb2,prompt:#fb4934,hl+:#fb4934
+  --layout=reverse --border --height=40%"
+source <(fzf --zsh)
+
+# ── bat ───────────────────────────────────────────────────────────────
+export BAT_THEME="gruvbox-dark"
+alias cat='bat --paging=never --style=header,grid,changes'
+export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+
+# ── eza ───────────────────────────────────────────────────────────────
+alias ls='eza --icons'
+alias ll='eza --icons -l --git'
+alias la='eza --icons -la --git'
+alias lt='eza --icons --tree --level=2'
+alias lm='eza --icons -la --git --sort=modified'
+
+# ── git ───────────────────────────────────────────────────────────────
+function git_current_branch() { git branch --show-current 2>/dev/null; }
+function git_main_branch() {
+  for ref in refs/heads/main refs/heads/master refs/remotes/origin/main refs/remotes/origin/master; do
+    git show-ref -q --verify "$ref" && echo "${ref##*/}" && return 0
+  done
+  echo "main"
+}
+alias gcb='git checkout -b'
+alias gcm='git checkout $(git_main_branch)'
+alias gpsup='git push --set-upstream origin $(git_current_branch)'
+alias glol='git log --graph --pretty="%Cred%h%Creset -%C(auto)%d%Creset %s %Cgreen(%ar) %C(bold blue)<%an>%Creset" --all'
+alias 'gc!'='git commit --amend'
+alias 'gcn!'='git commit --amend --no-edit'
+
+# ── misc ──────────────────────────────────────────────────────────────
+function dush() { du -sh ${1:-.}/* 2>/dev/null | sort -h; }
+
+function extract() {
+  if [[ ! -f "$1" ]]; then
+    echo "extract: '$1' not found"
+    return 1
+  fi
+  case "$1" in
+    *.tar.bz2) tar xjf "$1" ;;
+    *.tar.gz)  tar xzf "$1" ;;
+    *.tar.xz)  tar xJf "$1" ;;
+    *.tar.zst) tar --zstd -xf "$1" ;;
+    *.tar)     tar xf "$1" ;;
+    *.bz2)     bunzip2 "$1" ;;
+    *.gz)      gunzip "$1" ;;
+    *.xz)      unxz "$1" ;;
+    *.zip)     unzip "$1" ;;
+    *.rar)     unrar x "$1" ;;
+    *.7z)      7z x "$1" ;;
+    *.dmg)     hdiutil attach "$1" ;;
+    *)         echo "extract: unsupported format '$1'" ;;
+  esac
+}
+
+function myip() { curl -s -S -4 https://icanhazip.com; }
+
+alias ap='ansible-playbook'
+alias av='ansible-vault'
+alias cr='claude -r'
+alias reload="exec zsh"
+alias path='echo $PATH | tr ":" "\n"'
+alias ports='lsof -iTCP -sTCP:LISTEN -nP'
+
+alias zshconfig="$EDITOR $ZDOTDIR/.zshrc"
+alias zshenv="$EDITOR ~/.zshenv"
+alias zshprofile="$EDITOR $ZDOTDIR/.zprofile"
+
+alias speedtest='cloudflare-speed-cli'
+
+{{- if eq .chezmoi.os "darwin" }}
+function flushdns() { sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder; }
+
+function inet() { ifconfig | grep "inet " | grep -v 127.0.0.1 | awk '{print $2}'; }
+
+alias nano='micro'
+alias whois='quien'
+{{- end }}
+
+[ -r "$ZDOTDIR/local.zsh" ] && source "$ZDOTDIR/local.zsh"

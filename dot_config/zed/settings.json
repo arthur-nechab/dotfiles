@@ -1,0 +1,66 @@
+{
+  "collaboration_panel": {
+    "button": false
+  },
+  "cli_default_open_behavior": "existing_window",
+  "disable_ai": true,
+  "vim_mode": false,
+  "terminal": {
+    "font_family": "BerkeleyMono Nerd Font"
+  },
+  "session": {
+    "trust_all_worktrees": true
+  },
+  "theme": "Gruvbox Baby",
+  "icon_theme": "Material Icon Theme",
+  "buffer_font_family": "BerkeleyMono Nerd Font",
+  "buffer_font_size": 16.0,
+  "relative_line_numbers": "enabled",
+  "show_whitespaces": "trailing",
+  "autosave": "on_focus_change",
+  "project_panel": {
+    "entry_spacing": "standard",
+    "dock": "left",
+    "indent_size": 15
+  },
+  "agent": {
+    "dock": "right"
+  },
+  "agent_servers": {
+    "claude-acp": {
+      "type": "registry"
+    }
+  },
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false
+  },
+  "file_types": {
+    "Shell Script": [
+      "dot_zshenv.tmpl",
+      "dot_zshrc.tmpl",
+      "dot_zprofile.tmpl"
+    ],
+    "Git Ignore": [
+      ".chezmoiignore",
+      "ignore"
+    ],
+    "TOML": [
+      ".chezmoi.toml.tmpl"
+    ],
+    "INI": [
+      "config.tmpl"
+    ],
+    "JSONC": [
+      "config"
+    ],
+    "Ruby": [
+      "Brewfile"
+    ],
+    "Jinja2": [
+      "*.j2",
+      "*.jinja",
+      "*.jinja2"
+    ]
+  }
+}

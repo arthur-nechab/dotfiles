@@ -1,0 +1,59 @@
+# ── Appearance & Theme ────────────────────────────────────────────────
+theme              = Gruvbox Dark Hard
+background-opacity = 0.9
+
+# ── Font ──────────────────────────────────────────────────────────────
+font-family        = BerkeleyMono Nerd Font
+font-size          = {{ if eq .chezmoi.os "darwin" }}19{{ else }}15{{ end }}
+adjust-cell-width  = -2%
+adjust-cell-height = -3%
+
+# ── Window & Layout ───────────────────────────────────────────────────
+window-padding-x        = 10
+window-padding-y        = 8
+window-padding-balance  = true
+unfocused-split-opacity = 0.8
+
+# ── Cursor ────────────────────────────────────────────────────────────
+cursor-style       = bar
+cursor-style-blink = false
+
+# ── Behavior ──────────────────────────────────────────────────────────
+mouse-hide-while-typing = true
+mouse-scroll-multiplier = 2
+right-click-action      = context-menu
+link-previews           = osc8
+confirm-close-surface   = false
+
+# ── Clipboard ─────────────────────────────────────────────────────────
+clipboard-read                 = allow
+clipboard-trim-trailing-spaces = true
+keybind                        = shift+insert=paste_from_clipboard
+
+# ── Shell Integration & SSH ───────────────────────────────────────────
+shell-integration-features = sudo,title,ssh-env,no-cursor
+
+{{ if eq .chezmoi.os "darwin" -}}
+# ── macOS only ────────────────────────────────────────────────────────
+background-blur                = 20
+window-colorspace              = display-p3
+font-thicken                   = true
+font-thicken-strength          = 60
+macos-titlebar-style           = tabs
+macos-option-as-alt            = left
+window-save-state              = always
+window-step-resize             = true
+window-vsync                   = true
+alpha-blending                 = linear-corrected
+quick-terminal-position        = top
+quick-terminal-size            = 38%
+quick-terminal-space-behavior  = move
+keybind = global:super+alt+ctrl+shift+space=toggle_quick_terminal
+notify-on-command-finish       = unfocused
+notify-on-command-finish-after = 10s
+{{ else -}}
+# ── Linux / GTK ───────────────────────────────────────────────────────
+gtk-single-instance            = false
+notify-on-command-finish       = unfocused
+notify-on-command-finish-after = 10s
+{{ end -}}

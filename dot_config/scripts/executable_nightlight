@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+CURRENT=$(hyprctl hyprsunset temperature 2>/dev/null)
+[[ "$CURRENT" =~ ^[0-9]+$ ]] || CURRENT=6500
+STATE_FILE="${XDG_RUNTIME_DIR:-/tmp}/nightlight_warm_temp"
+
+case "${1:-}" in
+  --toggle)
+    pgrep -x hyprsunset >/dev/null || hyprsunset -t 6500 &
+    sleep 0.2
+    CURRENT=$(hyprctl hyprsunset temperature 2>/dev/null)
+    [[ "$CURRENT" =~ ^[0-9]+$ ]] || CURRENT=6500
+    if [[ "$CURRENT" -le 4500 ]]; then
+      echo "$CURRENT" > "$STATE_FILE"
+      hyprctl hyprsunset temperature 6500
+    else
+      WARM=$(cat "$STATE_FILE" 2>/dev/null || echo "3500")
+      hyprctl hyprsunset temperature "$WARM"
+    fi
+    pkill -RTMIN+9 waybar
+    ;;
+  --up)
+    NEW=$(( CURRENT + 200 ))
+    [[ $NEW -gt 6500 ]] && NEW=6500
+    hyprctl hyprsunset temperature "$NEW"
+    pkill -RTMIN+9 waybar
+    ;;
+  --down)
+    NEW=$(( CURRENT - 200 ))
+    [[ $NEW -lt 1000 ]] && NEW=1000
+    hyprctl hyprsunset temperature "$NEW"
+    pkill -RTMIN+9 waybar
+    ;;
+  *)
+    if [[ "$CURRENT" -le 4500 ]]; then
+      ICON="󰖔"
+      CLASS="warm"
+    else
+      ICON="󰖨"
+      CLASS="cool"
+    fi
+    printf '{"text": "%s", "tooltip": "%sK", "class": "%s"}\n' "$ICON" "$CURRENT" "$CLASS"
+    ;;
+esac

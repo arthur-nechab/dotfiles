@@ -1,0 +1,23 @@
+/README.md
+
+{{- if ne .chezmoi.os "darwin" }}
+Library/
+{{- else }}
+.config/fastfetch/
+.config/yazi/
+{{- end }}
+
+{{- if not (or (eq .system.osid "linux-arch") (eq .system.osid "linux-cachyos")) }}
+.config/nvim/
+.config/zed/
+{{- end }}
+
+{{- if ne .system.de "hyprland" }}
+.config/hypr/
+.config/waybar/
+.config/rofi/
+.config/swaync/
+.config/scripts/
+{{- end }}
+
+.config/hypr/hyprpaper.conf

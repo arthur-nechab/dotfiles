@@ -1,0 +1,160 @@
+@define-color surface #3c3836;
+@define-color fg      #ebdbb2;
+@define-color gray    #928374;
+@define-color red     #fb4934;
+@define-color yellow  #fabd2f;
+@define-color blue    #83a598;
+@define-color purple  #d3869b;
+@define-color aqua    #8ec07c;
+@define-color orange  #fe8019;
+
+* {
+  font-family: "BerkeleyMono Nerd Font", "Symbols Nerd Font", monospace;
+  font-size: 13px;
+  font-weight: bold;
+  border: none;
+  border-radius: 0;
+  min-height: 0;
+}
+
+window#waybar {
+  background: transparent;
+  color: @fg;
+}
+
+/* ── Pill containers ─────────────────────────────────────────────── */
+
+.modules-left {
+  background: rgba(29, 32, 33, 0.8);
+  border-radius: 10px;
+  padding: 0 4px;
+  margin: 5px 0 0 0;
+}
+
+.modules-center {
+  background: rgba(29, 32, 33, 0.8);
+  border-radius: 10px;
+  padding: 0 4px;
+  margin-top: 5px;
+}
+
+.modules-right {
+  background: rgba(29, 32, 33, 0.8);
+  border-radius: 10px;
+  padding: 0 10px;
+  margin: 5px 0 0 0;
+}
+
+/* ── Workspaces ──────────────────────────────────────────────────── */
+
+#workspaces {
+  margin: 0 2px;
+}
+
+#workspaces button {
+  padding: 0 2px;
+  color: @gray;
+  background: transparent;
+  margin: 4px 1px;
+  transition: color 200ms ease-in-out;
+}
+
+#workspaces button:hover {
+  color: @yellow;
+  background: @surface;
+  border-radius: 8px;
+}
+
+#workspaces button.active {
+  color: @yellow;
+  font-weight: bold;
+}
+
+#workspaces button.urgent {
+  color: @red;
+}
+
+/* ── Common modules ──────────────────────────────────────────────── */
+
+#clock,
+#custom-weather,
+#mpris,
+#custom-btop,
+#custom-mic,
+#wireplumber,
+#network,
+#bluetooth,
+#tray {
+  padding: 0 8px;
+  color: @fg;
+  border-radius: 15px;
+  margin: 5px 0;
+}
+
+/* ── Per-module colors ───────────────────────────────────────────── */
+
+#mpris               { color: @yellow; }
+#custom-nightlight {
+  color: @purple;
+  font-size: 15px;
+  padding: 0 8px;
+  margin: 5px 0;
+  transition: color 150ms ease;
+}
+#custom-nightlight.cool { color: @yellow; }
+#custom-cava         { color: @orange; font-size: 11px; letter-spacing: 1px; padding: 0 4px; }
+#custom-weather      { color: @yellow; }
+#custom-btop         { color: @orange; }
+#clock               { color: @fg; }
+#wireplumber         { color: @purple; }
+#network             { color: @blue; }
+#bluetooth           { color: @aqua; font-size: 15px; }
+#custom-mic          { color: @orange; font-size: 15px; }
+#custom-mic.muted    { color: @red; }
+
+/* ── Notification button ─────────────────────────────────────────── */
+
+#custom-notification {
+  color: @red;
+  font-size: 15px;
+  padding: 0 8px;
+  margin: 5px 0;
+  transition: color 150ms ease;
+}
+
+#custom-notification:hover {
+  background: @surface;
+  border-radius: 8px;
+}
+
+/* ── Separators ──────────────────────────────────────────────────── */
+
+#custom-sep {
+  color: rgba(146, 131, 116, 0.4);
+  padding: 0 2px;
+  font-size: 14px;
+}
+
+/* ── Hover animations ────────────────────────────────────────────── */
+
+#custom-btop,
+#custom-mic,
+#wireplumber,
+#network,
+#bluetooth,
+#custom-weather,
+#clock {
+  transition: color 150ms ease;
+}
+
+#custom-btop:hover,
+#custom-weather:hover,
+#wireplumber:hover,
+#network:hover,
+#bluetooth:hover,
+#custom-mic:hover,
+#custom-nightlight:hover {
+  background: @surface;
+  border-radius: 8px;
+}
+

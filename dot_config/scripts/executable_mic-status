@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+if wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | grep -q MUTED; then
+    echo '{"text": "󰍭", "class": "muted", "tooltip": "Mic muted"}'
+else
+    echo '{"text": "󰍬", "class": "active", "tooltip": "Mic active"}'
+fi

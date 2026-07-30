@@ -1,0 +1,12 @@
+gui:
+  nerdFontsVersion: "3"
+  theme:
+    activeBorderColor:
+      - "#fe8019"
+      - bold
+    inactiveBorderColor:
+      - "#928374"
+    selectedLineBgColor:
+      - "#3c3836"
+    optionsTextColor:
+      - "#83a598"

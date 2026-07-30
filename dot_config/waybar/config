@@ -1,0 +1,200 @@
+[
+  {
+    "output": "DP-2",
+    "layer": "top",
+    "height": 42,
+    "spacing": 5,
+    "margin-top": 5,
+    "margin-left": 10,
+    "margin-right": 20,
+    "reload_style_on_change": true,
+    "modules-left": [
+      "hyprland/workspaces",
+      "custom/sep#4",
+      "mpris",
+      "custom/cava"
+    ],
+    "modules-center": [
+      "clock"
+    ],
+    "modules-right": [
+      "custom/weather",
+      "custom/sep",
+      "tray",
+      "custom/btop",
+      "custom/mic",
+      "custom/sep#3",
+      "bluetooth",
+      "wireplumber",
+      "network",
+      "custom/nightlight",
+      "custom/sep#2",
+      "custom/notification"
+    ],
+    "hyprland/workspaces": {
+      "format": "{icon}",
+      "on-click": "activate",
+      "format-icons": {
+        "1": "1",
+        "2": "2",
+        "3": "3",
+        "4": "4",
+        "default": "•"
+      },
+      "on-scroll-up": "hyprctl dispatch workspace e+1 1>/dev/null",
+      "on-scroll-down": "hyprctl dispatch workspace e-1 1>/dev/null",
+      "sort-by": "number"
+    },
+    "mpris": {
+      "format": "{player_icon} {dynamic}",
+      "format-paused": "{player_icon} {dynamic} {status_icon}",
+      "player-icons": {
+        "default": "",
+        "spotify": "󰓇 "
+      },
+      "status-icons": {
+        "paused": "⏸",
+        "playing": "▶"
+      },
+      "title-len": 30,
+      "dynamic-len": 30,
+      "dynamic-order": ["title", "artist"],
+      "tooltip-format": "{player}"
+    },
+    "clock": {
+      "format": "{:%d %b  %H:%M}",
+      "tooltip-format": "<tt><small>{calendar}</small></tt>",
+      "calendar": {
+        "mode": "month",
+        "on-scroll": 1,
+        "format": {
+          "months":   "<span color='#ebdbb2'><b>{}</b></span>",
+          "days":     "<span color='#928374'>{}</span>",
+          "weeks":    "<span alpha='60%' color='#b8bb26'>W{}</span>",
+          "weekdays": "<span alpha='70%' color='#fabd2f'>{}</span>",
+          "today":    "<span alpha='80%' color='#fb4934'><b>{}</b></span>"
+        }
+      }
+    },
+    "custom/weather": {
+      "exec": "~/.config/scripts/weather",
+      "interval": 3600,
+      "tooltip": false,
+      "format": "<span font='Symbols Nerd Font'>󰖨</span> {}"
+    },
+    "wireplumber": {
+      "format": "{icon}",
+      "format-muted": "<span font='Symbols Nerd Font'></span> Muted",
+      "format-icons": [
+        "<span font='Symbols Nerd Font'></span>",
+        "<span font='Symbols Nerd Font'></span>",
+        "<span font='Symbols Nerd Font'></span>"
+      ],
+      "on-click": "pwvucontrol",
+      "on-scroll-up": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+",
+      "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
+    },
+    "bluetooth": {
+      "format": "󰂯",
+      "format-disabled": "󰂲",
+      "format-connected": "󰂱",
+      "tooltip-format": "{controller_alias}\t{controller_address}",
+      "tooltip-format-connected": "{controller_alias}\t{controller_address}\n\n{device_enumerate}",
+      "tooltip-format-enumerate-connected": "{device_alias}\t{device_address}",
+      "on-click": "ghostty -e bluetuith"
+    },
+    "network": {
+      "format-wifi": "󰤨",
+      "format-ethernet": "󰈀",
+      "format-disconnected": "󰖪  Disconnected",
+      "tooltip-format": "{essid} ({signalStrength}%)\n{ifname}",
+      "tooltip-format-ethernet": "{ifname}",
+      "on-click": "ghostty -e impala"
+    },
+    "tray": {
+      "spacing": 10
+    },
+    "custom/btop": {
+      "format": "<span font='Symbols Nerd Font'>󰍛</span>",
+      "on-click": "ghostty -e btop",
+      "tooltip": false
+    },
+    "custom/sep#4": {
+      "format": "|",
+      "tooltip": false
+    },
+    "custom/sep": {
+      "format": "|",
+      "tooltip": false
+    },
+    "custom/sep#2": {
+      "format": "|",
+      "tooltip": false
+    },
+    "custom/sep#3": {
+      "format": "|",
+      "tooltip": false
+    },
+    "custom/nightlight": {
+      "return-type": "json",
+      "exec": "~/.config/scripts/nightlight",
+      "interval": "once",
+      "signal": 9,
+      "on-click": "~/.config/scripts/nightlight --toggle",
+      "on-scroll-up": "~/.config/scripts/nightlight --up",
+      "on-scroll-down": "~/.config/scripts/nightlight --down",
+      "tooltip": true
+    },
+    "custom/notification": {
+      "format": "󱅫",
+      "on-click": "swaync-client -t -sw",
+      "tooltip": false
+    },
+    "custom/cava": {
+      "format": "{}",
+      "exec": "~/.config/waybar/scripts/cava.sh",
+      "tooltip": false
+    },
+    "custom/mic": {
+      "return-type": "json",
+      "exec": "~/.config/scripts/mic-status",
+      "interval": "once",
+      "signal": 8,
+      "on-click": "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle && swayosd-client --input-volume mute-toggle && pkill -RTMIN+8 waybar",
+      "tooltip": true
+    }
+  },
+  {
+    "output": "HDMI-A-3",
+    "layer": "top",
+    "height": 33,
+    "spacing": 5,
+    "margin-top": 5,
+    "margin-left": 10,
+    "margin-right": 20,
+    "reload_style_on_change": true,
+    "modules-left": [
+      "hyprland/workspaces"
+    ],
+    "modules-center": [
+      "clock"
+    ],
+    "modules-right": [],
+    "hyprland/workspaces": {
+      "format": "{icon}",
+      "on-click": "activate",
+      "format-icons": {
+        "5": "5",
+        "default": "•"
+      },
+      "on-scroll-up": "hyprctl dispatch workspace e+1 1>/dev/null",
+      "on-scroll-down": "hyprctl dispatch workspace e-1 1>/dev/null",
+      "sort-by": "number",
+      "active-only": true
+    },
+    "clock": {
+      "format": "{:%H:%M}",
+      "tooltip-format": "<tt><small>{calendar}</small></tt>"
+    }
+  }
+]

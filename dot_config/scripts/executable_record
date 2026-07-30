@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+if pgrep -x wf-recorder > /dev/null; then
+    pkill -INT wf-recorder
+    notify-send "Recording stopped"
+else
+    SELECTION=$(slurp 2>/dev/null) || exit 0
+    [[ -z "$SELECTION" ]] && exit 0
+    wf-recorder -g "$SELECTION" \
+        -c h264_nvenc \
+        -p preset=p5 \
+        -p tune=hq \
+        -p rc=vbr \
+        -p cq=22 \
+        -r 60 \
+        -f ~/Videos/$(date +%Y%m%d_%H%M%S).mp4
+fi

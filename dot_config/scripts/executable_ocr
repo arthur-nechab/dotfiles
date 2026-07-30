@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+SELECTION=$(slurp 2>/dev/null) || exit 0
+[[ -z "$SELECTION" ]] && exit 0
+
+ERR=$(mktemp)
+TEXT=$(grim -g "$SELECTION" - 2>"$ERR" | tesseract stdin stdout --oem 1 --psm 3 -l eng+fra --dpi 300 2>>"$ERR")
+
+if [[ -z "$TEXT" ]]; then
+  notify-send -u critical "OCR" "No text detected$(printf '\n%s' "$(tail -2 "$ERR")")"
+  rm -f "$ERR"
+  exit 1
+fi
+rm -f "$ERR"
+
+printf "%s" "$TEXT" | wl-copy
+notify-send "OCR" "Text copied to clipboard"

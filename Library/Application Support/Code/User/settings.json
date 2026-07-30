@@ -1,0 +1,82 @@
+{
+  "editor.fontFamily": "'BerkeleyMono Nerd Font', 'JetBrainsMonoNL Nerd Font', Menlo, Monaco, 'Courier New', monospace",
+  "editor.autoIndent": "full",
+  "editor.cursorBlinking": "smooth",
+  "editor.smoothScrolling": true,
+  "editor.linkedEditing": true,
+  "editor.renderWhitespace": "trailing",
+  "editor.formatOnSave": false,
+  "editor.minimap.enabled": false,
+  "editor.guides.bracketPairs": "active",
+  "editor.stickyScroll.enabled": true,
+
+  "search.smartCase": true,
+  "search.followSymlinks": false,
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/.terraform": true,
+    "**/venv": true,
+    "**/*.tfstate": true
+  },
+
+  "files.autoSave": "onFocusChange",
+  "files.defaultLanguage": "markdown",
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "files.trimTrailingWhitespace": true,
+  "files.exclude": {
+    "**/.git": true
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.terraform/**": true,
+    "**/__pycache__/**": true
+  },
+  "files.associations": {
+    "*.tf": "terraform",
+    "*.tfvars": "terraform",
+    "*.tf.override": "terraform",
+    "*.sh.j2.j2": "jinja-shell",
+    "*.env.j2.j2": "jinja-shell"
+  },
+
+  "[python]": {
+    "editor.formatOnType": true
+  },
+  "[markdown]": {
+    "editor.wordWrap": "on"
+  },
+
+  "explorer.autoReveal": false,
+  "explorer.confirmDragAndDrop": false,
+  "explorer.confirmDelete": false,
+
+  "workbench.colorTheme": "Gruvbox Dark Hard",
+  "workbench.iconTheme": "material-icon-theme",
+  "workbench.tree.indent": 15,
+  "workbench.tree.renderIndentGuides": "always",
+  "workbench.startupEditor": "none",
+  "material-icon-theme.folders.color": "#45403d",
+  "material-icon-theme.rootFolders.color": "#90a4ae",
+  "material-icon-theme.files.color": "#928374",
+
+  "git.confirmSync": false,
+  "git.autofetch": true,
+  "git.enableSmartCommit": true,
+  "git.suggestSmartCommit": true,
+  "git.autoStash": true,
+  "git.pullBeforeCheckout": true,
+  "github.gitProtocol": "ssh",
+
+  "telemetry.telemetryLevel": "off",
+
+  "window.zoomLevel": 1,
+
+  "chat.enabled": false,
+  "chat.viewSessions.enabled": false,
+  "chat.disableAIFeatures": true,
+
+  "claudeCode.preferredLocation": "panel",
+  "claudeCode.disableLoginPrompt": true,
+  "claudeCode.hideOnboarding": true
+}

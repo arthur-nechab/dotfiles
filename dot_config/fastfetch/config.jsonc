@@ -1,0 +1,51 @@
+{
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "logo": {
+    "type": "file",
+    "source": "~/.config/fastfetch/garfield.txt",
+    "padding": {
+      "top": 2,
+      "left": 1,
+      "right": 3
+    }
+  },
+  "display": {
+    "color": {
+      "keys": "38;5;208",
+      "title": "38;5;208",
+      "separator": "38;5;130"
+    }
+  },
+  "modules": [
+    "title",
+    {
+      "type": "custom",
+      "format": "\u001b[38;5;208m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m"
+    },
+    "os",
+    "kernel",
+    "uptime",
+    "packages",
+    "separator",
+    "wm",
+    "shell",
+    "terminal",
+    "terminalfont",
+    "separator",
+    "cpu",
+    "gpu",
+    "memory",
+    {
+      "type": "disk",
+      "dirs": [
+        "/"
+      ]
+    },
+    "break",
+    {
+      "type": "colors",
+      "paddingLeft": 1,
+      "symbol": "circle"
+    }
+  ]
+}

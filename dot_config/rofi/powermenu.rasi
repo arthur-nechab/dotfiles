@@ -1,0 +1,50 @@
+@import "colors.rasinc"
+
+* {
+  background-color: transparent;
+  text-color:       @fg;
+  border:           0;
+  margin:           0;
+  padding:          0;
+  spacing:          0;
+}
+
+window {
+  background-color: @bg-hard;
+  border:           1px solid;
+  border-color:     @bg2;
+  border-radius:    10px;
+  width:            220px;
+}
+
+inputbar { enabled: false; }
+
+listview {
+  background-color: @bg-hard;
+  padding:          6px;
+  spacing:          2px;
+  lines:            4;
+  scrollbar:        false;
+  border-radius:    10px;
+}
+
+element {
+  background-color: transparent;
+  padding:          10px 4px 10px 12px;
+  border-radius:    6px;
+  cursor:           pointer;
+}
+
+element normal.normal   { text-color: @fg-dim; }
+element alternate.normal { text-color: @fg-dim; }
+element selected.normal {
+  background-color: @bg1;
+  text-color:       @fg;
+}
+
+element-text {
+  background-color: transparent;
+  text-color:       inherit;
+  vertical-align:   0.5;
+  horizontal-align: 0.0;
+}

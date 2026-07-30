@@ -1,0 +1,15 @@
+{{- if eq .chezmoi.os "darwin" }}
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
+export HOMEBREW_BAT=1
+export HOMEBREW_NO_AUTO_UPDATE=1
+
+export PATH="$HOME/bin:$PATH"
+export PATH="$PATH:$HOME/.lmstudio/bin"
+export PATH="$HOME/.cargo/bin:$PATH"
+export PATH="$PATH:/opt/homebrew/opt/fzf/bin"
+{{- else if eq .system.de "hyprland" }}
+if [ -z "${WAYLAND_DISPLAY}" ] && [ "${XDG_VTNR:-0}" -eq 1 ]; then
+   exec start-hyprland
+fi
+{{- end }}

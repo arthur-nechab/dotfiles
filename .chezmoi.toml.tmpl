@@ -1,0 +1,17 @@
+{{- $osID := .chezmoi.os -}}
+{{- if (and (eq .chezmoi.os "linux") (hasKey .chezmoi.osRelease "id")) -}}
+  {{- $osID = printf "%s-%s" .chezmoi.os .chezmoi.osRelease.id -}}
+{{- end -}}
+
+{{- $de := "" -}}
+{{- if eq $osID "linux-arch" -}}
+  {{- $de = "hyprland" -}}
+{{- else if or (eq $osID "linux-cachyos") (eq $osID "linux-debian") -}}
+  {{- $de = "kde" -}}
+{{- end -}}
+
+sourceDir = {{ .chezmoi.sourceDir | quote }}
+
+[data.system]
+osid  = {{ $osID | quote }}
+de    = {{ $de | quote }}

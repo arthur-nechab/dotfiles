@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+WALLDIR="$HOME/Pictures/Wallpapers"
+CACHE="$HOME/.cache/hypr/current-wallpaper"
+THUMBDIR="$HOME/.cache/hypr/wallpaper-thumbs"
+
+mapfile -t PATHS < <(find "$WALLDIR" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \) | sort)
+[[ ${#PATHS[@]} -eq 0 ]] && exit 1
+
+mkdir -p "$THUMBDIR"
+for f in "${PATHS[@]}"; do
+    thumb="$THUMBDIR/$(basename "$f")"
+    [[ ! -f "$thumb" ]] && magick "$f" -thumbnail 240x135^ -gravity center -extent 240x135 "$thumb" 2>/dev/null
+done
+
+entries=""
+for f in "${PATHS[@]}"; do
+    name="$(basename "${f%.*}")"
+    thumb="$THUMBDIR/$(basename "$f")"
+    entries+="$name\0icon\x1f$thumb\n"
+done
+
+IDX=$(printf '%b' "$entries" | rofi -dmenu -format i -p "" -show-icons -theme ~/.config/rofi/wallpaper.rasi)
+[[ -z "$IDX" ]] && exit 0
+
+WALL="${PATHS[$IDX]}"
+[[ ! -f "$WALL" ]] && exit 1
+
+mkdir -p "$(dirname "$CACHE")"
+echo "$WALL" > "$CACHE"
+
+hyprctl hyprpaper preload "$WALL"
+hyprctl monitors | awk '/^Monitor /{print $2}' | while read -r mon; do
+    hyprctl hyprpaper wallpaper "$mon,$WALL"
+done
+hyprctl hyprpaper unload unused

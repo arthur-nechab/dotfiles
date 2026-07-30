@@ -1,0 +1,100 @@
+#:schema https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json
+
+version = 4
+final_space = true
+console_title_template = '{{ .Folder }}'
+
+[[blocks]]
+type = 'prompt'
+alignment = 'left'
+newline = true
+
+[[blocks.segments]]
+type = 'path'
+style = 'plain'
+background = 'transparent'
+foreground = '#458588'
+template = ' {{ .Path }}'
+
+[blocks.segments.options]
+style = 'full'
+folder_separator_icon = '/'
+
+[[blocks.segments]]
+type = 'git'
+style = 'plain'
+foreground = '#98971A'
+background = 'transparent'
+foreground_templates = [
+  '{{ if or (.Working.Changed) (.Staging.Changed) }}#FF9248{{ end }}',
+  '{{ if and (gt .Ahead 0) (gt .Behind 0) }}#ff4500{{ end }}',
+  '{{ if gt .Ahead 0 }}#B388FF{{ end }}',
+  '{{ if gt .Behind 0 }}#B388FF{{ end }}'
+]
+template = ' {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }} '
+
+[blocks.segments.options]
+branch_icon = " "
+commit_icon = '@'
+fetch_status = true
+fetch_upstream_icon = true
+
+[[blocks]]
+type = 'rprompt'
+overflow = 'hidden'
+
+[[blocks.segments]]
+type = 'python'
+style = 'plain'
+foreground = '#FFDE57'
+background = 'transparent'
+template = '  {{ if .Venv }}{{ .Venv }} {{ end }}'
+
+[[blocks.segments]]
+type = 'executiontime'
+style = 'plain'
+foreground = '#FEAC19'
+background = 'transparent'
+template = ' {{ .FormattedMs }}'
+
+[blocks.segments.options]
+threshold = 2000
+style = 'round'
+
+[[blocks.segments]]
+type = 'time'
+style = 'plain'
+foreground = '#928374'
+background = 'transparent'
+template = ' {{ .CurrentDate | date "15:04:05" }}'
+
+[[blocks]]
+type = 'prompt'
+alignment = 'left'
+newline = true
+
+[[blocks.segments]]
+type = 'status'
+style = 'plain'
+foreground_templates = [
+  "{{if gt .Code 0}}#fb4934{{end}}",
+  "{{if eq .Code 0}}#a89984{{end}}",
+]
+background = 'transparent'
+template = '{{ if gt .Code 0 }}✗{{ else }}❯{{ end }}'
+
+[blocks.segments.options]
+always_enabled = true
+
+[transient_prompt]
+foreground_templates = [
+  "{{if gt .Code 0}}#fb4934{{end}}",
+  "{{if eq .Code 0}}#a89984{{end}}",
+]
+background = 'transparent'
+template = '❯ '
+
+[secondary_prompt]
+foreground = '#a89984'
+background = 'transparent'
+template = '❯❯ '
