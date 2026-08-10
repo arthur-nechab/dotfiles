@@ -142,7 +142,7 @@ hl.bind(mod .. " + SHIFT + F",   hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mod .. " + F",           hl.dsp.window.fullscreen({ mode = 0 }))
 hl.bind(mod .. " + BACKSLASH",   hl.dsp.layout("togglesplit"))
 hl.bind(mod .. " + L",           hl.dsp.exec_cmd("loginctl lock-session"))
-hl.bind(mod .. " + SHIFT + ESCAPE", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.config/scripts/powermenu"))
+hl.bind(mod .. " + SHIFT + Q",   hl.dsp.exec_cmd(os.getenv("HOME") .. "/.config/scripts/powermenu"))
 
 -- ── Focus ────────────────────────────────────────────────────────────
 hl.bind(mod .. " + left",  hl.dsp.focus({ direction = "l" }))
