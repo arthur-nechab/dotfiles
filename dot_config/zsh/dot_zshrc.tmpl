@@ -105,7 +105,12 @@ function extract() {
 function myip() { curl -s -S -4 https://icanhazip.com; }
 
 alias ap='ansible-playbook'
-alias av='ansible-vault'
+alias avc='ansible-vault create'
+alias avd='ansible-vault decrypt'
+alias aven='ansible-vault encrypt'
+alias aved='ansible-vault edit'
+alias avr='ansible-vault rekey'
+alias avv='ansible-vault view'
 alias cr='claude -r'
 alias reload="exec zsh"
 alias path='echo $PATH | tr ":" "\n"'
