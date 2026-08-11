@@ -7,7 +7,8 @@ across machines with [chezmoi](https://www.chezmoi.io).
 | --- | --- |
 | Shell + prompt | zsh, oh-my-posh, zsh-autosuggestions, zsh-syntax-highlighting |
 | Terminal | ghostty |
-| Editors | nvim (LazyVim), zed |
+| Multiplexer | herdr |
+| Editors | nvim (LazyVim), zed, vscode (macOS) |
 | Navigation | yazi, eza, bat, fd, ripgrep, fzf, zoxide |
 | Git | lazygit |
 | System | btop, fastfetch |
@@ -80,7 +81,7 @@ is the sole dotfile left at the top level, exporting the rest and pointing zsh a
     ├── ghostty/                    # terminal
     ├── nvim/  zed/                 # editors
     ├── git/                        # global gitignore
-    ├── yazi/  lazygit/  btop/      # TUIs
+    ├── yazi/  lazygit/  btop/  herdr/  # TUIs
     ├── fastfetch/
     ├── hypr/  waybar/  rofi/       # Hyprland desktop
     ├── swaync/
