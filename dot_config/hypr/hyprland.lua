@@ -29,10 +29,10 @@ hl.env("__GLX_VENDOR_LIBRARY_NAME",  "nvidia")
 hl.env("NVD_BACKEND",                "direct")
 hl.env("AQ_DRM_DEVICES",             "/dev/dri/nvidia")
 
--- Steam store/UI on native Wayland (avoids Xwayland for the CEF)
+-- Steam store and UI run on native Wayland, not on Xwayland
 hl.env("STEAM_ENABLE_WAYLAND_CEF",  "1")
 
--- G-Sync/VRR at driver level
+-- G-Sync and VRR at driver level
 hl.env("__GL_GSYNC_ALLOWED", "1")
 hl.env("__GL_VRR_ALLOWED",   "1")
 
@@ -209,4 +209,4 @@ hl.layer_rule({ match = { namespace = "rofi" },   blur = true, ignore_alpha = 0.
 -- ── Window rules ─────────────────────────────────────────────────────
 hl.window_rule({ match = { class = "com.saivert.pwvucontrol" }, float = true })
 hl.window_rule({ match = { class = "clipse" },                     float = true, size = "622 652", center = true })
-hl.window_rule({ match = { class = ".*" }, suppress_event = "maximize" })  -- prevent apps from forcing maximize
+hl.window_rule({ match = { class = ".*" }, suppress_event = "maximize" })  -- ignore maximize requests from applications

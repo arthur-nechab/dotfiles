@@ -17,19 +17,19 @@ across machines with [chezmoi](https://www.chezmoi.io).
 
 ## 🚀 Setup
 
-Chezmoi not installed yet, one-liner:
+If chezmoi is not installed, use this command:
 
 ```sh
 sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply arthur-nechab/dotfiles
 ```
 
-Chezmoi already installed (Homebrew, pacman, ...):
+If chezmoi is already installed (Homebrew, pacman, and others):
 
 ```sh
 chezmoi init --apply arthur-nechab/dotfiles
 ```
 
-Cautious install, inspect before touching anything:
+To inspect the changes before you apply them:
 
 ```sh
 chezmoi init arthur-nechab/dotfiles
@@ -43,35 +43,35 @@ To pull later changes:
 chezmoi update
 ```
 
-The same command gives a different result per machine: `.chezmoi.toml.tmpl` derives an OS id
-and a desktop environment from `/etc/os-release`, and `.chezmoiignore` gates each config on
-those. The Hyprland desktop only lands on a machine whose desktop is Hyprland, never on a KDE
-one, and `Library/` only on macOS.
+The same command gives a different result on each machine. `.chezmoi.toml.tmpl` reads
+`/etc/os-release` and sets an OS id and a desktop environment. `.chezmoiignore` uses those two
+values to select the configs. chezmoi installs the Hyprland configs only on a Hyprland machine,
+never on a KDE machine. It installs `Library/` only on macOS.
 
 ## 📂 XDG Directories
 
 Everything here follows the [XDG Base Directory
-spec](https://specifications.freedesktop.org/basedir-spec/latest/): `$HOME` stays clean, and
-config, data, cache and state stay separable. Exported in `dot_zshenv.tmpl`, which zsh reads
-before anything else:
+spec](https://specifications.freedesktop.org/basedir-spec/latest/). `$HOME` stays clean, and
+config, data, cache and state stay separate. `dot_zshenv.tmpl` exports these variables. zsh
+reads that file first:
 
 | Variable | Path | Holds |
 | --- | --- | --- |
-| `XDG_CONFIG_HOME` | `~/.config` | configuration, what this repo writes |
-| `XDG_DATA_HOME` | `~/.local/share` | application data meant to persist |
+| `XDG_CONFIG_HOME` | `~/.config` | configuration, the files this repo writes |
+| `XDG_DATA_HOME` | `~/.local/share` | application data that must persist |
 | `XDG_CACHE_HOME` | `~/.cache` | regenerable cache, safe to delete |
 | `XDG_STATE_HOME` | `~/.local/state` | logs, history, runtime state |
 | `ZDOTDIR` | `~/.config/zsh` | keeps `.zshrc` out of `$HOME` |
 
-`ZDOTDIR` is the one that needs a foothold: zsh only reads `~/.zshenv` from `$HOME`, so that file
-is the sole dotfile left at the top level, exporting the rest and pointing zsh at `~/.config/zsh`.
+`ZDOTDIR` is the exception. zsh reads `~/.zshenv` only from `$HOME`. Therefore `~/.zshenv` is the
+only dotfile in `$HOME`. It exports the other variables and points zsh at `~/.config/zsh`.
 
 ## 🌳 Directory structure
 
 ```
 .
-├── .chezmoi.toml.tmpl              # per-machine axes (OS id, desktop) + sourceDir
-├── .chezmoiignore                  # which configs each machine does NOT get
+├── .chezmoi.toml.tmpl              # per-machine values (OS id, desktop) and sourceDir
+├── .chezmoiignore                  # the configs each machine does not receive
 ├── dot_zshenv.tmpl                 # → ~/.zshenv, exports XDG vars and ZDOTDIR
 ├── private_dot_gnupg/              # → ~/.gnupg, gpg-agent (0700)
 ├── Library/                        # → macOS only, VS Code settings
@@ -85,5 +85,5 @@ is the sole dotfile left at the top level, exporting the rest and pointing zsh a
     ├── fastfetch/
     ├── hypr/  waybar/  rofi/       # Hyprland desktop
     ├── swaync/
-    └── scripts/                    # helpers the bar and keybinds call
+    └── scripts/                    # scripts that the bar and the keybinds call
 ```
