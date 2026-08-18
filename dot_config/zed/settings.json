@@ -1,66 +1,60 @@
 {
-  "collaboration_panel": {
-    "button": false
-  },
-  "cli_default_open_behavior": "existing_window",
-  "disable_ai": true,
-  "vim_mode": false,
-  "terminal": {
-    "font_family": "BerkeleyMono Nerd Font"
-  },
-  "session": {
-    "trust_all_worktrees": true
-  },
+  // ── Appearance ─────────────────────────────────────────────────────
   "theme": "Gruvbox Baby",
   "icon_theme": "Material Icon Theme",
   "buffer_font_family": "BerkeleyMono Nerd Font",
-  "buffer_font_size": 16.0,
+  "buffer_font_size": 16,
+
+  // ── Editor ─────────────────────────────────────────────────────────
   "relative_line_numbers": "enabled",
   "show_whitespaces": "trailing",
   "autosave": "on_focus_change",
+
+  // ── Panels ─────────────────────────────────────────────────────────
   "project_panel": {
-    "entry_spacing": "standard",
     "dock": "left",
+    "entry_spacing": "standard",
+    "git_status_indicator": true,
     "indent_size": 15
   },
-  "agent": {
-    "dock": "right"
+  "git_panel": {
+    "entry_primary_click_action": "file_diff",
+    "file_icons": true,
+    "tree_view": true
   },
-  "agent_servers": {
-    "claude-acp": {
-      "type": "registry"
-    }
+  "collaboration_panel": {
+    "button": false
   },
+
+  // ── Git ────────────────────────────────────────────────────────────
+  "diff_view_style": "unified",
+
+  // ── Terminal ───────────────────────────────────────────────────────
+  "terminal": {
+    "font_family": "BerkeleyMono Nerd Font",
+    "working_directory": "always_home"
+  },
+
+  // ── Session ────────────────────────────────────────────────────────
+  "session": {
+    "trust_all_worktrees": true
+  },
+
+  // ── Privacy ────────────────────────────────────────────────────────
+  "disable_ai": true,
   "telemetry": {
     "diagnostics": false,
     "metrics": false
   },
+
+  // ── File type overrides ────────────────────────────────────────────
   "file_types": {
-    "Shell Script": [
-      "dot_zshenv.tmpl",
-      "dot_zshrc.tmpl",
-      "dot_zprofile.tmpl"
-    ],
-    "Git Ignore": [
-      ".chezmoiignore",
-      "ignore"
-    ],
-    "TOML": [
-      ".chezmoi.toml.tmpl"
-    ],
-    "INI": [
-      "config.tmpl"
-    ],
-    "JSONC": [
-      "config"
-    ],
-    "Ruby": [
-      "Brewfile"
-    ],
-    "Jinja2": [
-      "*.j2",
-      "*.jinja",
-      "*.jinja2"
-    ]
+    "Shell Script": ["dot_zshenv.tmpl", "dot_zshrc.tmpl", "dot_zprofile.tmpl"],
+    "Git Ignore": [".chezmoiignore", "ignore"],
+    "TOML": [".chezmoi.toml.tmpl"],
+    "INI": ["config.tmpl"],
+    "JSONC": ["config"],
+    "Ruby": ["Brewfile"],
+    "Jinja2": ["*.j2", "*.jinja", "*.jinja2"]
   }
 }
