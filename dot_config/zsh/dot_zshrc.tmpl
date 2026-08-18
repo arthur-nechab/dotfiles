@@ -1,5 +1,6 @@
 # ── History ───────────────────────────────────────────────────────────
 HISTFILE="$XDG_STATE_HOME/zsh/history"
+[[ -d ${HISTFILE:h} ]] || mkdir -p ${HISTFILE:h}
 HISTSIZE=50000
 SAVEHIST=50000
 
@@ -20,6 +21,7 @@ export GPG_TTY=$(tty)
 
 # ── Completion ────────────────────────────────────────────────────────
 autoload -Uz compinit
+[[ -d $XDG_CACHE_HOME/zsh ]] || mkdir -p $XDG_CACHE_HOME/zsh
 compinit -d "$XDG_CACHE_HOME/zsh/zcompdump-$ZSH_VERSION"
 zstyle ':completion:*' menu select
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
