@@ -94,18 +94,17 @@ window#waybar {
 /* ── Per-module colors ───────────────────────────────────────────── */
 
 #mpris               { color: @yellow; }
-#custom-nightlight {
-  color: @purple;
+#custom-nightlight,
+#custom-notification {
   font-size: 15px;
   padding: 0 8px;
   margin: 5px 0;
-  transition: color 150ms ease;
 }
+#custom-nightlight      { color: @purple; }
 #custom-nightlight.cool { color: @yellow; }
 #custom-cava         { color: @orange; font-size: 11px; letter-spacing: 1px; padding: 0 4px; }
 #custom-weather      { color: @yellow; }
 #custom-btop         { color: @orange; }
-#clock               { color: @fg; }
 #wireplumber         { color: @purple; }
 #network             { color: @blue; }
 #bluetooth           { color: @aqua; font-size: 15px; }
@@ -114,18 +113,7 @@ window#waybar {
 
 /* ── Notification button ─────────────────────────────────────────── */
 
-#custom-notification {
-  color: @red;
-  font-size: 15px;
-  padding: 0 8px;
-  margin: 5px 0;
-  transition: color 150ms ease;
-}
-
-#custom-notification:hover {
-  background: @surface;
-  border-radius: 8px;
-}
+#custom-notification { color: @red; }
 
 /* ── Separators ──────────────────────────────────────────────────── */
 
@@ -143,7 +131,9 @@ window#waybar {
 #network,
 #bluetooth,
 #custom-weather,
-#clock {
+#clock,
+#custom-nightlight,
+#custom-notification {
   transition: color 150ms ease;
 }
 
@@ -153,7 +143,8 @@ window#waybar {
 #network:hover,
 #bluetooth:hover,
 #custom-mic:hover,
-#custom-nightlight:hover {
+#custom-nightlight:hover,
+#custom-notification:hover {
   background: @surface;
   border-radius: 8px;
 }
