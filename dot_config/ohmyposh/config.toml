@@ -10,6 +10,14 @@ alignment = 'left'
 newline = true
 
 [[blocks.segments]]
+type = 'session'
+style = 'plain'
+background = 'transparent'
+foreground = '#D79921'
+foreground_templates = ['{{ if .Root }}#fb4934{{ end }}']
+template = '{{ if .SSHSession }} {{ .UserName }}@{{ .HostName }} {{ end }}'
+
+[[blocks.segments]]
 type = 'path'
 style = 'plain'
 background = 'transparent'
@@ -77,7 +85,7 @@ newline = true
 type = 'status'
 style = 'plain'
 foreground_templates = [
-  "{{if gt .Code 0}}#fb4934{{end}}",
+  "{{if or (gt .Code 0) .Root}}#fb4934{{end}}",
   "{{if eq .Code 0}}#a89984{{end}}",
 ]
 background = 'transparent'
