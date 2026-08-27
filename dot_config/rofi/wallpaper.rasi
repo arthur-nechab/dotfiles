@@ -56,7 +56,7 @@ element-text {
   text-color:       @fg-dim;
   horizontal-align: 0.5;
   vertical-align:   0.5;
-  font:             "BerkeleyMono Nerd Font 11";
+  font:             "Inter 11";
 }
 
 element selected.normal element-text {
