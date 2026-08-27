@@ -32,17 +32,10 @@
       "custom/notification"
     ],
     "hyprland/workspaces": {
-      "format": "{icon}",
+      "format": "{id}",
       "on-click": "activate",
-      "format-icons": {
-        "1": "1",
-        "2": "2",
-        "3": "3",
-        "4": "4",
-        "default": "•"
-      },
-      "on-scroll-up": "hyprctl dispatch workspace e+1 1>/dev/null",
-      "on-scroll-down": "hyprctl dispatch workspace e-1 1>/dev/null",
+      "on-scroll-up": "hyprctl dispatch 'hl.dsp.focus({ workspace = \"e+1\" })' >/dev/null",
+      "on-scroll-down": "hyprctl dispatch 'hl.dsp.focus({ workspace = \"e-1\" })' >/dev/null",
       "sort-by": "number"
     },
     "mpris": {
@@ -181,14 +174,8 @@
     ],
     "modules-right": [],
     "hyprland/workspaces": {
-      "format": "{icon}",
+      "format": "{id}",
       "on-click": "activate",
-      "format-icons": {
-        "5": "5",
-        "default": "•"
-      },
-      "on-scroll-up": "hyprctl dispatch workspace e+1 1>/dev/null",
-      "on-scroll-down": "hyprctl dispatch workspace e-1 1>/dev/null",
       "sort-by": "number",
       "active-only": true
     },
