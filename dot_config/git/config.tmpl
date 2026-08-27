@@ -1,0 +1,28 @@
+# Neutral preferences, every machine. git reads this file first; the role overlay in
+# ~/.gitconfig (identity, signing, defaultBranch) comes after it and wins on any shared key.
+[core]
+	pager = delta
+[delta]
+	navigate = true
+	dark = true
+	line-numbers = true
+[credential]
+	helper = {{ if eq .chezmoi.os "darwin" }}osxkeychain{{ else }}cache{{ end }}
+[fetch]
+	prune = true
+[pull]
+	rebase = true
+[rebase]
+	autostash = true
+[merge]
+	log = true
+[push]
+	recurseSubmodules = on-demand
+[diff]
+	submodule = log
+[status]
+	submoduleSummary = true
+[submodule]
+	recurse = true
+[help]
+	autocorrect = prompt
