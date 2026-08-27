@@ -1,0 +1,16 @@
+// ── Input ────────────────────────────────────────────────────────────
+
+input {
+    keyboard {
+        xkb {
+            layout "fr"
+            variant "azerty"
+        }
+        numlock
+    }
+
+    touchpad {
+        tap
+        natural-scroll
+    }
+}

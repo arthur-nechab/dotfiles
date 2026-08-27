@@ -1,0 +1,4 @@
+// ── Autostart ────────────────────────────────────────────────────────
+
+// system LC_TIME is fr_FR; the bar must stay in English
+spawn-at-startup "sh" "-c" "LC_TIME=en_US.UTF-8 exec noctalia"

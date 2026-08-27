@@ -1,0 +1,142 @@
+// ── Keybinds ─────────────────────────────────────────────────────────
+
+binds {
+    // ─── Applications ───
+    Mod+Return                          hotkey-overlay-title="Terminal: ghostty" { spawn "ghostty"; }
+    Mod+Space                           hotkey-overlay-title="Launcher" { spawn-sh "noctalia msg panel-toggle launcher"; }
+    Mod+B                               hotkey-overlay-title="Browser" { spawn-sh "gtk-launch \"$(xdg-settings get default-web-browser)\""; }
+    Mod+D                               hotkey-overlay-title="Discord" { spawn "discord"; }
+    Mod+E                               hotkey-overlay-title="File manager: nautilus" { spawn "nautilus"; }
+    Mod+Z                               hotkey-overlay-title="Editor: zed" { spawn "zeditor"; }
+
+    // ─── Noctalia ───
+    Mod+Shift+Return                    hotkey-overlay-title="Wallpaper picker" { spawn-sh "noctalia msg panel-toggle wallpaper"; }
+    Mod+S                               hotkey-overlay-title="Control center" { spawn-sh "noctalia msg panel-toggle control-center"; }
+    Mod+CTRL+S                          hotkey-overlay-title="Settings" { spawn-sh "noctalia msg settings-toggle"; }
+    Mod+ALT+L                           hotkey-overlay-title="Lock" { spawn-sh "noctalia msg session lock"; }
+    Mod+Shift+Q                         hotkey-overlay-title="Session menu" { spawn-sh "noctalia msg panel-toggle session"; }
+    Mod+Shift+R                         hotkey-overlay-title="Screen recording: toggle" { spawn-sh "noctalia msg plugin 'noctalia/screen_recorder:service' all toggle"; }
+
+    // ─── Media ───
+    XF86AudioRaiseVolume                allow-when-locked=true { spawn-sh "noctalia msg volume-up"; }
+    XF86AudioLowerVolume                allow-when-locked=true { spawn-sh "noctalia msg volume-down"; }
+    XF86AudioMute                       allow-when-locked=true { spawn-sh "noctalia msg volume-mute"; }
+    XF86AudioMicMute                    allow-when-locked=true { spawn-sh "noctalia msg mic-mute"; }
+    XF86AudioNext                       allow-when-locked=true { spawn-sh "noctalia msg media next"; }
+    XF86AudioPrev                       allow-when-locked=true { spawn-sh "noctalia msg media previous"; }
+    XF86AudioPlay                       allow-when-locked=true { spawn-sh "noctalia msg media play"; }
+    XF86AudioPause                      allow-when-locked=true { spawn-sh "noctalia msg media stop"; }
+    XF86MonBrightnessUp                 allow-when-locked=true { spawn-sh "noctalia msg brightness-up"; }
+    XF86MonBrightnessDown               allow-when-locked=true { spawn-sh "noctalia msg brightness-down"; }
+
+    // ─── Screenshots ───
+    Print                               hotkey-overlay-title="Screenshot: screen" { spawn-sh "noctalia msg screenshot-fullscreen"; }
+    Mod+Shift+S                         hotkey-overlay-title="Screenshot: region" { spawn-sh "noctalia msg screenshot-region"; }
+    Mod+Shift+T                         hotkey-overlay-title="OCR: copy text from region" { spawn-sh "~/.config/scripts/ocr"; }
+
+    // ─── Focus and movement ───
+    Mod+Q                               { close-window; }
+
+    Mod+Left                            { focus-column-left; }
+    Mod+H                               { focus-column-left; }
+    Mod+Right                           { focus-column-right; }
+    Mod+L                               { focus-column-right; }
+    Mod+Up                              { focus-window-up; }
+    Mod+K                               { focus-window-up; }
+    Mod+Down                            { focus-window-down; }
+    Mod+J                               { focus-window-down; }
+
+    Mod+CTRL+Left                       { move-column-left; }
+    Mod+CTRL+H                          { move-column-left; }
+    Mod+CTRL+Right                      { move-column-right; }
+    Mod+CTRL+L                          { move-column-right; }
+    Mod+CTRL+Up                         { move-window-up; }
+    Mod+CTRL+K                          { move-window-up; }
+    Mod+CTRL+Down                       { move-window-down; }
+    Mod+CTRL+J                          { move-window-down; }
+
+    Mod+Home                            { focus-column-first; }
+    Mod+End                             { focus-column-last; }
+    Mod+CTRL+Home                       { move-column-to-first; }
+    Mod+CTRL+End                        { move-column-to-last; }
+
+    Mod+Shift+Left                      { focus-monitor-left; }
+    Mod+Shift+Right                     { focus-monitor-right; }
+    Mod+Shift+Up                        { focus-monitor-up; }
+    Mod+Shift+Down                      { focus-monitor-down; }
+
+    Mod+Shift+CTRL+Left                 { move-column-to-monitor-left; }
+    Mod+Shift+CTRL+Right                { move-column-to-monitor-right; }
+    Mod+Shift+CTRL+Up                   { move-column-to-monitor-up; }
+    Mod+Shift+CTRL+Down                 { move-column-to-monitor-down; }
+    Mod+Shift+V                         { switch-focus-between-floating-and-tiling; }
+
+    Mod+BracketLeft                     { consume-or-expel-window-left; }
+    Mod+BracketRight                    { consume-or-expel-window-right; }
+    Mod+Comma                           { consume-window-into-column; }
+    Mod+Period                          { expel-window-from-column; }
+
+    // ─── Workspaces ───
+    Mod+WheelScrollDown                 cooldown-ms=150 { focus-workspace-down; }
+    Mod+WheelScrollUp                   cooldown-ms=150 { focus-workspace-up; }
+    Mod+CTRL+WheelScrollDown            cooldown-ms=150 { move-column-to-workspace-down; }
+    Mod+CTRL+WheelScrollUp              cooldown-ms=150 { move-column-to-workspace-up; }
+
+    Mod+WheelScrollRight                { focus-column-right; }
+    Mod+WheelScrollLeft                 { focus-column-left; }
+    Mod+CTRL+WheelScrollRight           { move-column-right; }
+    Mod+CTRL+WheelScrollLeft            { move-column-left; }
+
+    Mod+Shift+WheelScrollDown           { focus-column-right; }
+    Mod+Shift+WheelScrollUp             { focus-column-left; }
+    Mod+CTRL+Shift+WheelScrollDown      { move-column-right; }
+    Mod+CTRL+Shift+WheelScrollUp        { move-column-left; }
+
+    Mod+ampersand                       { focus-workspace 1; }
+    Mod+eacute                          { focus-workspace 2; }
+    Mod+quotedbl                        { focus-workspace 3; }
+    Mod+apostrophe                      { focus-workspace 4; }
+    Mod+parenleft                       { focus-workspace 5; }
+    Mod+minus                           { focus-workspace 6; }
+    Mod+egrave                          { focus-workspace 7; }
+    Mod+underscore                      { focus-workspace 8; }
+    Mod+ccedilla                        { focus-workspace 9; }
+
+    Mod+Shift+ampersand                 { move-column-to-workspace 1; }
+    Mod+Shift+eacute                    { move-column-to-workspace 2; }
+    Mod+Shift+quotedbl                  { move-column-to-workspace 3; }
+    Mod+Shift+apostrophe                { move-column-to-workspace 4; }
+    Mod+Shift+parenleft                 { move-column-to-workspace 5; }
+    Mod+Shift+minus                     { move-column-to-workspace 6; }
+    Mod+Shift+egrave                    { move-column-to-workspace 7; }
+    Mod+Shift+underscore                { move-column-to-workspace 8; }
+    Mod+Shift+ccedilla                  { move-column-to-workspace 9; }
+
+    Mod+TAB                             { focus-workspace-previous; }
+    Mod+O                               repeat=false { toggle-overview; }
+
+    // ─── Layout ───
+    Mod+R                               { switch-preset-column-width; }
+    Mod+CTRL+Shift+R                    { switch-preset-window-height; }
+    Mod+CTRL+R                          { reset-window-height; }
+    Mod+CTRL+F                          { expand-column-to-available-width; }
+    Mod+C                               { center-column; }
+    Mod+CTRL+C                          { center-visible-columns; }
+    Mod+U                               { set-column-width "-10%"; }
+    Mod+I                               { set-column-width "+10%"; }
+    Mod+Shift+U                         { set-window-height "-10%"; }
+    Mod+Shift+I                         { set-window-height "+10%"; }
+
+    Mod+T                               { toggle-window-floating; }
+    Mod+F                               { maximize-column; }
+    Mod+Shift+F                         { fullscreen-window; }
+    Mod+W                               { toggle-column-tabbed-display; }
+    Mod+M                               { maximize-window-to-edges; }
+
+    // ─── Session ───
+    Mod+Shift+ESCAPE                    { show-hotkey-overlay; }
+    // frees the keyboard when a fullscreen app grabs the shortcuts
+    Mod+ESCAPE                          allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
+    Mod+Shift+P                         { power-off-monitors; }
+    CTRL+ALT+Delete                     { quit; }
+}
