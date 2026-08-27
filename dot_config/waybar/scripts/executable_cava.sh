@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-config_file="/tmp/waybar_cava_config"
+config_file=$(mktemp)
 trap 'rm -f "$config_file"' EXIT
 cat > "$config_file" <<'EOF'
 [general]

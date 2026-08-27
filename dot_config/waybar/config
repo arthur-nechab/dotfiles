@@ -146,6 +146,7 @@
     "custom/cava": {
       "format": "{}",
       "exec": "~/.config/waybar/scripts/cava.sh",
+      "restart-interval": 1,
       "tooltip": false
     },
     "custom/mic": {
