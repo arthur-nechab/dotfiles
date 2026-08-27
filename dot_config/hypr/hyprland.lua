@@ -31,6 +31,7 @@ hl.env("XCURSOR_SIZE",                        "24")
 hl.env("HYPRCURSOR_SIZE",                     "24")
 hl.env("MOZ_ENABLE_WAYLAND",                  "1")
 hl.env("QT_QPA_PLATFORM",                     "wayland;xcb")
+hl.env("QT_QPA_PLATFORMTHEME",                "gtk3")
 hl.env("QT_WAYLAND_DISABLE_WINDOWDECORATION", "1")
 hl.env("ELECTRON_OZONE_PLATFORM_HINT",        "auto")
 hl.env("STEAM_ENABLE_WAYLAND_CEF",  "1")
@@ -114,7 +115,7 @@ local sh = assert(shells[sys.shell], "unknown shell layer in system.lua: " .. to
 
 -- ── Autostart ────────────────────────────────────────────────────────
 hl.on("hyprland.start", function()
-    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=Hyprland")
+    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=Hyprland QT_QPA_PLATFORMTHEME=gtk3")
     for _, cmd in ipairs(sh.autostart) do
         hl.exec_cmd(cmd)
     end
