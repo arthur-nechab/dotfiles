@@ -4,10 +4,13 @@
 {{- end -}}
 
 {{- $de := "" -}}
+{{- $shell := "" -}}
 {{- if eq $osID "linux-arch" -}}
   {{- $de = "hyprland" -}}
-{{- else if or (eq $osID "linux-cachyos") (eq $osID "linux-debian") -}}
-  {{- $de = "kde" -}}
+  {{- $shell = "modular" -}}
+{{- else if eq $osID "linux-debian" -}}
+  {{- $de = "hyprland" -}}
+  {{- $shell = "noctalia" -}}
 {{- end -}}
 
 sourceDir = {{ .chezmoi.sourceDir | quote }}
@@ -15,3 +18,4 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 [data.system]
 osid  = {{ $osID | quote }}
 de    = {{ $de | quote }}
+shell = {{ $shell | quote }}

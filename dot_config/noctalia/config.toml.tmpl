@@ -1,0 +1,88 @@
+[bar.default]
+background_opacity = 0.85
+center = [ "date", "clock" ]
+end = [ "tray", "spacer_3", "clipboard", "network", "bluetooth", "input_volume", "volume", "battery", "notifications" ]
+margin_ends = 100
+start = [ "control-center", "workspaces", "spacer_1", "cpu", "ram" ]
+widget_spacing = 8
+
+[control_center.calendar]
+show_events_card = false
+
+[idle.behavior.lock]
+enabled = true
+timeout = 300.0
+
+[idle.behavior.screen-off]
+enabled = true
+timeout = 600.0
+
+[location]
+auto_locate = true
+custom_schedule = true
+sunrise = "07:30"
+sunset = "20:30"
+
+[nightlight]
+enabled = true
+
+[plugins]
+enabled = [ "noctalia/screen_recorder" ]
+
+[shell]
+telemetry_enabled = false
+font_family = "Inter"
+niri_overview_type_to_launch_enabled = true
+polkit_agent = true
+settings_show_advanced = false
+
+    [shell.animation]
+    speed = 1.5
+
+    [shell.launcher]
+    compact = true
+
+    [shell.screen_corners]
+    enabled = true
+    size = 32
+
+    [shell.screenshot]
+    directory = "{{ .chezmoi.homeDir }}/Pictures/Screenshots"
+
+[theme]
+source = "wallpaper"
+wallpaper_scheme = "soft"
+
+    [theme.templates]
+    enable_community_templates = false
+    builtin_ids = [ "gtk3", "gtk4" ]
+
+[widget.battery]
+show_label = false
+
+[widget.cpu]
+show_value = true
+stat = "cpu_usage"
+visualization = "graph"
+
+[widget.date]
+format = "{:%d %b}"
+
+[widget.input_volume]
+show_label = false
+
+[widget.spacer_1]
+type = "spacer"
+
+[widget.spacer_3]
+type = "spacer"
+
+[widget.network]
+show_label = false
+
+[widget.volume]
+show_label = false
+
+[plugin_settings."noctalia/screen_recorder"]
+video_source = "portal"
+directory = "{{ .chezmoi.homeDir }}/Videos/Recordings"

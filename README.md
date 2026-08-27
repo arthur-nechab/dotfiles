@@ -12,7 +12,8 @@ across machines with [chezmoi](https://www.chezmoi.io).
 | Navigation | yazi, eza, bat, fd, ripgrep, fzf, zoxide |
 | Git | lazygit |
 | System | btop, fastfetch |
-| Desktop (Hyprland) | hyprland, waybar, rofi, swaync, hypridle, hyprlock |
+| Desktop (Arch) | hyprland, waybar, rofi, swaync, hypridle, hyprlock |
+| Laptop (Debian) | hyprland, noctalia |
 | Theme | gruvbox |
 
 ## 🚀 Setup
@@ -44,9 +45,8 @@ chezmoi update
 ```
 
 The same command gives a different result on each machine. `.chezmoi.toml.tmpl` reads
-`/etc/os-release` and sets an OS id and a desktop environment. `.chezmoiignore` uses those two
-values to select the configs. chezmoi installs the Hyprland configs only on a Hyprland machine,
-never on a KDE machine. It installs `Library/` only on macOS.
+`/etc/os-release` and sets three values: an OS id, a compositor (`de`) and a shell layer
+(`shell`). `.chezmoiignore` uses them to select the configs.
 
 ## 📂 XDG Directories
 
@@ -70,20 +70,22 @@ only dotfile in `$HOME`. It exports the other variables and points zsh at `~/.co
 
 ```
 .
-├── .chezmoi.toml.tmpl              # per-machine values (OS id, desktop) and sourceDir
-├── .chezmoiignore                  # the configs each machine does not receive
-├── dot_zshenv.tmpl                 # → ~/.zshenv, exports XDG vars and ZDOTDIR
-├── private_dot_gnupg/              # → ~/.gnupg, gpg-agent (0700)
-├── Library/                        # → macOS only, VS Code settings
-└── dot_config/                     # → ~/.config
-    ├── zsh/                        # .zshrc, .zprofile
-    ├── ohmyposh/                   # prompt
-    ├── ghostty/                    # terminal
-    ├── nvim/  zed/                 # editors
-    ├── git/                        # global gitignore
+├── .chezmoi.toml.tmpl                  # per-machine values (OS id, compositor, shell) and sourceDir
+├── .chezmoiignore                      # the configs each machine does not receive
+├── dot_zshenv.tmpl                     # → ~/.zshenv, exports XDG vars and ZDOTDIR
+├── private_dot_gnupg/                  # → ~/.gnupg, gpg-agent (0700)
+├── Library/                            # → macOS only, VS Code settings
+└── dot_config/                         # → ~/.config
+    ├── zsh/                            # .zshrc, .zprofile
+    ├── ohmyposh/                       # prompt
+    ├── ghostty/                        # terminal
+    ├── nvim/  zed/                     # editors
+    ├── git/                            # neutral git preferences, global gitignore
     ├── yazi/  lazygit/  btop/  herdr/  # TUIs
-    ├── fastfetch/
-    ├── hypr/  waybar/  rofi/       # Hyprland desktop
-    ├── swaync/
-    └── scripts/                    # scripts that the bar and the keybinds call
+    ├── fastfetch/                      # system info
+    ├── hypr/                           # Hyprland (de = hyprland)
+    ├── waybar/  rofi/  swaync/         # modular shell (shell = modular)
+    ├── noctalia/                       # noctalia shell (shell = noctalia)
+    ├── niri/
+    └── scripts/                        # scripts that the bar and the keybinds call
 ```

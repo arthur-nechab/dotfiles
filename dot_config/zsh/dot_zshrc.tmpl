@@ -26,6 +26,9 @@ compinit -d "$XDG_CACHE_HOME/zsh/zcompdump-$ZSH_VERSION"
 zstyle ':completion:*' menu select
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 
+# ── mise ──────────────────────────────────────────────────────────────
+command -v mise >/dev/null && eval "$(mise activate zsh)"
+
 # ── Prompt / navigation ───────────────────────────────────────────────
 if [[ "$TERM_PROGRAM" != "Apple_Terminal" ]]; then
   eval "$(oh-my-posh init zsh --config $XDG_CONFIG_HOME/ohmyposh/config.toml)"
@@ -36,6 +39,9 @@ eval "$(zoxide init zsh)"
 {{- if eq .chezmoi.os "darwin" }}
 [ -r /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh ] && source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 [ -r /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ] && source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+{{- else if eq .system.osid "linux-debian" }}
+[ -r /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh ] && source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+[ -r /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ] && source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 {{- else }}
 [ -r /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ] && source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 [ -r /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ] && source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
@@ -98,7 +104,7 @@ function extract() {
     *.xz)      unxz "$1" ;;
     *.zip)     unzip "$1" ;;
     *.rar)     unrar x "$1" ;;
-    *.7z)      7z x "$1" ;;
+    *.7z)      { command -v 7zz >/dev/null && 7zz x "$1" } || 7z x "$1" ;;
     *.dmg)     hdiutil attach "$1" ;;
     *)         echo "extract: unsupported format '$1'" ;;
   esac

@@ -1,23 +1,30 @@
 README.md
+.local/state/noctalia/
+.config/niri/
 
-{{- if ne .chezmoi.os "darwin" }}
-Library/
-{{- else }}
+{{- if eq .chezmoi.os "darwin" }}
 .config/fastfetch/
-.config/yazi/
-{{- end }}
-
-{{- if not (or (eq .system.osid "linux-arch") (eq .system.osid "linux-cachyos")) }}
 .config/nvim/
+.config/yazi/
 .config/zed/
+{{- else }}
+Library/
 {{- end }}
 
 {{- if ne .system.de "hyprland" }}
 .config/hypr/
+{{- end }}
+
+{{- if ne .system.shell "modular" }}
 .config/waybar/
 .config/rofi/
 .config/swaync/
-.config/scripts/
+.config/scripts/*
+{{- if eq .system.shell "noctalia" }}
+!.config/scripts/ocr
+{{- end }}
 {{- end }}
 
-.config/hypr/hyprpaper.conf
+{{- if ne .system.shell "noctalia" }}
+.config/noctalia/
+{{- end }}
