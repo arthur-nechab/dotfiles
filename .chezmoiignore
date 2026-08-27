@@ -4,6 +4,8 @@ README.md
 
 {{- if eq .chezmoi.os "darwin" }}
 .config/fastfetch/
+.config/gtk-3.0/
+.config/gtk-4.0/
 .config/nvim/
 .config/yazi/
 .config/zed/
