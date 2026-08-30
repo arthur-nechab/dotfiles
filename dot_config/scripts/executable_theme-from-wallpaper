@@ -16,6 +16,8 @@ from PIL import Image
 HOME = Path.home()
 CACHE = HOME / ".cache"
 QS_THEMES = HOME / ".config/quickshell/themes"
+GHOSTTY_THEMES = Path("/usr/share/ghostty/themes")
+MIN_CONTRAST = 4.0
 
 # quickshell name -> (ghostty theme, btop theme, nvim colorscheme, zed theme)
 THEMES = {
@@ -106,10 +108,50 @@ def apply_hyprland(palette):
     subprocess.run(["hyprctl", "eval", lua], capture_output=True)
 
 
+def luminance(hexc):
+    def chan(v):
+        v = int(hexc[v:v + 2], 16) / 255
+        return v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4
+    return 0.2126 * chan(0) + 0.7152 * chan(2) + 0.0722 * chan(4)
+
+
+def contrast(a, b):
+    la, lb = sorted((luminance(a), luminance(b)))
+    return (lb + 0.05) / (la + 0.05)
+
+
+def lift(colour, bg):
+    """the same hue, light enough to read on bg"""
+    h, l, sat = colorsys.rgb_to_hls(*(int(colour[i:i + 2], 16) / 255 for i in (0, 2, 4)))
+    while l < 1:
+        l = min(1.0, l + 0.02)
+        out = "%02x%02x%02x" % tuple(round(v * 255) for v in colorsys.hls_to_rgb(h, l, sat))
+        if contrast(out, bg) >= MIN_CONTRAST:
+            return out
+    return "ffffff"
+
+
+def readable_palette(theme):
+    """most themes ship a bright black under 3:1; twilight also breaks its blue"""
+    try:
+        text = (GHOSTTY_THEMES / theme).read_text()
+    except OSError:
+        return ""
+    bg = re.search(r"^background\s*=\s*#?(\w{6})", text, re.M)
+    if not bg:
+        return ""
+    out = ""
+    for index, colour in re.findall(r"palette\s*=\s*(\d+)=#?(\w{6})", text):
+        # 0 is the background of half the TUIs, never a foreground
+        if index != "0" and contrast(colour, bg.group(1)) < MIN_CONTRAST:
+            out += f"palette = {index}=#{lift(colour, bg.group(1))}\n"
+    return out
+
+
 def apply_ghostty(theme):
     out = HOME / ".config/ghostty/themes/dynamic"
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(f"theme = {theme}\n")
+    out.write_text(f"theme = {theme}\n" + readable_palette(theme))
     # ghostty 1.3 only reloads through its keybind; without single-instance every
     # window is its own process, so the shortcut has to reach each one by address
     clients = subprocess.run(["hyprctl", "-j", "clients"], capture_output=True, text=True)
