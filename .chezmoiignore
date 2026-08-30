@@ -29,5 +29,5 @@ Library/
 .config/qt6ct/
 {{- else }}
 .config/quickshell/
-.config/xdg-desktop-portal/hyprland-portals.conf
+.config/xdg-desktop-portal/
 {{- end }}
