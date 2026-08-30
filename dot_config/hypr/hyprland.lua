@@ -185,6 +185,8 @@ hl.config({
         disable_hyprland_logo    = true,
         disable_splash_rendering = true,
         vrr                      = 2,
+        -- a link opened from another app raises the browser, workspace included
+        focus_on_activate        = true,
     },
 
     cursor = {
