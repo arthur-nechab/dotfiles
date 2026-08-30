@@ -55,26 +55,23 @@ Scope {
                 }
             }
 
-            property bool bOnTop: false
+            // which layer is on screen; the other one takes the next file
+            property bool showA: true
 
             Layer {
                 id: layerA
-                opacity: 1
-                onStatusChanged: if (status === Image.Ready && !wall.bOnTop && layerB.opacity === 1) wall.swap()
+                opacity: wall.showA ? 1 : 0
+                onStatusChanged: if (status === Image.Ready && !wall.showA) wall.showA = true
             }
 
             Layer {
                 id: layerB
-                opacity: 0
-                onStatusChanged: if (status === Image.Ready && wall.bOnTop && layerA.opacity === 1) wall.swap()
+                opacity: wall.showA ? 0 : 1
+                onStatusChanged: if (status === Image.Ready && wall.showA) wall.showA = false
             }
 
-            function swap() {
-                layerA.opacity = bOnTop ? 0 : 1;
-                layerB.opacity = bOnTop ? 1 : 0;
-            }
-
-            // the hidden layer takes the new file; the swap runs once it is decoded
+            // the hidden layer takes the new file and comes up once it is decoded;
+            // a second change before that lands in the same hidden layer
             Connections {
                 target: root
                 function onPathChanged() {
@@ -83,8 +80,13 @@ Scope {
                         layerA.source = src;
                         return;
                     }
-                    wall.bOnTop = layerA.opacity === 1;
-                    (wall.bOnTop ? layerB : layerA).source = src;
+                    const hidden = wall.showA ? layerB : layerA;
+                    // going back to the previous file: it is still decoded there, no status change comes
+                    if (hidden.source == src) {
+                        wall.showA = !wall.showA;
+                        return;
+                    }
+                    hidden.source = src;
                 }
             }
         }
