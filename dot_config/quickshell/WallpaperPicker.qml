@@ -13,6 +13,8 @@ PanelWindow {
     readonly property var files: scanned
         .map(p => ({ path: p, name: p.split("/").pop().replace(/\.[^.]+$/, ""),
                      theme: (themes[p.split("/").pop()] ?? {}).theme ?? "" }))
+        // theme-from-wallpaper keeps a 560 px copy of each file; the original stands in until it exists
+        .map(f => Object.assign(f, { thumb: Quickshell.env("HOME") + "/.cache/wallpaper-thumbs/" + f.name + ".jpg" }))
         .sort((a, b) => a.theme.localeCompare(b.theme) || a.name.localeCompare(b.name))
 
 
@@ -132,10 +134,10 @@ PanelWindow {
                     Image {
                         anchors.fill: parent
                         anchors.margins: 3
-                        source: "file://" + modelData.path
+                        source: "file://" + modelData.thumb
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
-                        sourceSize.width: 560
+                        onStatusChanged: if (status === Image.Error) source = "file://" + modelData.path
                     }
                 }
 

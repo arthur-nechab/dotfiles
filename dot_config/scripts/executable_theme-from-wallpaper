@@ -16,6 +16,7 @@ from PIL import Image
 HOME = Path.home()
 CACHE = HOME / ".cache"
 QS_THEMES = HOME / ".config/quickshell/themes"
+THUMBS = CACHE / "wallpaper-thumbs"
 GHOSTTY_THEMES = Path("/usr/share/ghostty/themes")
 MIN_CONTRAST = 4.0
 
@@ -326,10 +327,20 @@ def index_wallpapers():
     except (OSError, ValueError):
         cache = {}
     fresh = {}
+    THUMBS.mkdir(parents=True, exist_ok=True)
     for f in sorted(folder.glob("*")):
         if f.suffix.lower() not in (".jpg", ".jpeg", ".png", ".webp"):
             continue
         key = f.name
+        # the picker shows these instead of decoding 6 MB originals on every open
+        thumb = THUMBS / (f.stem + ".jpg")
+        if not thumb.exists() or thumb.stat().st_mtime < f.stat().st_mtime:
+            try:
+                im = Image.open(f).convert("RGB")
+                im.thumbnail((560, 560))
+                im.save(thumb, "JPEG", quality=85)
+            except OSError:
+                pass
         old = cache.get(key)
         if old and old.get("mtime") == f.stat().st_mtime:
             fresh[key] = old
