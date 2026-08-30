@@ -1,0 +1,10 @@
+id = "rename-sync"
+name = "rename-sync"
+version = "0.1.0"
+min_herdr_version = "0.8.0"
+description = "Renaming a workspace renames the Claude conversations inside it"
+platforms = ["linux", "macos"]
+
+[[events]]
+on = "workspace.renamed"
+command = ["sh", "run"]

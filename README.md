@@ -82,7 +82,8 @@ only dotfile in `$HOME`. It exports the other variables and points zsh at `~/.co
     ├── ghostty/                        # terminal
     ├── nvim/  zed/                     # editors
     ├── git/                            # neutral git preferences, global gitignore
-    ├── yazi/  lazygit/  btop/  herdr/  # TUIs
+    ├── herdr/  yazi/  lazygit/  btop/  # TUIs
+    │   └── plugins/rename-sync/        # herdr: renames the Claude sessions of a renamed workspace
     ├── fastfetch/                      # system info
     ├── gtk-3.0/  gtk-4.0/              # GTK theme, icons, font, cursor
     ├── hypr/                           # Hyprland (de = hyprland)

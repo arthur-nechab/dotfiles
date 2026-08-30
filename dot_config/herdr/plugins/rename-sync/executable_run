@@ -1,0 +1,21 @@
+#!/bin/sh
+# herdr runs this on every workspace.renamed event, with HERDR_WORKSPACE_ID set
+ws=$HERDR_WORKSPACE_ID
+lock=${TMPDIR:-/tmp}/herdr-rename-sync-$ws
+# one run per workspace at a time; the running one reads the final label itself
+mkdir "$lock" 2>/dev/null || exit 0
+trap 'rmdir "$lock"' EXIT
+# herdr fires once per intermediate label of its rename box
+sleep 2
+
+label() { herdr workspace get "$ws" | jq -r '.result.workspace.label // empty'; }
+l=$(label)
+[ -n "$l" ] && [ "$l" != "~" ] || exit 0
+
+# only the first Claude of the workspace follows the label; a second one keeps its own subject
+pane=$(herdr agent list | jq -r --arg w "$ws" '[.result.agents[] | select(.workspace_id == $w and .agent == "claude")][0] | .pane_id // empty')
+[ -n "$pane" ] || exit 0
+[ "$(herdr agent get "$pane" | jq -r '.result.terminal_title_stripped')" != "$l" ] || exit 0
+# /rename is a local command, but it still needs the prompt free
+herdr agent wait "$pane" --until idle --until done --timeout 3600000 >/dev/null
+herdr agent prompt "$pane" "/rename $(label)" >/dev/null
