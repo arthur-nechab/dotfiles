@@ -1,0 +1,4 @@
+#!/bin/sh
+# the selection, or the folder itself when nothing is selected
+[ $# -gt 0 ] && exec zeditor "$@"
+exec zeditor "$(printf '%s' "$NAUTILUS_SCRIPT_CURRENT_URI" | sed 's#^file://##' | python3 -c 'import sys,urllib.parse;print(urllib.parse.unquote(sys.stdin.read().strip()))')"
