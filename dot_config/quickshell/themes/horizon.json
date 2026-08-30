@@ -1,0 +1,14 @@
+{
+  "bg": "#1c1e26",
+  "surface": "#2b2e3b",
+  "fg": "#d5d8da",
+  "gray": "#7d7d7d",
+  "red": "#ec6a88",
+  "green": "#3fdaa4",
+  "yellow": "#fbc3a7",
+  "blue": "#3fc4de",
+  "purple": "#f075b5",
+  "aqua": "#6be4e6",
+  "orange": "#f39296",
+  "opacity": 0.8
+}

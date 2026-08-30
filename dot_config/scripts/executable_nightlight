@@ -1,48 +1,39 @@
-#!/usr/bin/env bash
+#!/bin/sh
+# hyprsunset front end; no argument prints "<kelvin> warm|cool" for the bar
+state=${XDG_RUNTIME_DIR:-/tmp}/nightlight_warm_temp
 
 read_temp() {
-  local t
-  t=$(hyprctl hyprsunset temperature 2>/dev/null)
-  [[ "$t" =~ ^[0-9]+$ ]] && echo "$t" || echo 6500
+    t=$(hyprctl hyprsunset temperature 2>/dev/null)
+    case $t in
+        ''|*[!0-9]*) echo 6500 ;;
+        *) echo "$t" ;;
+    esac
 }
+current=$(read_temp)
 
-CURRENT=$(read_temp)
-STATE_FILE="${XDG_RUNTIME_DIR:-/tmp}/nightlight_warm_temp"
-
-case "${1:-}" in
-  --toggle)
-    pgrep -x hyprsunset >/dev/null || hyprsunset -t 6500 &
-    sleep 0.2
-    CURRENT=$(read_temp)
-    if [[ "$CURRENT" -le 4500 ]]; then
-      echo "$CURRENT" > "$STATE_FILE"
-      hyprctl hyprsunset temperature 6500
-    else
-      WARM=$(cat "$STATE_FILE" 2>/dev/null || echo "3500")
-      hyprctl hyprsunset temperature "$WARM"
-    fi
-    ;;
-  --up)
-    NEW=$(( CURRENT + 200 ))
-    [[ $NEW -gt 6500 ]] && NEW=6500
-    hyprctl hyprsunset temperature "$NEW"
-    ;;
-  --down)
-    NEW=$(( CURRENT - 200 ))
-    [[ $NEW -lt 1000 ]] && NEW=1000
-    hyprctl hyprsunset temperature "$NEW"
-    ;;
-  *)
-    if [[ "$CURRENT" -le 4500 ]]; then
-      ICON="󰖔"
-      CLASS="warm"
-    else
-      ICON="󰖨"
-      CLASS="cool"
-    fi
-    printf '{"text": "%s", "tooltip": "%sK", "class": "%s"}\n' "$ICON" "$CURRENT" "$CLASS"
-    exit 0
-    ;;
+case ${1:-} in
+    --toggle)
+        pgrep -x hyprsunset >/dev/null || { hyprsunset -t 6500 & }
+        sleep 0.2
+        current=$(read_temp)
+        if [ "$current" -le 4500 ]; then
+            echo "$current" > "$state"
+            hyprctl hyprsunset temperature 6500
+        else
+            hyprctl hyprsunset temperature "$(cat "$state" 2>/dev/null || echo 3500)"
+        fi
+        ;;
+    --up)
+        new=$((current + 200))
+        [ "$new" -gt 6500 ] && new=6500
+        hyprctl hyprsunset temperature "$new"
+        ;;
+    --down)
+        new=$((current - 200))
+        [ "$new" -lt 1000 ] && new=1000
+        hyprctl hyprsunset temperature "$new"
+        ;;
+    *)
+        if [ "$current" -le 4500 ]; then echo "$current warm"; else echo "$current cool"; fi
+        ;;
 esac
-
-pkill -RTMIN+9 waybar

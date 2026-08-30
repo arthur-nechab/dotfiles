@@ -1,0 +1,11 @@
+#!/bin/sh
+# raise the existing window of that class instead of starting a second instance
+class=$1
+shift
+
+addr=$(hyprctl -j clients | jq -r --arg c "$class" \
+    'map(select(.class | test($c; "i"))) | first | .address // empty')
+
+# the config is Lua, so `hyprctl dispatch` parses Lua too; eval is the only door
+[ -n "$addr" ] && exec hyprctl eval "hl.dispatch(hl.dsp.focus({ window = 'address:$addr' }))"
+exec "$@"

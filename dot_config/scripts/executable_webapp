@@ -1,0 +1,37 @@
+#!/bin/sh
+browser=${WEBAPP_BROWSER:-vivaldi-stable}
+name=$1
+url=$2
+icon=$3
+
+[ -z "$url" ] && { echo "usage: webapp <name> <url> [icon-url-or-file]" >&2; exit 1; }
+
+class=webapp-$(printf '%s' "$name" | tr '[:upper:] ' '[:lower:]-')
+dir=$HOME/.local/share/applications
+icons=$HOME/.local/share/icons/hicolor/256x256/apps
+mkdir -p "$dir" "$icons"
+
+# an icon already on disk is kept unless one is given; else touch icon, then a favicon service
+host=$(printf '%s' "$url" | sed -E 's#^[a-z]+://##; s#/.*##')
+if [ -z "$icon" ] && [ -s "$icons/$class.png" ]; then
+    :
+elif [ -f "$icon" ]; then
+    cp "$icon" "$icons/$class.png"
+elif ! curl -sfL -m 10 -o "$icons/$class.png" "${icon:-https://$host/apple-touch-icon.png}"; then
+    curl -sfL -m 10 -o "$icons/$class.png" "https://www.google.com/s2/favicons?domain=$host&sz=256"
+fi
+[ -s "$icons/$class.png" ] && iconname=$class || iconname=applications-internet
+
+cat > "$dir/$class.desktop" <<DESKTOP
+[Desktop Entry]
+Type=Application
+Name=$name
+GenericName=Web app
+Exec=$browser --app="$url" --class=$class
+Icon=$iconname
+StartupWMClass=$class
+Categories=Network;
+DESKTOP
+
+update-desktop-database "$dir" 2>/dev/null
+echo "$dir/$class.desktop ($iconname)"

@@ -12,7 +12,7 @@ across machines with [chezmoi](https://www.chezmoi.io).
 | Navigation | yazi, eza, bat, fd, ripgrep, fzf, zoxide |
 | Git | lazygit |
 | System | btop, fastfetch |
-| Desktop (Arch) | hyprland, waybar, rofi, swaync, hypridle, hyprlock |
+| Desktop (Arch) | hyprland, quickshell |
 | Laptop (Debian) | hyprland, noctalia |
 | Theme | gruvbox |
 
@@ -75,6 +75,7 @@ only dotfile in `$HOME`. It exports the other variables and points zsh at `~/.co
 ├── dot_zshenv.tmpl                     # → ~/.zshenv, exports XDG vars and ZDOTDIR
 ├── private_dot_gnupg/                  # → ~/.gnupg, gpg-agent (0700)
 ├── Library/                            # → macOS only, VS Code settings
+├── dot_local/share/nautilus/scripts/   # → Nautilus context-menu scripts
 └── dot_config/                         # → ~/.config
     ├── zsh/                            # .zshrc, .zprofile
     ├── ohmyposh/                       # prompt
@@ -83,8 +84,10 @@ only dotfile in `$HOME`. It exports the other variables and points zsh at `~/.co
     ├── git/                            # neutral git preferences, global gitignore
     ├── yazi/  lazygit/  btop/  herdr/  # TUIs
     ├── fastfetch/                      # system info
+    ├── gtk-3.0/  gtk-4.0/              # GTK theme, icons, font, cursor
     ├── hypr/                           # Hyprland (de = hyprland)
-    ├── waybar/  rofi/  swaync/         # modular shell (shell = modular)
+    ├── xdg-desktop-portal/             # portal backends (shell = quickshell)
+    ├── quickshell/                     # quickshell shell (shell = quickshell)
     ├── noctalia/                       # noctalia shell (shell = noctalia)
     ├── niri/
     └── scripts/                        # scripts that the bar and the keybinds call

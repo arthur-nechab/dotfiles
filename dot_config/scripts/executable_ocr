@@ -1,17 +1,18 @@
-#!/usr/bin/env bash
+#!/bin/sh
+# read the text in a region with tesseract and copy it; the region comes from
+# the argument ("x,y wxh") or from slurp
+selection=${1:-$(slurp 2>/dev/null)} || exit 0
+[ -z "$selection" ] && exit 0
 
-SELECTION=$(slurp 2>/dev/null) || exit 0
-[[ -z "$SELECTION" ]] && exit 0
+err=$(mktemp)
+text=$(grim -g "$selection" - 2>"$err" | tesseract stdin stdout --oem 1 --psm 3 -l eng+fra --dpi 300 2>>"$err")
 
-ERR=$(mktemp)
-TEXT=$(grim -g "$SELECTION" - 2>"$ERR" | tesseract stdin stdout --oem 1 --psm 3 -l eng+fra --dpi 300 2>>"$ERR")
-
-if [[ -z "$TEXT" ]]; then
-  notify-send -u critical "OCR" "No text detected$(printf '\n%s' "$(tail -2 "$ERR")")"
-  rm -f "$ERR"
-  exit 1
+if [ -z "$text" ]; then
+    notify-send -u critical "Text recognition" "No text found$(printf '\n%s' "$(tail -2 "$err")")"
+    rm -f "$err"
+    exit 1
 fi
-rm -f "$ERR"
+rm -f "$err"
 
-printf "%s" "$TEXT" | wl-copy
-notify-send "OCR" "Text copied to clipboard"
+printf '%s' "$text" | wl-copy
+notify-send "Text recognition" "Copied to clipboard"

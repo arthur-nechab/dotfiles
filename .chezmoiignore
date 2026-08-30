@@ -1,12 +1,14 @@
 README.md
-.local/state/noctalia/
 .config/niri/
+.local/state/noctalia/
 
 {{- if eq .chezmoi.os "darwin" }}
 .config/fastfetch/
 .config/gtk-3.0/
 .config/gtk-4.0/
+.config/noctalia/
 .config/nvim/
+.config/scripts/
 .config/yazi/
 .config/zed/
 {{- else }}
@@ -17,16 +19,15 @@ Library/
 .config/hypr/
 {{- end }}
 
-{{- if ne .system.shell "modular" }}
-.config/waybar/
-.config/rofi/
-.config/swaync/
-.config/scripts/*
-{{- if eq .system.shell "noctalia" }}
-!.config/scripts/ocr
-{{- end }}
-{{- end }}
-
-{{- if ne .system.shell "noctalia" }}
+{{- if eq .system.shell "quickshell" }}
 .config/noctalia/
+.config/quickshell/local.json
+.config/btop/btop.conf
+.config/lazygit/config.yml
+.config/zed/settings.json
+.config/ghostty/themes/dynamic
+.config/qt6ct/
+{{- else }}
+.config/quickshell/
+.config/xdg-desktop-portal/hyprland-portals.conf
 {{- end }}

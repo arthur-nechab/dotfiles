@@ -1,3 +1,17 @@
-#!/usr/bin/env bash
+#!/bin/sh
+out=$(curl -s -m 8 "wttr.in/?format=%C|%t") || exit 0
+cond=${out%%|*}
+temp=$(printf '%s' "${out#*|}" | xargs)
+[ -z "$temp" ] && exit 0
+case $out in *"Unknown location"*) exit 0 ;; esac
 
-curl -s "wttr.in/?format=%t" | xargs
+hour=$(date +%H)
+case $(printf '%s' "$cond" | tr '[:upper:]' '[:lower:]') in
+    *thunder*)                        glyph="󰖓" ;;
+    *snow*|*sleet*|*blizzard*|*ice*)  glyph="󰖘" ;;
+    *rain*|*drizzle*|*shower*)        glyph="󰖗" ;;
+    *fog*|*mist*|*haze*)              glyph="󰖑" ;;
+    *overcast*|*cloudy*)              glyph="󰖐" ;;
+    *)  if [ "${hour#0}" -ge 21 ] || [ "${hour#0}" -lt 7 ]; then glyph="󰖔"; else glyph="󰖙"; fi ;;
+esac
+printf '%s %s|%s\n' "$glyph" "$temp" "$cond"
