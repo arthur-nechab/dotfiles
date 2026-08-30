@@ -11,6 +11,7 @@ README.md
 .config/scripts/
 .config/yazi/
 .config/zed/
+.local/share/nautilus/
 {{- else }}
 Library/
 {{- end }}
