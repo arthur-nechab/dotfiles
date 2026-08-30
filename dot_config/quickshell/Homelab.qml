@@ -14,12 +14,12 @@ Singleton {
     readonly property bool hasGatus: local.gatus && local.gatus.url ? true : false
     readonly property string gatusUrl: hasGatus ? local.gatus.url : ""
     readonly property string alertsUrl: hasPrometheus ? local.prometheus.url + "/alerts" : ""
-    readonly property bool hasPihole: local.pihole && local.pihole.url ? true : false
+    readonly property bool hasDns: local.dns && local.dns.url ? true : false
     readonly property bool hasHass: local.hass && local.hass.url ? true : false
     // the vps is only scraped through the mesh, so prometheus carries it
     readonly property bool hasOvh: hasPrometheus && local.ovh && local.ovh.host ? true : false
 
-    readonly property bool anyConfigured: hasPrometheus || hasProxmox || hasScrutiny || hasGatus || hasPihole || hasHass
+    readonly property bool anyConfigured: hasPrometheus || hasProxmox || hasScrutiny || hasGatus || hasDns || hasHass
 
     // ── Prometheus ───────────────────────────────────────────────────────
     property int firing: 0
@@ -55,13 +55,15 @@ Singleton {
     property real gatusUptime: -1
     property var gatusList: []
 
-    // ── Pi-hole ──────────────────────────────────────────────────────────
+    // ── Technitium DNS ───────────────────────────────────────────────────
     property real blockedPercent: -1
     property int blockedToday: 0
     property int queriesToday: 0
     property int cachedToday: 0
-    property int forwardedToday: 0
-    property string piholeSid: ""
+    property int recursiveToday: 0
+    property int authoritativeToday: 0
+    // 24 hourly {total, blocked} points, oldest first
+    property var dnsHourly: []
 
     // ── Home Assistant ───────────────────────────────────────────────────
     property var sensors: []
@@ -90,10 +92,10 @@ Singleton {
             }
             property JsonObject gatus: JsonObject { property string url: "" }
             property JsonObject scrutiny: JsonObject { property string url: "" }
-            property JsonObject pihole: JsonObject {
+            property JsonObject dns: JsonObject {
                 property string url: ""
-                property string password: ""
-                property string password_cmd: ""
+                property string token: ""
+                property string token_cmd: ""
             }
             property JsonObject hass: JsonObject {
                 property string url: ""
@@ -125,7 +127,7 @@ Singleton {
     }
 
     Secret { id: proxmoxSecret; literal: local.proxmox.token;  cmd: local.proxmox.token_cmd }
-    Secret { id: piholeSecret;  literal: local.pihole.password; cmd: local.pihole.password_cmd }
+    Secret { id: dnsSecret;     literal: local.dns.token;       cmd: local.dns.token_cmd }
     Secret { id: hassSecret;    literal: local.hass.token;     cmd: local.hass.token_cmd }
 
     component Fetch: Scope {
@@ -333,40 +335,29 @@ Singleton {
         }
     }
 
+    // one call carries the counters, the hourly series and the top lists
     Fetch {
-        id: piholeAuth
-        url: root.hasPihole ? local.pihole.url + "/api/auth" : ""
-        always: true
-        headers: ["Content-Type: application/json"]
-        method: "POST"
-        body: JSON.stringify({ password: piholeSecret.value })
-        enabled: root.hasPihole && piholeSecret.value !== ""
-        interval: 3600000
+        url: root.hasDns ? local.dns.url + "/api/dashboard/stats/get?type=lastDay" : ""
+        headers: ["Authorization: Bearer " + dnsSecret.value]
+        enabled: root.hasDns && dnsSecret.value !== ""
+        onFailed: root.blockedPercent = -1
         onParsed: data => {
-            root.piholeSid = data.session ? (data.session.sid ?? "") : "";
-        }
-    }
-
-    Timer {
-        id: piholeReauth
-        interval: 60000
-        onTriggered: {
-            root.piholeSid = "";
-            piholeAuth.refresh();
-        }
-    }
-
-    Fetch {
-        url: root.piholeSid === "" ? "" : local.pihole.url + "/api/stats/summary"
-        headers: ["sid: " + root.piholeSid]
-        onFailed: if (!piholeReauth.running) piholeReauth.start()
-        onParsed: data => {
-            const q = data.queries ?? {};
-            root.blockedPercent = q.percent_blocked ?? -1;
-            root.blockedToday = q.blocked ?? 0;
-            root.queriesToday = q.total ?? 0;
-            root.cachedToday = q.cached ?? 0;
-            root.forwardedToday = q.forwarded ?? 0;
+            const r = data.response ?? {};
+            const st = r.stats ?? {};
+            if (data.status !== "ok" || !r.stats) {
+                root.blockedPercent = -1;
+                return;
+            }
+            root.queriesToday = st.totalQueries ?? 0;
+            root.blockedToday = st.totalBlocked ?? 0;
+            root.cachedToday = st.totalCached ?? 0;
+            root.recursiveToday = st.totalRecursive ?? 0;
+            root.authoritativeToday = st.totalAuthoritative ?? 0;
+            root.blockedPercent = root.queriesToday > 0 ? 100 * root.blockedToday / root.queriesToday : 0;
+            const sets = {};
+            for (const d of (r.mainChartData ?? {}).datasets ?? [])
+                sets[d.label] = d.data;
+            root.dnsHourly = (sets.Total ?? []).map((t, k) => ({ total: t, blocked: (sets.Blocked ?? [])[k] ?? 0 }));
         }
     }
 

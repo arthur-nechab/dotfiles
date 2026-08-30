@@ -433,132 +433,6 @@ PanelWindow {
                 }
 
                 Section {
-                    title: "PI-HOLE"
-                    visible: Homelab.hasPihole
-                    spacing: 8
-
-                    Label {
-                        visible: Homelab.blockedPercent < 0
-                        text: "Unreachable"
-                        color: Theme.gray
-                        font.pixelSize: 12
-                        font.bold: true
-                    }
-
-                    Row {
-                        visible: Homelab.blockedPercent >= 0
-                        width: parent.width
-
-                        Column {
-                            width: parent.width / 2
-                            spacing: 1
-
-                            Label {
-                                text: Homelab.blockedPercent.toFixed(1) + "%"
-                                color: Theme.purple
-                                font.pixelSize: 20
-                                font.bold: true
-                            }
-
-                            Label {
-                                text: "blocked"
-                                color: Theme.gray
-                                font.pixelSize: 11
-                                font.bold: true
-                            }
-                        }
-
-                        Column {
-                            width: parent.width / 2
-                            spacing: 1
-
-                            Label {
-                                anchors.right: parent.right
-                                text: Homelab.queriesToday.toLocaleString(Qt.locale("fr_FR"), "f", 0)
-                                color: Theme.fg
-                                font.pixelSize: 20
-                                font.bold: true
-                            }
-
-                            Label {
-                                anchors.right: parent.right
-                                text: "queries"
-                                color: Theme.gray
-                                font.pixelSize: 11
-                                font.bold: true
-                            }
-                        }
-                    }
-
-                    Rectangle {
-                        visible: Homelab.blockedPercent >= 0
-                        width: parent.width
-                        height: 10
-                        radius: 4
-                        color: Theme.surface
-
-                        readonly property int total: Math.max(1, Homelab.queriesToday)
-
-                        Row {
-                            anchors.fill: parent
-                            spacing: 0
-
-                            Rectangle {
-                                width: parent.width * Homelab.blockedToday / parent.parent.total
-                                height: parent.height
-                                color: Theme.purple
-                            }
-
-                            Rectangle {
-                                width: parent.width * Homelab.cachedToday / parent.parent.total
-                                height: parent.height
-                                color: Theme.aqua
-                            }
-
-                            Rectangle {
-                                width: parent.width * Homelab.forwardedToday / parent.parent.total
-                                height: parent.height
-                                color: Theme.blue
-                            }
-                        }
-                    }
-
-                    Row {
-                        visible: Homelab.blockedPercent >= 0
-                        width: parent.width
-                        spacing: 12
-
-                        Repeater {
-                            model: [
-                                { c: Theme.purple, l: "blocked",   v: Homelab.blockedToday },
-                                { c: Theme.aqua,   l: "cached",    v: Homelab.cachedToday },
-                                { c: Theme.blue,   l: "forwarded", v: Homelab.forwardedToday }
-                            ]
-
-                            Row {
-                                required property var modelData
-                                spacing: 5
-
-                                Rectangle {
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    width: 8
-                                    height: 8
-                                    radius: 4
-                                    color: modelData.c
-                                }
-
-                                Label {
-                                    text: modelData.v + " " + modelData.l
-                                    color: Theme.gray
-                                    font.pixelSize: 11
-                                    font.bold: true
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Section {
                     title: "GATUS"
                     visible: Homelab.hasGatus
                     spacing: 6
@@ -637,6 +511,180 @@ PanelWindow {
                             url: Homelab.gatusUrl
                         }
                     }
+                }
+
+                Section {
+                    title: "DNS"
+                    visible: Homelab.hasDns
+                    spacing: 8
+
+                    Label {
+                        visible: Homelab.blockedPercent < 0
+                        text: "Unreachable"
+                        color: Theme.gray
+                        font.pixelSize: 12
+                        font.bold: true
+                    }
+
+                    Row {
+                        visible: Homelab.blockedPercent >= 0
+                        width: parent.width
+
+                        Column {
+                            width: parent.width / 2
+                            spacing: 1
+
+                            Label {
+                                text: Homelab.blockedPercent.toFixed(1) + "%"
+                                color: Theme.purple
+                                font.pixelSize: 20
+                                font.bold: true
+                            }
+
+                            Label {
+                                text: "blocked"
+                                color: Theme.gray
+                                font.pixelSize: 11
+                                font.bold: true
+                            }
+                        }
+
+                        Column {
+                            width: parent.width / 2
+                            spacing: 1
+
+                            Label {
+                                anchors.right: parent.right
+                                text: Homelab.queriesToday.toLocaleString(Qt.locale("fr_FR"), "f", 0)
+                                color: Theme.fg
+                                font.pixelSize: 20
+                                font.bold: true
+                            }
+
+                            Label {
+                                anchors.right: parent.right
+                                text: "queries today"
+                                color: Theme.gray
+                                font.pixelSize: 11
+                                font.bold: true
+                            }
+                        }
+                    }
+
+                    // one bar per hour, blocked share on top of it
+                    Row {
+                        id: hourly
+
+                        visible: Homelab.blockedPercent >= 0 && Homelab.dnsHourly.length > 0
+                        width: parent.width
+                        height: 36
+                        spacing: 2
+
+                        readonly property int peak: Math.max(1, ...Homelab.dnsHourly.map(h => h.total))
+                        readonly property real slot: (width - spacing * (Homelab.dnsHourly.length - 1)) / Math.max(1, Homelab.dnsHourly.length)
+
+                        Repeater {
+                            model: Homelab.dnsHourly
+
+                            Item {
+                                required property var modelData
+
+                                width: hourly.slot
+                                height: hourly.height
+
+                                Rectangle {
+                                    anchors.bottom: parent.bottom
+                                    width: parent.width
+                                    height: Math.max(2, parent.height * parent.modelData.total / hourly.peak)
+                                    radius: 2
+                                    color: Theme.surface
+                                }
+
+                                Rectangle {
+                                    anchors.bottom: parent.bottom
+                                    width: parent.width
+                                    height: parent.height * parent.modelData.blocked / hourly.peak
+                                    radius: 2
+                                    color: Theme.purple
+                                }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        visible: Homelab.blockedPercent >= 0
+                        width: parent.width
+                        height: 10
+                        radius: 4
+                        color: Theme.surface
+
+                        readonly property int total: Math.max(1, Homelab.queriesToday)
+
+                        Row {
+                            anchors.fill: parent
+                            spacing: 0
+
+                            Rectangle {
+                                width: parent.width * Homelab.blockedToday / parent.parent.total
+                                height: parent.height
+                                color: Theme.purple
+                            }
+
+                            Rectangle {
+                                width: parent.width * Homelab.cachedToday / parent.parent.total
+                                height: parent.height
+                                color: Theme.aqua
+                            }
+
+                            Rectangle {
+                                width: parent.width * Homelab.recursiveToday / parent.parent.total
+                                height: parent.height
+                                color: Theme.blue
+                            }
+
+                            Rectangle {
+                                width: parent.width * Homelab.authoritativeToday / parent.parent.total
+                                height: parent.height
+                                color: Theme.green
+                            }
+                        }
+                    }
+
+                    Row {
+                        visible: Homelab.blockedPercent >= 0
+                        width: parent.width
+                        spacing: 12
+
+                        Repeater {
+                            model: [
+                                { c: Theme.purple, l: "blocked",   v: Homelab.blockedToday },
+                                { c: Theme.aqua,   l: "cached",    v: Homelab.cachedToday },
+                                { c: Theme.blue,   l: "recursive", v: Homelab.recursiveToday },
+                                { c: Theme.green,  l: "local",     v: Homelab.authoritativeToday }
+                            ]
+
+                            Row {
+                                required property var modelData
+                                spacing: 5
+
+                                Rectangle {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 8
+                                    height: 8
+                                    radius: 4
+                                    color: modelData.c
+                                }
+
+                                Label {
+                                    text: modelData.v + " " + modelData.l
+                                    color: Theme.gray
+                                    font.pixelSize: 11
+                                    font.bold: true
+                                }
+                            }
+                        }
+                    }
+
                 }
 
                 Section {
