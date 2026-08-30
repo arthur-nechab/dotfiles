@@ -1,0 +1,346 @@
+#!/usr/bin/env python3
+"""Pick a colour scheme from the current wallpaper and apply it everywhere."""
+
+import colorsys
+import json
+import math
+import os
+import re
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+from PIL import Image
+
+HOME = Path.home()
+CACHE = HOME / ".cache"
+QS_THEMES = HOME / ".config/quickshell/themes"
+
+# quickshell name -> (ghostty theme, btop theme, nvim colorscheme, zed theme)
+THEMES = {
+    "ayu-mirage":       ("Ayu Mirage",           "ayu",                   "ayu-mirage",       "Ayu Mirage"),
+    "dracula":          ("Dracula",              "dracula",               "dracula",          "Dracula"),
+    "everforest":       ("Everforest Dark Hard", "everforest-dark-hard",  "everforest",       "Everforest Dark Hard (regular)"),
+    "flexoki-dark":     ("Flexoki Dark",         "flexoki-dark",          "flexoki-dark",     "Flexoki Dark"),
+    "gruvbox":          ("Gruvbox Dark Hard",    "gruvbox_dark",          "gruvbox",          "Gruvbox Baby"),
+    "gruvbox-material": ("Gruvbox Material Dark", "gruvbox_material_dark", "gruvbox-material", "Gruvbox Dark Soft"),
+    "horizon":          ("Horizon",              "horizon",               "horizon",          "Horizon"),
+    "kanagawa-dragon":  ("Kanagawa Dragon",      "kanagawa-dragon",       "kanagawa-dragon",  "Kanagawa Dragon"),
+    "kanagawa-wave":    ("Kanagawa Wave",        "kanagawa-wave",         "kanagawa-wave",    "Kanagawa Wave"),
+    "monokai":          ("Monokai Pro",          "monokai",               "monokai-pro",      "KTRZ Monokai"),
+    "night-owl":        ("Night Owl",            "night-owl",             "night-owl",        "Night Owl Dark"),
+    "nord":             ("Nord",                 "nord",                  "nord",             "Nord Dark"),
+    "tokyonight":       ("TokyoNight",           "tokyo-night",           "tokyonight-night", "Tokyo Night"),
+    "tokyonight-storm": ("TokyoNight Storm",     "tokyo-storm",           "tokyonight-storm", "Tokyo Night Storm"),
+    # no twilight port for neovim; tokyonight-night is the closest purple dark
+    "twilight":         ("Twilight",             "twilight",              "tokyonight-night", "Twilight"),
+}
+
+
+def measure(path):
+    """Dominant hue, saturation and lightness of an image."""
+    raw = Image.open(path).convert("RGB").resize((64, 64)).tobytes()
+    hsv = [colorsys.rgb_to_hsv(raw[i] / 255, raw[i + 1] / 255, raw[i + 2] / 255)
+           for i in range(0, len(raw), 3)]
+    # weight by saturation and by value: hue is meaningless in a near-black
+    # pixel, and a dark painting is mostly those
+    w = [s * v for _, s, v in hsv]
+    x = sum(math.cos(h * 2 * math.pi) * wi for (h, _, _), wi in zip(hsv, w))
+    y = sum(math.sin(h * 2 * math.pi) * wi for (h, _, _), wi in zip(hsv, w))
+    hue = (math.degrees(math.atan2(y, x)) + 360) % 360
+    sat = sum(s * v for _, s, v in hsv) / sum(v for _, _, v in hsv)
+    lum = sum(v for _, _, v in hsv) / len(hsv)
+    return hue, sat, lum
+
+
+def classify(hue, sat, lum):
+    # no hue worth trusting down here, so drop hue entirely
+    if sat < 0.10:
+        return "kanagawa-dragon"
+    # the warm band holds three quarters of the collection, so it is the one
+    # that has to be split finely; every theme picked here clears 11:1 on its
+    # own background with at least 4.5 of spread between its accents
+    if hue >= 330 or hue < 90:
+        if sat >= 0.55:
+            return "flexoki-dark"
+        if sat >= 0.38:
+            return "gruvbox"
+        if sat >= 0.32:
+            return "gruvbox-material"
+        if lum < 0.45:
+            return "nord" if sat < 0.20 else "twilight"
+        return "kanagawa-wave" if sat < 0.25 else "twilight"
+    if hue < 190:
+        return "night-owl"
+    if hue < 230:
+        return "horizon" if sat >= 0.55 else "dracula"
+    return "tokyonight"
+
+
+# images the measurement gets right and taste gets wrong
+OVERRIDES = {
+    "Against the Storm": "kanagawa-dragon",
+    "The Vigil": "gruvbox",
+    "Fair Winds": "night-owl",
+    # grey stone in fog: the muted dragon palette, not the grey fallback
+    "Grey Chapel": "kanagawa-dragon",
+}
+
+
+def apply_quickshell(name):
+    src = QS_THEMES / f"{name}.json"
+    shutil.copyfile(src, CACHE / "quickshell-theme.json")
+    return json.loads(src.read_text())
+
+
+def apply_hyprland(palette):
+    # the config is Lua, so hyprctl keyword is refused; only eval reaches it
+    lua = (
+        'hl.config({ general = { col = {'
+        f' active_border = {{ colors = {{ "rgba({palette["gray"][1:]}aa)",'
+        f' "rgba({palette["fg"][1:]}aa)" }}, angle = 45 }},'
+        f' inactive_border = "rgba({palette["surface"][1:]}aa)"'
+        ' } } })'
+    )
+    subprocess.run(["hyprctl", "eval", lua], capture_output=True)
+
+
+def apply_ghostty(theme):
+    out = HOME / ".config/ghostty/themes/dynamic"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(f"theme = {theme}\n")
+    # ghostty 1.3 only reloads through its keybind; without single-instance every
+    # window is its own process, so the shortcut has to reach each one by address
+    clients = subprocess.run(["hyprctl", "-j", "clients"], capture_output=True, text=True)
+    for c in json.loads(clients.stdout or "[]"):
+        if c.get("class") != "com.mitchellh.ghostty":
+            continue
+        subprocess.run(
+            ["hyprctl", "eval",
+             'hl.dispatch(hl.dsp.send_shortcut({ mods = "CTRL ALT SHIFT",'
+             f' key = "r", window = "address:{c["address"]}" }}))'],
+            capture_output=True,
+        )
+
+
+def apply_qt(palette):
+    """qt6ct palette: 21 QPalette roles, argb, one line per colour group."""
+    def shade(hexa, factor):
+        r, g, b = (int(hexa[i:i + 2], 16) for i in (1, 3, 5))
+        return "#ff" + "".join(f"{min(255, max(0, round(c * factor))):02x}"
+                               for c in (r, g, b))
+
+    def c(hexa, alpha="ff"):
+        return "#" + alpha + hexa[1:]
+
+    bg, sf = palette["bg"], palette["surface"]
+    fg, gy = palette["fg"], palette["gray"]
+    # QPalette role order: WindowText Button Light Midlight Dark Mid Text
+    # BrightText ButtonText Base Window Shadow Highlight HighlightedText Link
+    # LinkVisited AlternateBase NoRole ToolTipBase ToolTipText PlaceholderText
+    roles = [c(fg), c(sf), shade(sf, 1.6), shade(sf, 1.3), shade(sf, 0.6),
+             shade(sf, 0.8), c(fg), c(palette["red"]), c(fg), c(bg), c(sf),
+             shade(bg, 0.4), c(palette["blue"]), c(bg), c(palette["aqua"]),
+             c(palette["purple"]), c(sf), c(bg), c(sf), c(fg), c(gy, "80")]
+    off = list(roles)
+    for i in (0, 6, 8, 13, 19):        # every text role goes grey when disabled
+        off[i] = c(gy)
+    conf = HOME / ".config/qt6ct/colors/dynamic.conf"
+    conf.parent.mkdir(parents=True, exist_ok=True)
+    conf.write_text("[ColorScheme]\n"
+                    f"active_colors={', '.join(roles)}\n"
+                    f"disabled_colors={', '.join(off)}\n"
+                    f"inactive_colors={', '.join(roles)}\n")
+
+    # fusion draws flat boxes; the sheet rounds the selection and pads the toolbar
+    qss = HOME / ".config/qt6ct/qss/dynamic.qss"
+    qss.parent.mkdir(parents=True, exist_ok=True)
+    qss.write_text(f"""QToolBar {{ border: 0; padding: 4px; spacing: 2px; }}
+QToolButton {{ border: 0; border-radius: 6px; padding: 5px; }}
+QToolButton:hover {{ background: {sf}; }}
+QToolButton:checked, QToolButton:pressed {{ background: {palette["blue"]}; color: {bg}; }}
+
+QAbstractItemView {{ border: 0; outline: 0; }}
+QAbstractItemView::item {{ border-radius: 6px; padding: 3px; }}
+QAbstractItemView::item:hover {{ background: {sf}; }}
+QAbstractItemView::item:selected {{ background: {palette["blue"]}; color: {bg}; }}
+
+QHeaderView::section {{ background: {sf}; border: 0; padding: 5px; }}
+
+QTabBar::tab {{ background: transparent; border: 0; padding: 6px 12px;
+                border-radius: 6px; margin: 2px; }}
+QTabBar::tab:selected {{ background: {sf}; }}
+
+QLineEdit, QComboBox, QSpinBox {{ background: {bg}; border: 1px solid {sf};
+                                  border-radius: 6px; padding: 4px 8px; }}
+QLineEdit:focus, QComboBox:focus {{ border-color: {palette["blue"]}; }}
+
+QMenu {{ background: {sf}; border: 1px solid {gy}; border-radius: 8px; padding: 4px; }}
+QMenu::item {{ border-radius: 5px; padding: 5px 22px; }}
+QMenu::item:selected {{ background: {palette["blue"]}; color: {bg}; }}
+QMenuBar {{ background: transparent; border: 0; }}
+QMenuBar::item {{ border-radius: 5px; padding: 5px 9px; }}
+QMenuBar::item:selected {{ background: {sf}; }}
+
+QScrollBar:vertical {{ background: transparent; width: 11px; margin: 0; }}
+QScrollBar:horizontal {{ background: transparent; height: 11px; margin: 0; }}
+QScrollBar::handle {{ background: {gy}; border-radius: 5px; min-height: 28px;
+                      min-width: 28px; }}
+QScrollBar::handle:hover {{ background: {palette["fg"]}; }}
+QScrollBar::add-line, QScrollBar::sub-line {{ height: 0; width: 0; }}
+QScrollBar::add-page, QScrollBar::sub-page {{ background: transparent; }}
+
+QStatusBar {{ border: 0; color: {gy}; }}
+QSplitter::handle {{ background: transparent; }}
+""")
+
+    main = HOME / ".config/qt6ct/qt6ct.conf"
+    font = '"Inter,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"'
+    main.write_text("[Appearance]\n"
+                    "custom_palette=true\n"
+                    f"color_scheme_path={conf}\n"
+                    "style=Fusion\n"
+                    "icon_theme=Papirus-Dark\n"
+                    "standard_dialogs=default\n"
+                    "\n[Fonts]\n"
+                    f"general={font}\n"
+                    'fixed="BerkeleyMono Nerd Font,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"\n'
+                    "\n[Interface]\n"
+                    f"stylesheets=@Invalid()\n")
+    # the list is written raw: qt6ct stores it as a QStringList
+    main.write_text(main.read_text().replace(
+        "stylesheets=@Invalid()", f"stylesheets={qss}"))
+
+
+def apply_gnome(accent):
+    # libadwaita takes one of nine named accents; slate is the grey of the folders
+    subprocess.run(["gsettings", "set", "org.gnome.desktop.interface",
+                    "accent-color", accent], capture_output=True)
+
+
+def apply_folders(color):
+    # deliberately not theme-driven: the file manager keeps one neutral look.
+    # papirus-folders rewrites /usr/share/icons, so it needs the sudoers rule;
+    # without it -n fails at once and the folders keep the colour they had
+    subprocess.run(["sudo", "-n", "papirus-folders", "-C", color,
+                    "--theme", "Papirus-Dark"], capture_output=True)
+
+
+def apply_btop(theme):
+    conf = HOME / ".config/btop/btop.conf"
+    if not conf.exists():
+        return
+    text = re.sub(r'^color_theme = ".*"$', f'color_theme = "{theme}"',
+                  conf.read_text(), flags=re.M)
+    conf.write_text(text)
+
+
+def apply_lazygit(palette):
+    """The whole file: it holds nothing but the font version and four colours."""
+    conf = HOME / ".config/lazygit/config.yml"
+    conf.parent.mkdir(parents=True, exist_ok=True)
+    conf.write_text("gui:\n"
+                    '  nerdFontsVersion: "3"\n'
+                    "  theme:\n"
+                    "    activeBorderColor:\n"
+                    f'      - "{palette["orange"]}"\n'
+                    "      - bold\n"
+                    "    inactiveBorderColor:\n"
+                    f'      - "{palette["gray"]}"\n'
+                    "    selectedLineBgColor:\n"
+                    f'      - "{palette["surface"]}"\n'
+                    "    optionsTextColor:\n"
+                    f'      - "{palette["blue"]}"\n')
+
+
+def apply_nvim(name):
+    # colorscheme.lua reads this at startup
+    out = HOME / ".cache/nvim/colorscheme"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(name + "\n")
+    # running instances listen on their default socket, so switch them too
+    runtime = Path(os.environ.get("XDG_RUNTIME_DIR", "/run/user/1000"))
+    for sock in runtime.glob("nvim.*.0"):
+        subprocess.run(["nvim", "--server", str(sock), "--remote-expr",
+                        f"execute('colorscheme {name}')"],
+                       capture_output=True, timeout=5)
+
+
+def apply_zed(theme):
+    conf = HOME / ".config/zed/settings.json"
+    if not conf.exists():
+        return
+    text = re.sub(r'^(\s*"theme":\s*)".*"', rf'\1"{theme}"', conf.read_text(), flags=re.M)
+    conf.write_text(text)
+
+
+def index_wallpapers():
+    """themes of every wallpaper, for the picker; measured once per file."""
+    folder = HOME / "Pictures/Wallpapers"
+    out = CACHE / "wallpaper-themes.json"
+    try:
+        cache = json.loads(out.read_text())
+    except (OSError, ValueError):
+        cache = {}
+    fresh = {}
+    for f in sorted(folder.glob("*")):
+        if f.suffix.lower() not in (".jpg", ".jpeg", ".png", ".webp"):
+            continue
+        key = f.name
+        old = cache.get(key)
+        if old and old.get("mtime") == f.stat().st_mtime:
+            fresh[key] = old
+            continue
+        try:
+            name = OVERRIDES.get(f.stem) or classify(*measure(f))
+        except OSError:
+            continue
+        fresh[key] = {"theme": name, "mtime": f.stat().st_mtime}
+    if fresh != cache:
+        out.write_text(json.dumps(fresh, indent=1))
+
+
+def main():
+    index_wallpapers()
+    args = [a for a in sys.argv[1:] if not a.startswith("-")]
+    if "--theme" in sys.argv:
+        args = args[:0]
+    if args:
+        wallpaper = args[0]
+    else:
+        pointer = CACHE / "hypr/current-wallpaper"
+        if not pointer.exists():
+            return 1
+        wallpaper = pointer.read_text().strip()
+    if not wallpaper or not os.path.exists(wallpaper):
+        return 1
+
+    stem = os.path.splitext(os.path.basename(wallpaper))[0]
+    if "--theme" in sys.argv:
+        name = sys.argv[sys.argv.index("--theme") + 1]
+    else:
+        name = OVERRIDES.get(stem) or classify(*measure(wallpaper))
+    ghostty, btop, nvim, zed = THEMES[name]
+
+    stamp = CACHE / "quickshell-theme.name"
+    if "--force" not in sys.argv and stamp.exists() and stamp.read_text().strip() == name:
+        return 0
+
+    palette = apply_quickshell(name)
+    apply_hyprland(palette)
+    apply_ghostty(ghostty)
+    apply_btop(btop)
+    apply_lazygit(palette)
+    apply_nvim(nvim)
+    apply_zed(zed)
+    apply_qt(palette)
+    apply_gnome("slate")
+    apply_folders("grey")
+    stamp.write_text(name + "\n")
+    print(name)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

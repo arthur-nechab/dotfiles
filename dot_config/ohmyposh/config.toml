@@ -13,15 +13,15 @@ newline = true
 type = 'session'
 style = 'plain'
 background = 'transparent'
-foreground = '#D79921'
-foreground_templates = ['{{ if .Root }}#fb4934{{ end }}']
+foreground = 'yellow'
+foreground_templates = ['{{ if .Root }}red{{ end }}']
 template = '{{ if .SSHSession }} {{ .UserName }}@{{ .HostName }} {{ end }}'
 
 [[blocks.segments]]
 type = 'path'
 style = 'plain'
 background = 'transparent'
-foreground = '#458588'
+foreground = 'blue'
 template = ' {{ .Path }}'
 
 [blocks.segments.options]
@@ -31,13 +31,13 @@ folder_separator_icon = '/'
 [[blocks.segments]]
 type = 'git'
 style = 'plain'
-foreground = '#98971A'
+foreground = 'green'
 background = 'transparent'
 foreground_templates = [
-  '{{ if or (.Working.Changed) (.Staging.Changed) }}#FF9248{{ end }}',
-  '{{ if and (gt .Ahead 0) (gt .Behind 0) }}#ff4500{{ end }}',
-  '{{ if gt .Ahead 0 }}#B388FF{{ end }}',
-  '{{ if gt .Behind 0 }}#B388FF{{ end }}'
+  '{{ if or (.Working.Changed) (.Staging.Changed) }}yellow{{ end }}',
+  '{{ if and (gt .Ahead 0) (gt .Behind 0) }}red{{ end }}',
+  '{{ if gt .Ahead 0 }}magenta{{ end }}',
+  '{{ if gt .Behind 0 }}magenta{{ end }}'
 ]
 template = ' {{ .HEAD }}{{if .BranchStatus }} {{ .BranchStatus }}{{ end }}{{ if .Working.Changed }}  {{ .Working.String }}{{ end }}{{ if and (.Working.Changed) (.Staging.Changed) }} |{{ end }}{{ if .Staging.Changed }}  {{ .Staging.String }}{{ end }} '
 
@@ -54,14 +54,14 @@ overflow = 'hidden'
 [[blocks.segments]]
 type = 'python'
 style = 'plain'
-foreground = '#FFDE57'
+foreground = 'lightYellow'
 background = 'transparent'
 template = '  {{ if .Venv }}{{ .Venv }} {{ end }}'
 
 [[blocks.segments]]
 type = 'executiontime'
 style = 'plain'
-foreground = '#FEAC19'
+foreground = 'yellow'
 background = 'transparent'
 template = ' {{ .FormattedMs }}'
 
@@ -72,7 +72,7 @@ style = 'round'
 [[blocks.segments]]
 type = 'time'
 style = 'plain'
-foreground = '#928374'
+foreground = 'darkGray'
 background = 'transparent'
 template = ' {{ .CurrentDate | date "15:04:05" }}'
 
@@ -85,8 +85,8 @@ newline = true
 type = 'status'
 style = 'plain'
 foreground_templates = [
-  "{{if or (gt .Code 0) .Root}}#fb4934{{end}}",
-  "{{if eq .Code 0}}#a89984{{end}}",
+  "{{if or (gt .Code 0) .Root}}red{{end}}",
+  "{{if eq .Code 0}}darkGray{{end}}",
 ]
 background = 'transparent'
 template = '{{ if gt .Code 0 }}✗{{ else }}❯{{ end }}'
@@ -96,13 +96,13 @@ always_enabled = true
 
 [transient_prompt]
 foreground_templates = [
-  "{{if gt .Code 0}}#fb4934{{end}}",
-  "{{if eq .Code 0}}#a89984{{end}}",
+  "{{if gt .Code 0}}red{{end}}",
+  "{{if eq .Code 0}}darkGray{{end}}",
 ]
 background = 'transparent'
 template = '❯ '
 
 [secondary_prompt]
-foreground = '#a89984'
+foreground = 'darkGray'
 background = 'transparent'
 template = '❯❯ '

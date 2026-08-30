@@ -1,7 +1,21 @@
 {
   // ── Appearance ─────────────────────────────────────────────────────
+  "cli_default_open_behavior": "existing_window",
   "theme": "Gruvbox Baby",
   "icon_theme": "Material Icon Theme",
+  // one extension per theme the wallpaper script can pick
+  "auto_install_extensions": {
+    "tokyo-night": true,
+    "dracula": true,
+    "nord": true,
+    "kanagawa-themes": true,
+    "everforest": true,
+    "night-owlz": true,
+    "horizon": true,
+    "flexoki-themes": true,
+    "twilight": true,
+    "ktrz-monokai": true
+  },
   "buffer_font_family": "BerkeleyMono Nerd Font",
   "buffer_font_size": 16,
 
