@@ -11,7 +11,8 @@ PanelWindow {
     visible: false
     implicitWidth: 460
     // follow the content instead of reserving 900px of empty card
-    implicitHeight: Math.min(900, Math.max(160, body.implicitHeight + 32))
+    // as tall as the content, up to the bottom gap of the screen
+    implicitHeight: Math.min(screen.height - 77, Math.max(160, body.implicitHeight + 32))
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.namespace: "quickshell-homelab"
@@ -38,6 +39,7 @@ PanelWindow {
     // opening refreshes everything at once, then the timers take over
     onVisibleChanged: {
         Homelab.panelOpen = visible;
+        Claude.panelOpen = visible;
         if (visible)
             Homelab.refreshAll();
     }
@@ -50,99 +52,23 @@ PanelWindow {
         }
     }
 
-    component Toggle: MouseArea {
-        id: toggle
-
+    // same card as a toggle, for an action with no state to read back
+    component Card: MouseArea {
         property string glyph: ""
         property string label: ""
-        property string probe: ""
-        property string match: ""
-        property string onCmd: ""
-        property string offCmd: ""
-        property string onMsg: ""
-        property string offMsg: ""
-        property color accent: Theme.aqua
-        property int pollInterval: 5000
-        property bool active: false
-        property bool busy: false
-        property string pending: ""
+        property color accent: Theme.yellow
 
         width: 84
         height: 54
         hoverEnabled: true
-        onClicked: {
-            // the notification waits for the command: announcing on click would
-            // claim a result the process has not produced yet
-            toggle.pending = toggle.active ? toggle.offMsg : toggle.onMsg;
-            toggle.busy = true;
-            action.command = ["sh", "-c", toggle.active ? toggle.offCmd : toggle.onCmd];
-            action.running = false;
-            action.running = true;
-        }
-
-        function announce(what: string): void {
-            notify.command = ["notify-send", "-a", "homelab", "-i",
-                              "utilities-system-monitor", toggle.label, what];
-            notify.running = false;
-            notify.running = true;
-        }
-
-        Process {
-            id: notify
-        }
-
-        Process {
-            id: action
-
-            stderr: StdioCollector {}
-
-            onExited: (code, status) => {
-                toggle.busy = false;
-                if (code === 0) {
-                    toggle.announce(toggle.pending);
-                } else {
-                    const err = action.stderr.text.trim().split("\n").pop();
-                    toggle.announce(err !== "" ? err : "Failed (exit " + code + ")");
-                }
-                check.restart();
-            }
-        }
-
-        Process {
-            id: status
-            command: ["sh", "-c", toggle.probe]
-            stdout: StdioCollector {
-                onStreamFinished: toggle.active = this.text.indexOf(toggle.match) >= 0
-            }
-        }
-
-        Timer {
-            id: check
-            interval: 400
-            onTriggered: {
-                status.running = false;
-                status.running = true;
-            }
-        }
-
-        Timer {
-            interval: toggle.pollInterval
-            running: panel.visible && toggle.probe !== ""
-            repeat: true
-            triggeredOnStart: true
-            onTriggered: {
-                status.running = false;
-                status.running = true;
-            }
-        }
 
         Rectangle {
             anchors.fill: parent
             anchors.margins: 2
             radius: 10
-            color: toggle.containsMouse ? Theme.surface : "transparent"
-            border.width: toggle.active ? 2 : 1
-            border.color: toggle.active ? toggle.accent : Theme.surface
+            color: parent.containsMouse ? Theme.surface : "transparent"
+            border.width: 1
+            border.color: Theme.surface
         }
 
         Column {
@@ -151,17 +77,16 @@ PanelWindow {
 
             Label {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: toggle.glyph
-                color: toggle.active ? toggle.accent : Theme.gray
-                opacity: toggle.busy ? 0.4 : 1
+                text: parent.parent.glyph
+                color: parent.parent.accent
                 font.pixelSize: 20
                 font.bold: true
             }
 
             Label {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: toggle.label
-                color: toggle.active ? Theme.fg : Theme.gray
+                text: parent.parent.label
+                color: Theme.gray
                 font.pixelSize: 11
                 font.bold: true
             }
@@ -311,11 +236,12 @@ PanelWindow {
                         anchors.verticalCenter: parent.verticalCenter
                         spacing: 6
 
-                        Toggle {
+                        ActionToggle {
                             id: netbirdToggle
 
                             glyph: "\u{f0582}"
                             label: "NetBird"
+                            polling: panel.visible
                             probe: "netbird status | grep -q 'Management: Connected' && echo ON"
                             match: "ON"
                             onCmd: "netbird up"
@@ -324,31 +250,41 @@ PanelWindow {
                             offMsg: "VPN disconnected"
                         }
 
-                        Toggle {
+                        ActionToggle {
                             glyph: "\u{f06a9}"
                             accent: Theme.yellow
                             label: "Ollama"
+                            polling: panel.visible
                             probe: "systemctl is-active --quiet ollama && echo ON"
                             match: "ON"
                             onCmd: "systemctl start ollama"
                             offCmd: "systemctl stop ollama"
-                            onMsg: "Model server started"
-                            offMsg: "Model server stopped"
+                            onMsg: "Ollama started"
+                            offMsg: "Ollama stopped"
                         }
 
-                        Toggle {
+                        ActionToggle {
                             glyph: "\u{f08ae}"
                             accent: Theme.purple
                             label: "VRAM"
+                            polling: panel.visible
                             probe: "curl -sf -m 2 http://localhost:11434/api/ps | jq -e '.models | length > 0' >/dev/null && echo ON"
                             match: "ON"
                             onCmd: "true"
                             offCmd: "curl -sf -m 2 http://localhost:11434/api/ps | jq -r '.models[].name' | xargs -r -n1 ollama stop"
-                            onMsg: "No model loaded"
+                            onMsg: "No model running"
                             offMsg: "GPU memory freed"
                         }
-                    }
 
+                        Card {
+                            glyph: "󰓅"
+                            label: "Speedtest"
+                            onClicked: {
+                                Quickshell.execDetached(["ghostty", "-e", "cloudflare-speed-cli"]);
+                                panel.visible = false;
+                            }
+                        }
+                    }
                 }
 
                 Section {
@@ -688,6 +624,159 @@ PanelWindow {
                 }
 
                 Section {
+                    title: "OLLAMA"
+                    spacing: 10
+
+                    // same card as gatus: ram on the left, vram captioned by the loaded model
+                    // on the right; without a model the card only says so
+                    Rectangle {
+                        readonly property bool loaded: System.llm.models.length > 0
+
+                        width: parent.width
+                        height: 62
+                        radius: 10
+                        color: "transparent"
+                        border.width: 1
+                        border.color: Theme.surface
+
+                        Label {
+                            anchors.centerIn: parent
+                            visible: !parent.loaded
+                            text: "No model running"
+                            color: Theme.gray
+                            font.pixelSize: 13
+                        }
+
+                        Row {
+                            anchors.fill: parent
+                            anchors.margins: 12
+                            visible: parent.loaded
+
+                            Repeater {
+                                model: [
+                                    { v: System.ram.usedGb.toFixed(1) + " / " + System.ram.totalGb.toFixed(0) + " GB",
+                                      l: "RAM", c: Theme.blue },
+                                    { v: System.gpu.vramUsedGb.toFixed(1) + " / " + System.gpu.vramTotalGb.toFixed(0) + " GB",
+                                      l: System.llm.models.length > 0
+                                          ? System.llm.models[0].name.toUpperCase()
+                                            + (System.llm.models.length > 1 ? " +" + (System.llm.models.length - 1) : "")
+                                          : "VRAM",
+                                      c: Theme.purple }
+                                ]
+
+                                Column {
+                                    required property var modelData
+
+                                    width: parent.width / 2
+                                    spacing: 2
+
+                                    Label {
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        text: modelData.v
+                                        color: modelData.c
+                                        font.pixelSize: 18
+                                        font.bold: true
+                                    }
+
+                                    Label {
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        text: modelData.l
+                                        color: Theme.gray
+                                        font.pixelSize: 10
+                                        font.letterSpacing: 1
+                                        font.bold: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Section {
+                    title: "CLAUDE CODE"
+                    spacing: 10
+
+                    Line {
+                        visible: Claude.authError
+                        label: "limits"
+                        value: "Not signed in"
+                        tint: Theme.red
+                    }
+
+                    Repeater {
+                        model: Claude.limits
+
+                        Item {
+                            required property var modelData
+
+                            readonly property string remaining: Claude.until(modelData.resetsAt)
+                            readonly property color tint: Claude.tierColor(modelData.pct)
+
+                            width: parent.width
+                            height: 40
+
+                            Label {
+                                anchors.left: parent.left
+                                anchors.top: parent.top
+                                text: modelData.label
+                                color: Theme.fg
+                                font.pixelSize: 13
+                            }
+
+                            Label {
+                                anchors.left: parent.left
+                                anchors.top: parent.top
+                                anchors.topMargin: 17
+                                visible: parent.remaining !== ""
+                                text: "resets in " + parent.remaining
+                                color: Theme.gray
+                                font.pixelSize: 11
+                            }
+
+                            Label {
+                                anchors.right: parent.right
+                                anchors.top: parent.top
+                                text: Math.round(modelData.pct) + "%"
+                                color: parent.tint
+                                font.pixelSize: 13
+                                font.bold: true
+                            }
+
+                            Gauge {
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.bottom: parent.bottom
+                                height: 6
+                                value: modelData.pct / 100
+                                accent: parent.tint
+                            }
+                        }
+                    }
+
+                    Line {
+                        visible: Claude.extraUsed >= 0
+                        label: "Extra usage"
+                        value: "$" + Claude.extraUsed.toFixed(2) + " / $" + Claude.extraLimit.toFixed(0)
+                    }
+                }
+
+                Section {
+                    title: "SCRUTINY"
+                    visible: Homelab.hasScrutiny && Homelab.failedDisks.length > 0
+
+                    Repeater {
+                        model: Homelab.failedDisks
+
+                        Line {
+                            required property var modelData
+                            label: modelData.host + " \u00b7 " + modelData.name
+                            value: "SMART failed"
+                            tint: Theme.red
+                        }
+                    }
+                }
+
+                Section {
                     title: "HOSTS"
                     visible: Homelab.hasProxmox
                     spacing: 8
@@ -752,22 +841,6 @@ PanelWindow {
                                     percent: modelData.diskPercent
                                 }
                             }
-                        }
-                    }
-                }
-
-                Section {
-                    title: "SCRUTINY"
-                    visible: Homelab.hasScrutiny && Homelab.failedDisks.length > 0
-
-                    Repeater {
-                        model: Homelab.failedDisks
-
-                        Line {
-                            required property var modelData
-                            label: modelData.host + " \u00b7 " + modelData.name
-                            value: "SMART failed"
-                            tint: Theme.red
                         }
                     }
                 }

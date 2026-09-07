@@ -82,6 +82,8 @@ PanelWindow {
     property string wifiState: ""
     // network waiting for its passphrase, "" when none
     property string asking: ""
+    // the hidden network form is open
+    property bool hiddenOpen: false
 
     function strip(s) {
         return s.replace(/\x1b\[[0-9;]*m/g, "");
@@ -148,6 +150,8 @@ PanelWindow {
     function wifiRefresh() {
         wifiStation.running = false;
         wifiStation.running = true;
+        wifiPower.running = false;
+        wifiPower.running = true;
         wifiKnown.running = false;
         wifiKnown.running = true;
         wifiRescan();
@@ -165,6 +169,25 @@ PanelWindow {
     }
 
     onWifiDeviceChanged: wifiRescan()
+
+    property var hiddenName: null
+    property var hiddenPass: null
+
+    // enter on the name moves to the passphrase; enter there connects
+    function hiddenSend(which) {
+        if (which === "name" || hiddenPass.text === "") {
+            if (hiddenName.text !== "")
+                hiddenPass.forceActiveFocus();
+            return;
+        }
+        if (hiddenName.text === "")
+            return;
+        wifiRun(["iwctl", "--passphrase", hiddenPass.text, "station", wifiDevice,
+                 "connect-hidden", hiddenName.text]);
+        hiddenName.text = "";
+        hiddenPass.text = "";
+        hiddenOpen = false;
+    }
 
     // argv, never sh -c: an ssid is attacker chosen text
     function wifiRun(argv) {
@@ -188,7 +211,143 @@ PanelWindow {
         onTriggered: cc.wifiRefresh()
     }
 
+    // powered state comes from the device list, which still names a radio that is off
+    Process {
+        id: wifiPower
+        command: ["sh", "-c", "COLUMNS=200 iwctl device list"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                for (const line of cc.strip(this.text).split("\n")) {
+                    const m = line.match(/^\s+(\S+)\s+[0-9a-f:]{17}\s+(on|off)\s/i);
+                    if (m) {
+                        if (cc.wifiDevice === "")
+                            cc.wifiDevice = m[1];
+                        cc.wifiPowered = m[2] === "on";
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    property bool wifiPowered: true
+
+    // ── Link ─────────────────────────────────────────────────────────────
+    // the interface that carries the default route, wifi or not
+    property string linkIface: ""
+    property string linkIp: ""
+    property string linkGateway: ""
+    property real ping: -1
+    property int loss: -1
+    property real rxRate: 0
+    property real txRate: 0
+    property real rxTotal: 0
+    property real txTotal: 0
+    property var prevDev: null
+
+    readonly property var currentNet: networks.find(x => x.current) ?? null
+    readonly property string currentSsid: currentNet ? currentNet.ssid : ""
+    // saved network waiting for its forget confirmation, "" when none
+    property string forgettingSsid: ""
+
+    function fmtBytes(b, unit) {
+        const u = ["B", "KB", "MB", "GB", "TB"];
+        let i = 0;
+        while (b >= 1000 && i < u.length - 1) {
+            b /= 1000;
+            i++;
+        }
+        return (i === 0 ? b.toFixed(0) : b.toFixed(b < 10 ? 2 : 1)) + " " + u[i] + unit;
+    }
+
+    // one shell round: the route on its first line, then ping's two summary lines
+    Process {
+        id: linkProbe
+        command: ["sh", "-c",
+            "ip -4 -o route show default | head -1; echo;"
+            + "ping -q -c 3 -i 0.2 -W 1 1.1.1.1 2>/dev/null | tail -2"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const t = this.text;
+                const r = t.match(/via (\S+) dev (\S+).*? src (\S+)/);
+                cc.linkGateway = r ? r[1] : "";
+                cc.linkIface = r ? r[2] : "";
+                cc.linkIp = r ? r[3] : "";
+                const l = t.match(/(\d+)% packet loss/);
+                cc.loss = l ? parseInt(l[1]) : 100;
+                const a = t.match(/rtt [^=]+= [\d.]+\/([\d.]+)/);
+                cc.ping = a ? parseFloat(a[1]) : -1;
+            }
+        }
+    }
+
+    Timer {
+        interval: 5000
+        repeat: true
+        running: cc.visible && cc.tab === "network"
+        triggeredOnStart: true
+        onTriggered: {
+            linkProbe.running = false;
+            linkProbe.running = true;
+            wifiPower.running = false;
+            wifiPower.running = true;
+        }
+    }
+
+    FileView {
+        id: devFile
+        path: "/proc/net/dev"
+        onLoaded: {
+            const line = text().split("\n").find(x => x.trim().startsWith(cc.linkIface + ":"));
+            if (!line || cc.linkIface === "")
+                return;
+            const f = line.split(":")[1].trim().split(/\s+/).map(Number);
+            const now = Date.now();
+            cc.rxTotal = f[0];
+            cc.txTotal = f[8];
+            if (cc.prevDev) {
+                const dt = (now - cc.prevDev.t) / 1000;
+                if (dt > 0) {
+                    cc.rxRate = (f[0] - cc.prevDev.rx) / dt;
+                    cc.txRate = (f[8] - cc.prevDev.tx) / dt;
+                }
+            }
+            cc.prevDev = { t: now, rx: f[0], tx: f[8] };
+        }
+    }
+
+    Timer {
+        interval: 1000
+        repeat: true
+        running: cc.visible && cc.tab === "network"
+        triggeredOnStart: true
+        onTriggered: devFile.reload()
+        // a fresh first sample on the next opening, not an average over the gap
+        onRunningChanged: if (!running) cc.prevDev = null
+    }
+
     readonly property var adapter: Bluetooth.defaultAdapter
+    // device waiting for its forget confirmation, "" when none
+    property string forgetting: ""
+
+    // nf-md glyph for the bluez icon name, the plain bluetooth mark otherwise
+    function btGlyph(icon, connected) {
+        if (/headset|headphone/.test(icon))
+            return "\u{f02cb}";
+        if (/mouse/.test(icon))
+            return "\u{f037d}";
+        if (/keyboard/.test(icon))
+            return "\u{f030c}";
+        if (/gaming|joystick/.test(icon))
+            return "\u{f0297}";
+        if (/phone/.test(icon))
+            return "\u{f011c}";
+        if (/computer|laptop/.test(icon))
+            return "\u{f0322}";
+        if (/audio|speaker/.test(icon))
+            return "\u{f04c3}";
+        return connected ? "\u{f00b1}" : "\u{f00af}";
+    }
     readonly property var devices: {
         const l = Bluetooth.devices.values;
         return l.slice().sort((a, b) => (b.connected - a.connected) || a.name.localeCompare(b.name));
@@ -249,6 +408,9 @@ PanelWindow {
             sel = 0;
             navigating = false;
             asking = "";
+            forgetting = "";
+            forgettingSsid = "";
+            hiddenOpen = false;
             visible = true;
             keys.forceActiveFocus();
         }
@@ -440,6 +602,31 @@ PanelWindow {
             color: parent.accent
             font.pixelSize: 11
             font.bold: true
+        }
+    }
+
+    // one cell of the link grid: name on the left, reading on the right
+    component Stat: Item {
+        property string label: ""
+        property string value: ""
+
+        height: 18
+
+        Label {
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            text: parent.label
+            color: Theme.gray
+            font.pixelSize: 12
+        }
+
+        Label {
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            text: parent.value
+            color: Theme.fg
+            font.family: Theme.monoFont
+            font.pixelSize: 12
         }
     }
 
@@ -687,57 +874,19 @@ PanelWindow {
                     Label {
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.left: parent.left
-                        text: cc.adapter && cc.adapter.enabled ? "Bluetooth on" : "Bluetooth off"
+                        text: "Bluetooth"
                         color: Theme.fg
                         font.pixelSize: 13
                         font.bold: true
                     }
 
-                    Row {
-                    anchors.right: parent.right
-                    spacing: 8
-
-                    MouseArea {
+                    Pill {
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
                         width: 74
-                        height: 26
-                        enabled: cc.adapter !== null
-                        onClicked: cc.adapter.enabled = !cc.adapter.enabled
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: 8
-                            color: Theme.surface
-                        }
-
-                        Label {
-                            anchors.centerIn: parent
-                            text: cc.adapter && cc.adapter.enabled ? "Turn off" : "Turn on"
-                            color: Theme.aqua
-                            font.pixelSize: 11
-                            font.bold: true
-                        }
-                    }
-
-                    MouseArea {
-                        width: 74
-                        height: 26
+                        label: cc.adapter && cc.adapter.discovering ? "Stop" : "Scan"
                         enabled: cc.adapter !== null && cc.adapter.enabled
                         onClicked: cc.adapter.discovering = !cc.adapter.discovering
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: 8
-                            color: Theme.surface
-                        }
-
-                        Label {
-                            anchors.centerIn: parent
-                            text: cc.adapter && cc.adapter.discovering ? "Stop" : "Scan"
-                            color: Theme.yellow
-                            font.pixelSize: 11
-                            font.bold: true
-                        }
-                    }
                     }
                 }
 
@@ -756,9 +905,21 @@ PanelWindow {
                         height: 42
                         hoverEnabled: true
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
+                        readonly property bool confirming: cc.forgetting === modelData.address
+
+                        // right click asks, the red pill (or a second right click) forgets
                         onClicked: mouse => {
                             if (mouse.button === Qt.RightButton) {
-                                if (modelData.paired) modelData.forget();
+                                if (!modelData.paired)
+                                    return;
+                                if (confirming) {
+                                    modelData.forget();
+                                    cc.forgetting = "";
+                                } else {
+                                    cc.forgetting = modelData.address;
+                                }
+                            } else if (confirming) {
+                                cc.forgetting = "";
                             } else if (modelData.connected) {
                                 modelData.disconnect();
                             } else {
@@ -782,7 +943,7 @@ PanelWindow {
 
                             Label {
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: modelData.connected ? "\u{f00b1}" : "\u{f00af}"
+                                text: cc.btGlyph(modelData.icon, modelData.connected)
                                 color: modelData.connected ? Theme.aqua : Theme.gray
                                 font.pixelSize: 16
                                 font.bold: true
@@ -802,10 +963,14 @@ PanelWindow {
                                 Label {
                                     text: {
                                         const bits = [];
-                                        if (modelData.connected)
+                                        if (modelData.pairing)
+                                            bits.push("Pairing");
+                                        else if (modelData.connected)
                                             bits.push("Connected");
                                         else if (modelData.paired)
                                             bits.push("Paired");
+                                        if (modelData.trusted)
+                                            bits.push("Trusted");
                                         return bits.join(" · ");
                                     }
                                     visible: text !== ""
@@ -815,12 +980,26 @@ PanelWindow {
                             }
                         }
 
+                        Pill {
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.right: parent.right
+                            anchors.rightMargin: 6
+                            width: 70
+                            visible: parent.confirming
+                            label: "Forget"
+                            accent: Theme.red
+                            onClicked: {
+                                modelData.forget();
+                                cc.forgetting = "";
+                            }
+                        }
+
                         Row {
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.right: parent.right
                             anchors.rightMargin: 10
                             spacing: 4
-                            visible: modelData.batteryAvailable
+                            visible: modelData.batteryAvailable && !parent.confirming
 
                             Label {
                                 anchors.verticalCenter: parent.verticalCenter
@@ -860,15 +1039,87 @@ PanelWindow {
 
                 Row {
                     width: parent.width
+                    spacing: 12
+
+                    Label {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: cc.linkIface === "" ? "󰖪" : (cc.linkIface.startsWith("wl") ? "󰤨" : "󰈀")
+                        color: cc.linkIface === "" ? Theme.gray : Theme.blue
+                        font.pixelSize: 28
+                    }
+
+                    Column {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width - 96
+                        spacing: 1
+
+                        Label {
+                            width: parent.width
+                            elide: Text.ElideRight
+                            text: {
+                                if (cc.linkIface === "")
+                                    return "Offline";
+                                if (!cc.linkIface.startsWith("wl"))
+                                    return "Ethernet";
+                                return cc.currentSsid !== "" ? cc.currentSsid : cc.linkIface;
+                            }
+                            color: Theme.fg
+                            font.pixelSize: 15
+                            font.bold: true
+                        }
+
+                        Label {
+                            width: parent.width
+                            elide: Text.ElideRight
+                            text: cc.wifiDevice === ""
+                                ? "NO WI-FI ADAPTER"
+                                : cc.wifiDevice.toUpperCase() + " · " + (cc.wifiPowered ? cc.wifiState.toUpperCase() : "OFF")
+                                  + (cc.currentNet ? " · " + Math.round(cc.currentNet.rssi) + " dBm" : "")
+                            color: Theme.gray
+                            font.pixelSize: 11
+                            font.letterSpacing: 1
+                            font.bold: true
+                        }
+                    }
+
+                    ToggleSwitch {
+                        anchors.verticalCenter: parent.verticalCenter
+                        on: cc.wifiPowered
+                        enabled: cc.wifiDevice !== ""
+                        onClicked: cc.wifiRun(["iwctl", "device", cc.wifiDevice, "set-property", "Powered", cc.wifiPowered ? "off" : "on"])
+                    }
+                }
+
+                Grid {
+                    width: parent.width
+                    columns: 2
+                    columnSpacing: 24
+                    rowSpacing: 4
+
+                    Stat { width: (parent.width - 24) / 2; label: "Ping"; value: cc.ping < 0 ? "—" : Math.round(cc.ping) + " ms" }
+                    Stat { width: (parent.width - 24) / 2; label: "Packet loss"; value: cc.loss < 0 ? "—" : cc.loss + "%" }
+                    Stat { width: (parent.width - 24) / 2; label: "Receiving"; value: cc.fmtBytes(cc.rxRate, "/s") }
+                    Stat { width: (parent.width - 24) / 2; label: "Sending"; value: cc.fmtBytes(cc.txRate, "/s") }
+                    Stat { width: (parent.width - 24) / 2; label: "Downloaded"; value: cc.fmtBytes(cc.rxTotal, "") }
+                    Stat { width: (parent.width - 24) / 2; label: "Uploaded"; value: cc.fmtBytes(cc.txTotal, "") }
+                    Stat { width: (parent.width - 24) / 2; label: "IP address"; value: cc.linkIp === "" ? "—" : cc.linkIp }
+                    Stat { width: (parent.width - 24) / 2; label: "Gateway"; value: cc.linkGateway === "" ? "—" : cc.linkGateway }
+                }
+
+                Rectangle {
+                    width: parent.width
+                    height: 1
+                    color: Theme.surface
+                }
+
+                Row {
+                    width: parent.width
                     spacing: 8
 
                     Section {
                         anchors.verticalCenter: parent.verticalCenter
                         width: parent.width - 176
-                        elide: Text.ElideRight
-                        text: cc.wifiDevice === ""
-                            ? "NO WI-FI ADAPTER"
-                            : cc.wifiDevice.toUpperCase() + " · " + cc.wifiState.toUpperCase()
+                        text: "NETWORKS"
                     }
 
                     Pill {
@@ -894,6 +1145,7 @@ PanelWindow {
                         readonly property bool selected: cc.navigating && cc.tab === "network" && cc.sel === index
 
                         readonly property bool asking: cc.asking === modelData.ssid
+                        readonly property bool confirming: cc.forgettingSsid === modelData.ssid
 
                         width: parent.width
                         // the row grows to hold the passphrase field
@@ -901,11 +1153,21 @@ PanelWindow {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
-                        // right click drops a saved network, like a paired bluetooth device
+                        // right click asks, the red pill (or a second right click) forgets
                         onClicked: mouse => {
                             if (mouse.button === Qt.RightButton) {
-                                if (saved)
+                                if (!saved)
+                                    return;
+                                if (confirming) {
                                     cc.wifiRun(["iwctl", "known-networks", modelData.ssid, "forget"]);
+                                    cc.forgettingSsid = "";
+                                } else {
+                                    cc.forgettingSsid = modelData.ssid;
+                                }
+                                return;
+                            }
+                            if (confirming) {
+                                cc.forgettingSsid = "";
                                 return;
                             }
                             if (saved || modelData.security === "open")
@@ -995,10 +1257,25 @@ PanelWindow {
                             font.bold: modelData.current
                         }
 
+                        Pill {
+                            anchors.right: parent.right
+                            anchors.rightMargin: 4
+                            y: 16 - height / 2
+                            width: 70
+                            visible: parent.confirming
+                            label: "Forget"
+                            accent: Theme.red
+                            onClicked: {
+                                cc.wifiRun(["iwctl", "known-networks", modelData.ssid, "forget"]);
+                                cc.forgettingSsid = "";
+                            }
+                        }
+
                         Label {
                             anchors.right: parent.right
                             anchors.rightMargin: 6
                             y: 16 - height / 2
+                            visible: !parent.confirming
                             text: modelData.current
                                 ? "Connected"
                                 : (parent.saved ? "Saved" : (modelData.security === "open" ? "" : "\uf023"))
@@ -1013,6 +1290,100 @@ PanelWindow {
                     text: "No networks found"
                     color: Theme.gray
                     font.pixelSize: 12
+                }
+
+                // a network that does not broadcast: name, then passphrase
+                MouseArea {
+                    id: hiddenRow
+
+                    width: parent.width
+                    height: cc.hiddenOpen ? 100 : 32
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        cc.hiddenOpen = !cc.hiddenOpen;
+                        if (cc.hiddenOpen)
+                            hiddenName.forceActiveFocus();
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: 6
+                        color: parent.containsMouse ? Theme.surface : "transparent"
+                    }
+
+                    Label {
+                        anchors.left: parent.left
+                        anchors.leftMargin: 6
+                        y: 16 - height / 2
+                        text: "\u{f0928}"
+                        color: Theme.gray
+                        font.pixelSize: 15
+                    }
+
+                    Label {
+                        anchors.left: parent.left
+                        anchors.leftMargin: 30
+                        y: 16 - height / 2
+                        text: "Hidden network\u2026"
+                        color: Theme.gray
+                        font.pixelSize: 13
+                    }
+
+                    Repeater {
+                        model: [
+                            { id: "name", hint: "Network name", y: 36 },
+                            { id: "pass", hint: "Passphrase", y: 68 }
+                        ]
+
+                        Rectangle {
+                            required property var modelData
+
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.margins: 6
+                            y: modelData.y
+                            height: 28
+                            radius: 8
+                            visible: cc.hiddenOpen
+                            color: Theme.bg
+                            border.width: 1
+                            border.color: Theme.surface
+
+                            TextInput {
+                                id: field
+
+                                anchors.fill: parent
+                                anchors.margins: 7
+                                verticalAlignment: TextInput.AlignVCenter
+                                echoMode: modelData.id === "pass" ? TextInput.Password : TextInput.Normal
+                                passwordCharacter: "\u25cf"
+                                color: Theme.fg
+                                font.family: Theme.uiFont
+                                font.pixelSize: 12
+                                clip: true
+
+                                Component.onCompleted: {
+                                    if (modelData.id === "name")
+                                        hiddenName = field;
+                                    else
+                                        hiddenPass = field;
+                                }
+
+                                Keys.onEscapePressed: cc.hiddenOpen = false
+                                Keys.onReturnPressed: cc.hiddenSend(modelData.id)
+                                Keys.onEnterPressed: cc.hiddenSend(modelData.id)
+
+                                Label {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    visible: field.text === ""
+                                    text: modelData.hint
+                                    color: Theme.gray
+                                    font.pixelSize: 12
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

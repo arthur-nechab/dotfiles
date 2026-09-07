@@ -37,6 +37,8 @@ Singleton {
 
     FileView {
         path: Quickshell.env("HOME") + "/.cache/quickshell-theme.json"
+        // read before the first frame, so the bar never flashes the built-in palette
+        blockLoading: true
         watchChanges: true
         onFileChanged: reload()
 

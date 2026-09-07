@@ -1,0 +1,18 @@
+#!/bin/sh
+# the oauth usage endpoint the claude cli itself polls; prints its json
+dir=${CLAUDE_CONFIG_DIR:-$HOME/.claude}
+tok=$(jq -r '.claudeAiOauth.accessToken // empty' "$dir/.credentials.json" 2>/dev/null)
+[ -n "$tok" ] || exit 3
+ver=$(jq -r '.version // empty' "$dir"/sessions/*.json 2>/dev/null | head -1)
+[ -n "$ver" ] || ver=$(claude --version 2>/dev/null | awk '{print $1}')
+out=$(mktemp)
+trap 'rm -f "$out"' EXIT
+code=$(curl -s -m 10 -o "$out" -w '%{http_code}' https://api.anthropic.com/api/oauth/usage \
+    -H "Authorization: Bearer $tok" \
+    -H "anthropic-beta: oauth-2025-04-20" \
+    -H "User-Agent: claude-code/${ver:-2.1.0}")
+case $code in
+    200) cat "$out" ;;
+    401|403) exit 3 ;;
+    *) exit 1 ;;
+esac

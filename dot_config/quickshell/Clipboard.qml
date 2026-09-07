@@ -142,7 +142,7 @@ PanelWindow {
             anchors.fill: parent
             icon: board.pinnedOnly ? "\u{f0403}" : "\u{f0192}"
             iconColor: board.pinnedOnly ? Theme.yellow : Theme.green
-            placeholder: board.pinnedOnly ? "Search pinned items" : "Search clipboard  ·  Tab pinned, Ctrl+P pin, Del remove"
+            placeholder: board.pinnedOnly ? "Search pinned items" : "Search clipboard  ·  Tab: pinned  Ctrl+P: pin  Del: remove"
             model: board.results
             rowHeight: e => e.image ? 68 : 44
             footer: 112
