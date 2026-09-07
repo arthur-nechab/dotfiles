@@ -227,6 +227,7 @@ local shells = {
         clipboard = "qs ipc call clipboard toggle",
         notifications = "qs ipc call notifications toggle",
         dnd       = "qs ipc call notifications dnd",
+        nightlight = "qs ipc call nightlight toggle",
         record    = scripts .. "record",
         region    = "qs ipc call screenshot region",
         window    = "qs ipc call screenshot window",
@@ -339,6 +340,7 @@ hl.animation({ leaf = "workspaces", enabled = true, speed = 6, bezier = "default
 
 -- ── Application shortcuts ────────────────────────────────────────────
 hl.bind(mod .. " + Return", hl.dsp.exec_cmd(terminal))
+hl.bind(mod .. " + CTRL + Return", hl.dsp.exec_cmd(focus .. "herdr " .. terminal .. " --class=herdr.ghostty -e herdr"))
 hl.bind(mod .. " + Space", hl.dsp.exec_cmd(sh.launcher))
 hl.bind(mod .. " + B", hl.dsp.exec_cmd([[sh -c 'gtk-launch "$(xdg-settings get default-web-browser)"']]))
 hl.bind(mod .. " + D", hl.dsp.exec_cmd(focus .. "discord " .. sh.apps.discord))
@@ -358,6 +360,12 @@ hl.bind(mod .. " + P", hl.dsp.exec_cmd("hyprpicker -a"))
 
 -- ── Window management ────────────────────────────────────────────────
 hl.bind(mod .. " + Q", hl.dsp.window.close())
+-- close, not kill: every app gets to save before the session empties
+hl.bind("CTRL + ALT + Delete", function()
+    for _, w in ipairs(hl.get_windows()) do
+        hl.dispatch(hl.dsp.window.close({ window = "address:" .. w.address }))
+    end
+end)
 hl.bind(mod .. " + CTRL + SHIFT + M", hl.dsp.exit())
 hl.bind(mod .. " + SHIFT + F", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mod .. " + F", hl.dsp.window.fullscreen({ mode = 0 }))
@@ -435,6 +443,9 @@ end)
 hl.bind(mod .. " + SHIFT + C", hl.dsp.exec_cmd(sh.clipboard))
 hl.bind(mod .. " + N", hl.dsp.exec_cmd(sh.notifications))
 hl.bind(mod .. " + SHIFT + P", hl.dsp.exec_cmd(sh.dnd))
+if sh.nightlight then
+    hl.bind(mod .. " + SHIFT + N", hl.dsp.exec_cmd(sh.nightlight))
+end
 hl.bind(mod .. " + SHIFT + R", hl.dsp.exec_cmd(sh.record))
 
 -- ── Layer rules ──────────────────────────────────────────────────────
@@ -446,7 +457,7 @@ end
 hl.window_rule({ match = { class = "com.saivert.pwvucontrol" }, float = true })
 -- dialogs: a floating window opens centred, never under the bar; the portal
 -- file chooser is tiled by default and reads better as a floating sheet
-hl.window_rule({ match = { float = true }, center = true })
+hl.window_rule({ match = { float = true, title = "negative:^vlc$" }, center = true })
 hl.window_rule({ match = { class = "xdg-desktop-portal-gtk" }, float = true, center = true, size = "1200 800" })
 hl.window_rule({ match = { class = ".*" }, suppress_event = "maximize" })
 
