@@ -1,21 +1,45 @@
+[backdrop]
+enabled = true
+blur_intensity = 0.6
+tint_intensity = 0.35
+
 [bar.default]
 background_opacity = 0.85
 center = [ "date", "clock" ]
 end = [ "tray", "spacer_3", "clipboard", "network", "bluetooth", "input_volume", "volume", "battery", "notifications" ]
+margin_edge = 6
 margin_ends = 100
-start = [ "control-center", "workspaces", "spacer_1", "cpu", "ram" ]
+radius = 12
+start = [ "control-center", "workspaces", "spacer_1", "cpu", "gpu", "ram" ]
 widget_spacing = 8
+contact_shadow = true
+hover_highlight = true
+shadow = true
 
 [control_center.calendar]
 show_events_card = false
 
+[idle]
+pre_action_fade_seconds = 0
+
 [idle.behavior.lock]
 enabled = true
+action = "lock"
 timeout = 300.0
 
 [idle.behavior.screen-off]
 enabled = true
+action = "screen_off"
 timeout = 600.0
+
+[[shell.session.actions]]
+action = "logout"
+
+[[shell.session.actions]]
+action = "reboot"
+
+[[shell.session.actions]]
+action = "shutdown"
 
 [location]
 auto_locate = true
@@ -23,7 +47,59 @@ custom_schedule = true
 sunrise = "07:30"
 sunset = "20:30"
 
-[nightlight]
+{{- /* output, logical width, logical height: the size hypr/hyprland.lua gives each
+     screen after its scale. change both files together. */ -}}
+{{- $outputs := list (list "eDP-1" 1536 960) (list "DVI-I-1" 1920 1080) (list "DVI-I-2" 1920 1080) }}
+
+[lockscreen_widgets]
+enabled = true
+schema_version = 2
+widget_order = [ {{ range $i, $o := $outputs }}{{ if $i }}, {{ end }}"lockscreen-clock@{{ index $o 0 }}", "lockscreen-login-box@{{ index $o 0 }}"{{ end }} ]
+{{ range $o := $outputs }}
+{{- $n := index $o 0 }}{{ $w := float64 (index $o 1) }}{{ $h := float64 (index $o 2) }}
+    [lockscreen_widgets.widget."lockscreen-clock@{{ $n }}"]
+    box_height = 140.0
+    box_width = 400.0
+    cx = {{ printf "%.1f" (divf $w 2) }}
+    cy = {{ printf "%.1f" (subf (divf $h 2) 198) }}
+    output = "{{ $n }}"
+    placement_height = {{ printf "%.1f" $h }}
+    placement_width = {{ printf "%.1f" $w }}
+    rotation = 0.0
+    type = "clock"
+
+        [lockscreen_widgets.widget."lockscreen-clock@{{ $n }}".settings]
+        background_opacity = 0.0
+        font_family = "Inter"
+        format = "{:%H:%M}"
+
+    [lockscreen_widgets.widget."lockscreen-login-box@{{ $n }}"]
+    box_height = 196.0
+    box_width = 380.0
+    cx = {{ printf "%.1f" (divf $w 2) }}
+    cy = {{ printf "%.1f" (divf $h 2) }}
+    output = "{{ $n }}"
+    placement_height = {{ printf "%.1f" $h }}
+    placement_width = {{ printf "%.1f" $w }}
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@{{ $n }}".settings]
+        background_color = "surface_variant"
+        background_opacity = 0.88
+        background_radius = 12.0
+        center_password_text = true
+        input_opacity = 1.0
+        input_radius = 6.0
+        layout = "compact"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = false
+        show_media = false
+        show_session_buttons = false
+        show_unlock_hint = false
+        show_weather = false
+{{ end }}[nightlight]
 enabled = true
 
 [plugins]
@@ -41,6 +117,14 @@ settings_show_advanced = false
 
     [shell.launcher]
     compact = true
+    sort_by_usage = true
+    auto_paste = "auto"
+
+        [shell.launcher.providers.calculator]
+        global = true
+
+        [shell.launcher.providers.windows]
+        global = true
 
     [shell.screen_corners]
     enabled = true
@@ -51,11 +135,19 @@ settings_show_advanced = false
 
 [theme]
 source = "wallpaper"
-wallpaper_scheme = "soft"
+wallpaper_scheme = "vibrant"
 
     [theme.templates]
-    enable_community_templates = false
-    builtin_ids = [ "gtk3", "gtk4" ]
+    enable_community_templates = true
+    builtin_ids = [ "gtk3", "gtk4", "ghostty", "btop", "hyprland" ]
+
+[wallpaper]
+directory = "{{ .chezmoi.homeDir }}/Pictures/Wallpapers"
+fill_mode = "crop"
+transition = [ "fade" ]
+transition_duration = 1200
+transition_on_startup = false
+edge_smoothness = 0.15
 
 [widget.battery]
 show_label = false
@@ -64,6 +156,12 @@ show_label = false
 show_value = true
 stat = "cpu_usage"
 visualization = "graph"
+
+[widget.gpu]
+type = "sysmon"
+show_value = true
+stat = "gpu_usage"
+visualization = "gauge"
 
 [widget.date]
 format = "{:%d %b}"
