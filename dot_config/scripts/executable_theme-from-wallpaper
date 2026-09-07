@@ -20,24 +20,26 @@ THUMBS = CACHE / "wallpaper-thumbs"
 GHOSTTY_THEMES = Path("/usr/share/ghostty/themes")
 MIN_CONTRAST = 4.0
 
-# quickshell name -> (ghostty theme, btop theme, nvim colorscheme, zed theme)
+# quickshell name -> (ghostty theme, btop theme, nvim colorscheme, zed theme, yazi flavor)
+# the yazi flavors come from package.toml; horizon, night-owl and twilight have none,
+# so they take the closest dark
 THEMES = {
-    "ayu-mirage":       ("Ayu Mirage",           "ayu",                   "ayu-mirage",       "Ayu Mirage"),
-    "dracula":          ("Dracula",              "dracula",               "dracula",          "Dracula"),
-    "everforest":       ("Everforest Dark Hard", "everforest-dark-hard",  "everforest",       "Everforest Dark Hard (regular)"),
-    "flexoki-dark":     ("Flexoki Dark",         "flexoki-dark",          "flexoki-dark",     "Flexoki Dark"),
-    "gruvbox":          ("Gruvbox Dark Hard",    "gruvbox_dark",          "gruvbox",          "Gruvbox Baby"),
-    "gruvbox-material": ("Gruvbox Material Dark", "gruvbox_material_dark", "gruvbox-material", "Gruvbox Dark Soft"),
-    "horizon":          ("Horizon",              "horizon",               "horizon",          "Horizon"),
-    "kanagawa-dragon":  ("Kanagawa Dragon",      "kanagawa-dragon",       "kanagawa-dragon",  "Kanagawa Dragon"),
-    "kanagawa-wave":    ("Kanagawa Wave",        "kanagawa-wave",         "kanagawa-wave",    "Kanagawa Wave"),
-    "monokai":          ("Monokai Pro",          "monokai",               "monokai-pro",      "KTRZ Monokai"),
-    "night-owl":        ("Night Owl",            "night-owl",             "night-owl",        "Night Owl Dark"),
-    "nord":             ("Nord",                 "nord",                  "nord",             "Nord Dark"),
-    "tokyonight":       ("TokyoNight",           "tokyo-night",           "tokyonight-night", "Tokyo Night"),
-    "tokyonight-storm": ("TokyoNight Storm",     "tokyo-storm",           "tokyonight-storm", "Tokyo Night Storm"),
+    "ayu-mirage":       ("Ayu Mirage",           "ayu",                   "ayu-mirage",       "Ayu Mirage",                     "ayu-dark"),
+    "dracula":          ("Dracula",              "dracula",               "dracula",          "Dracula",                        "dracula"),
+    "everforest":       ("Everforest Dark Hard", "everforest-dark-hard",  "everforest",       "Everforest Dark Hard (regular)", "everforest-medium"),
+    "flexoki-dark":     ("Flexoki Dark",         "flexoki-dark",          "flexoki-dark",     "Flexoki Dark",                   "flexoki-dark"),
+    "gruvbox":          ("Gruvbox Dark Hard",    "gruvbox_dark",          "gruvbox",          "Gruvbox Baby",                   "gruvbox-dark"),
+    "gruvbox-material": ("Gruvbox Material Dark", "gruvbox_material_dark", "gruvbox-material", "Gruvbox Dark Soft",             "gruvbox-material"),
+    "horizon":          ("Horizon",              "horizon",               "horizon",          "Horizon",                        "monokai"),
+    "kanagawa-dragon":  ("Kanagawa Dragon",      "kanagawa-dragon",       "kanagawa-dragon",  "Kanagawa Dragon",                "kanagawa-dragon"),
+    "kanagawa-wave":    ("Kanagawa Wave",        "kanagawa-wave",         "kanagawa-wave",    "Kanagawa Wave",                  "kanagawa"),
+    "monokai":          ("Monokai Pro",          "monokai",               "monokai-pro",      "KTRZ Monokai",                   "monokai"),
+    "night-owl":        ("Night Owl",            "night-owl",             "night-owl",        "Night Owl Dark",                 "tokyo-night"),
+    "nord":             ("Nord",                 "nord",                  "nord",             "Nord Dark",                      "nord"),
+    "tokyonight":       ("TokyoNight",           "tokyo-night",           "tokyonight-night", "Tokyo Night",                    "tokyo-night"),
+    "tokyonight-storm": ("TokyoNight Storm",     "tokyo-storm",           "tokyonight-storm", "Tokyo Night Storm",              "tokyo-night"),
     # no twilight port for neovim; tokyonight-night is the closest purple dark
-    "twilight":         ("Twilight",             "twilight",              "tokyonight-night", "Twilight"),
+    "twilight":         ("Twilight",             "twilight",              "tokyonight-night", "Twilight",                       "tokyo-night"),
 }
 
 
@@ -279,6 +281,14 @@ def apply_btop(theme):
     conf.write_text(text)
 
 
+def apply_yazi(flavor):
+    conf = HOME / ".config/yazi/theme.toml"
+    if not conf.exists():
+        return
+    text = re.sub(r'^dark = ".*"$', f'dark = "{flavor}"', conf.read_text(), flags=re.M)
+    conf.write_text(text)
+
+
 def apply_lazygit(palette):
     """The whole file: it holds nothing but the font version and four colours."""
     conf = HOME / ".config/lazygit/config.yml"
@@ -374,7 +384,7 @@ def main():
         name = sys.argv[sys.argv.index("--theme") + 1]
     else:
         name = OVERRIDES.get(stem) or classify(*measure(wallpaper))
-    ghostty, btop, nvim, zed = THEMES[name]
+    ghostty, btop, nvim, zed, yazi = THEMES[name]
 
     stamp = CACHE / "quickshell-theme.name"
     if "--force" not in sys.argv and stamp.exists() and stamp.read_text().strip() == name:
@@ -384,6 +394,7 @@ def main():
     apply_hyprland(palette)
     apply_ghostty(ghostty)
     apply_btop(btop)
+    apply_yazi(yazi)
     apply_lazygit(palette)
     apply_nvim(nvim)
     apply_zed(zed)
