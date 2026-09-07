@@ -6,7 +6,6 @@ README.md
 .config/fastfetch/
 .config/gtk-3.0/
 .config/gtk-4.0/
-.config/noctalia/
 .config/nvim/
 .config/scripts/
 .config/yazi/
@@ -16,8 +15,12 @@ README.md
 Library/
 {{- end }}
 
-{{- if ne .system.de "hyprland" }}
+# macOS or a Linux that .chezmoi.toml.tmpl does not know
+{{- if eq .system.shell "" }}
 .config/hypr/
+.config/quickshell/
+.config/xdg-desktop-portal/
+.config/noctalia/
 {{- end }}
 
 {{- if eq .system.shell "quickshell" }}
@@ -25,10 +28,17 @@ Library/
 .config/quickshell/local.json
 .config/btop/btop.conf
 .config/lazygit/config.yml
+.config/yazi/theme.toml
 .config/zed/settings.json
 .config/ghostty/themes/dynamic
 .config/qt6ct/
-{{- else }}
+{{- end }}
+
+{{- if eq .system.shell "noctalia" }}
 .config/quickshell/
 .config/xdg-desktop-portal/
+.config/scripts/nightlight
+.config/scripts/record
+.config/scripts/theme-from-wallpaper
+.config/scripts/weather
 {{- end }}

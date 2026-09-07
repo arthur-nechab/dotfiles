@@ -44,6 +44,13 @@ To pull later changes:
 chezmoi update
 ```
 
+yazi keeps its plugins and flavors out of this repo. `package.toml` pins them, so fetch them
+once after the first apply, and again when that file changes:
+
+```sh
+ya pkg install
+```
+
 The same command gives a different result on each machine. `.chezmoi.toml.tmpl` reads
 `/etc/os-release` and sets three values: an OS id, a compositor (`de`) and a shell layer
 (`shell`). `.chezmoiignore` uses them to select the configs.

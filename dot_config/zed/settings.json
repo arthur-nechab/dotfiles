@@ -1,20 +1,25 @@
 {
   // ── Appearance ─────────────────────────────────────────────────────
   "cli_default_open_behavior": "existing_window",
-  "theme": "Gruvbox Baby",
+  "theme": "Kanagawa Dragon",
   "icon_theme": "Material Icon Theme",
-  // one extension per theme the wallpaper script can pick
   "auto_install_extensions": {
-    "tokyo-night": true,
-    "dracula": true,
-    "nord": true,
     "kanagawa-themes": true,
-    "everforest": true,
-    "night-owlz": true,
-    "horizon": true,
-    "flexoki-themes": true,
-    "twilight": true,
-    "ktrz-monokai": true
+    "ansible": true,
+    "dockerfile": true,
+    "git-firefly": true,
+    "html": true,
+    "jinja2": true,
+    "just": true,
+    "log": true,
+    "lua": true,
+    "make": true,
+    "material-icon-theme": true,
+    "ruby": true,
+    "terraform": true,
+    "toml": true,
+    "xml": true,
+    "qml": true
   },
   "buffer_font_family": "BerkeleyMono Nerd Font",
   "buffer_font_size": 16,
@@ -61,13 +66,23 @@
     "metrics": false
   },
 
+  // ── Language servers ───────────────────────────────────────────────
+  "lsp": {
+    "lua-language-server": {
+      "settings": {
+        "Lua": { "diagnostics": { "globals": ["hl"] } }
+      }
+    }
+  },
+
   // ── File type overrides ────────────────────────────────────────────
   "file_types": {
-    "Shell Script": ["dot_zshenv.tmpl", "dot_zshrc.tmpl", "dot_zprofile.tmpl"],
+    "Shell Script": ["dot_zsh*.tmpl", "dot_zprofile.tmpl"],
     "Git Ignore": [".chezmoiignore", "ignore"],
-    "TOML": [".chezmoi.toml.tmpl"],
-    "INI": ["config.tmpl"],
-    "JSONC": ["config"],
+    "TOML": ["*.toml.tmpl"],
+    "Lua": ["*.lua.tmpl"],
+    "INI": ["config.tmpl", "*.conf", "*.conf.tmpl"],
+    "Git Config": ["gitconfig*"],
     "Ruby": ["Brewfile"],
     "Jinja2": ["*.j2", "*.jinja", "*.jinja2"]
   }

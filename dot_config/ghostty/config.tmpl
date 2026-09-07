@@ -1,5 +1,5 @@
 # ── Appearance & Theme ────────────────────────────────────────────────
-theme              = Gruvbox Dark Hard
+theme              = {{ if eq .system.shell "noctalia" }}noctalia{{ else }}Gruvbox Dark Hard{{ end }}
 background-opacity = 0.9
 
 # ── Font ──────────────────────────────────────────────────────────────

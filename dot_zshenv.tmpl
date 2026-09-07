@@ -15,6 +15,11 @@ export LANG=en_US.UTF-8
 
 export PATH="$HOME/.local/bin:$PATH"
 
-{{- if ne .chezmoi.os "darwin" }}
+export GOPATH="$XDG_DATA_HOME/go"
+export GOBIN="$HOME/.local/bin"
+
+{{- if eq .system.osid "linux-debian" }}
+export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR}/gcr/ssh"
+{{- else if ne .chezmoi.os "darwin" }}
 export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR}/ssh-agent.socket"
 {{- end }}
