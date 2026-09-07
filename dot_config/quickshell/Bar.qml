@@ -191,73 +191,19 @@ PanelWindow {
     }
 
     QtObject {
-        id: cpu
-        property real usage: 0
-        property var prev: null
-        property int temp: 0
-        property string load: ""
-    }
-
-    // coretemp package sensor; hwmon numbering can move, so it is found by name
-    Process {
-        running: true
-        command: ["sh", "-c", "for h in /sys/class/hwmon/hwmon*; do [ \"$(cat $h/name)\" = coretemp ] && echo $h/temp1_input && break; done"]
-        stdout: StdioCollector {
-            onStreamFinished: cpuTempFile.path = this.text.trim()
-        }
-    }
-
-    FileView {
-        id: cpuTempFile
-        printErrors: false
-        onLoaded: cpu.temp = Math.round(Number(text()) / 1000)
-    }
-
-    FileView {
-        id: loadFile
-        path: "/proc/loadavg"
-        onLoaded: cpu.load = text().split(" ").slice(0, 3).join("  ")
-    }
-
-    FileView {
-        id: statFile
-        path: "/proc/stat"
-        onLoaded: {
-            const line = text().split("\n")[0].split(/\s+/).slice(1).map(Number);
-            const total = line.reduce((a, b) => a + b, 0);
-            const idle = line[3] + line[4];
-            if (cpu.prev) {
-                const dt = total - cpu.prev.total;
-                const di = idle - cpu.prev.idle;
-                cpu.usage = dt > 0 ? Math.max(0, Math.min(1, 1 - di / dt)) : 0;
-            }
-            cpu.prev = { total: total, idle: idle };
-        }
-    }
-
-    FileView {
-        id: memFile
-        path: "/proc/meminfo"
-        onLoaded: {
-            const kv = {};
-            for (const l of text().split("\n")) {
-                const m = l.match(/^(\w+):\s+(\d+)/);
-                if (m) kv[m[1]] = Number(m[2]);
-            }
-            ram.usage = 1 - kv.MemAvailable / kv.MemTotal;
-            ram.usedGb = (kv.MemTotal - kv.MemAvailable) / 1048576;
-            ram.totalGb = kv.MemTotal / 1048576;
-        }
-    }
-
-    QtObject {
         id: usb
         property var devices: []
     }
 
     Process {
         id: usbProbe
-        command: ["lsblk", "-J", "-o", "PATH,LABEL,SIZE,MOUNTPOINT,HOTPLUG,TYPE,FSTYPE"]
+
+        function rerun() {
+            running = false;
+            running = true;
+        }
+
+        command: ["lsblk", "-J", "-o", "PATH,LABEL,SIZE,MOUNTPOINT,HOTPLUG,TYPE,FSTYPE,FSAVAIL"]
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
@@ -277,48 +223,58 @@ PanelWindow {
         }
     }
 
-    Timer {
-        interval: 5000
+    // one read at start, then only when udev reports a block device change;
+    // a plug fires a burst of events, the timer folds them into one read
+    Process {
         running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: {
-            usbProbe.running = false;
-            usbProbe.running = true;
+        command: ["udevadm", "monitor", "--udev", "--subsystem-match=block"]
+        stdout: SplitParser {
+            onRead: data => { if (data.startsWith("UDEV")) usbDebounce.restart(); }
         }
     }
+
+    Timer {
+        id: usbDebounce
+        interval: 500
+        onTriggered: usbProbe.rerun()
+    }
+
+    Component.onCompleted: usbProbe.rerun()
 
     QtObject {
         id: net
         property string iface: ""
         property string ip: ""
-        property bool netbird: false
     }
 
-    // one shell round for the three slow checks, instead of three processes
-    // on three timers; each answer sits on its own line
+    // shared readings live in System; the bar keeps what only it draws
+    readonly property var cpu: System.cpu
+    readonly property var ram: System.ram
+    readonly property var gpu: System.gpu
+    readonly property var llm: System.llm
+
     Process {
         id: probes
-        command: ["sh", "-c",
-            "netbird status 2>/dev/null | grep -q 'Management: Connected' && echo net;"
-            + "pgrep -x wf-recorder >/dev/null && echo rec;"
-            + "ip -4 -o route get 1.1.1.1 2>/dev/null | sed -n 's/.* src \\([0-9.]*\\).*/ip \\1/p';"
-            + "curl -s -m 3 http://localhost:11434/api/ps | jq -c '[.models[]?.size_vram] | {n: length, vram: add}' 2>/dev/null | sed 's/^/llm /'"]
+        command: ["sh", "-c", "pgrep -x wf-recorder >/dev/null && echo rec"]
         stdout: StdioCollector {
-            onStreamFinished: {
-                const lines = this.text.split("\n");
-                net.netbird = lines.indexOf("net") >= 0;
-                net.ip = (lines.find(x => x.startsWith("ip ")) ?? "ip ").slice(3);
-                rec.active = lines.indexOf("rec") >= 0;
-                const l = lines.find(x => x.startsWith("llm "));
-                try {
-                    const j = l ? JSON.parse(l.slice(4)) : { n: 0, vram: 0 };
-                    llm.loaded = j.n > 0;
-                    llm.vramGb = (j.vram ?? 0) / 1073741824;
-                } catch (e) {
-                    llm.loaded = false;
-                }
-            }
+            onStreamFinished: rec.active = this.text.indexOf("rec") >= 0
+        }
+    }
+
+    // the address only moves with the route, so it is read when the interface does
+    Process {
+        id: ipProbe
+        command: ["sh", "-c", "ip -4 -o route get 1.1.1.1 2>/dev/null | sed -n 's/.* src \\([0-9.]*\\).*/\\1/p'"]
+        stdout: StdioCollector {
+            onStreamFinished: net.ip = this.text.trim()
+        }
+    }
+
+    Connections {
+        target: net
+        function onIfaceChanged() {
+            ipProbe.running = false;
+            ipProbe.running = true;
         }
     }
 
@@ -331,21 +287,6 @@ PanelWindow {
             probes.running = false;
             probes.running = true;
         }
-    }
-
-    QtObject {
-        id: llm
-        property bool loaded: false
-        property real vramGb: 0
-    }
-
-
-    QtObject {
-        id: gpu
-        property int usage: 0
-        property real vramUsedGb: 0
-        property real vramTotalGb: 0
-        property int temp: 0
     }
 
     QtObject {
@@ -368,23 +309,6 @@ PanelWindow {
         onRunningChanged: if (!running) levels = new Array(18).fill(0)
     }
 
-    Process {
-        running: true
-        command: ["nvidia-smi", "--query-gpu=utilization.gpu,memory.used,memory.total,temperature.gpu",
-                  "--format=csv,noheader,nounits", "-l", "2"]
-        stdout: SplitParser {
-            onRead: data => {
-                const v = data.split(",").map(x => Number(x.trim()));
-                if (v.length === 4 && !v.some(isNaN)) {
-                    gpu.usage = v[0];
-                    gpu.vramUsedGb = v[1] / 1024;
-                    gpu.vramTotalGb = v[2] / 1024;
-                    gpu.temp = v[3];
-                }
-            }
-        }
-    }
-
     FileView {
         id: routeFile
         path: "/proc/net/route"
@@ -400,26 +324,12 @@ PanelWindow {
         }
     }
 
-    QtObject {
-        id: ram
-        property real usage: 0
-        property real usedGb: 0
-        property real totalGb: 0
-    }
-
     Timer {
         interval: 2000
         running: true
         repeat: true
         triggeredOnStart: true
-        onTriggered: {
-            statFile.reload();
-            memFile.reload();
-            routeFile.reload();
-            loadFile.reload();
-            if (cpuTempFile.path !== "")
-                cpuTempFile.reload();
-        }
+        onTriggered: routeFile.reload()
     }
 
     Process {
@@ -572,6 +482,7 @@ PanelWindow {
             implicitHeight: metrics.implicitHeight
             cursorShape: Qt.PointingHandCursor
             hoverEnabled: true
+            acceptedButtons: Qt.RightButton
             onClicked: bar.run("ghostty -e btop")
             property bool monoTip: true
             property string tip: "CPU  " + Math.round(cpu.usage * 100) + "%  \u00b7  " + cpu.temp + "\u00b0C  \u00b7  load " + cpu.load
@@ -620,9 +531,7 @@ PanelWindow {
 
                     Label {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: llm.loaded
-                            ? gpu.usage + "% \u00b7 " + llm.vramGb.toFixed(1) + "G"
-                            : gpu.usage + "%"
+                        text: gpu.usage + "%"
                         color: Theme.purple
                         font.pixelSize: 14
                         font.bold: true
@@ -757,438 +666,33 @@ PanelWindow {
         }
     }
 
-    PopupWindow {
+    CalendarPopup {
         id: calendar
-        anchor.item: dateBtn
-        anchor.edges: bar.atTop ? Edges.Bottom : Edges.Top
-        anchor.gravity: bar.atTop ? Edges.Bottom : Edges.Top
-        anchor.margins.top: 7
-        implicitWidth: 260
-        implicitHeight: calContent.implicitHeight + 45
-        color: "transparent"
-        visible: false
-
-        ClickAway {
-            target: calendar
-            screen: bar.screen
-        }
-
-        property string selected: Qt.formatDate(Theme.now, "yyyy-MM-dd")
-
-        onVisibleChanged: if (visible) selected = Qt.formatDate(Theme.now, "yyyy-MM-dd")
-
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: 10
-            anchors.topMargin: 10
-            radius: 10
-            color: Theme.bg
-
-            Column {
-                id: calContent
-
-                anchors.centerIn: parent
-                spacing: 4
-
-                Label {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: Qt.formatDateTime(Theme.now, "MMMM yyyy")
-                    color: Theme.yellow
-                    font.pixelSize: 14
-                    font.bold: true
-                }
-
-                DayOfWeekRow {
-                    width: 224
-                    locale: Qt.locale()
-                    delegate: Label {
-                        text: model.shortName
-                        color: Theme.gray
-                        font.pixelSize: 12
-                        font.bold: true
-                        horizontalAlignment: Text.AlignHCenter
-                    }
-                }
-
-                MonthGrid {
-
-                    width: 224
-                    height: 170
-                    month: Theme.now.getMonth()
-                    year: Theme.now.getFullYear()
-                    locale: Qt.locale()
-                    onClicked: date => calendar.selected = Qt.formatDate(date, "yyyy-MM-dd")
-
-                    delegate: Item {
-                        required property var model
-
-                        readonly property string day: Qt.formatDate(model.date, "yyyy-MM-dd")
-
-                        Rectangle {
-                            anchors.centerIn: parent
-                            width: 22
-                            height: 22
-                            radius: 6
-                            visible: parent.day === calendar.selected
-                            color: Theme.surface
-                        }
-
-                        Label {
-                            anchors.centerIn: parent
-                            text: model.day
-                            color: model.today ? Theme.red : (model.month === Theme.now.getMonth() ? Theme.fg : Theme.gray)
-                            opacity: model.month === Theme.now.getMonth() ? 1 : 0.4
-                            font.pixelSize: 14
-                            font.bold: true
-                        }
-
-                    }
-                }
-            }
-        }
+        anchorItem: dateBtn
+        atTop: bar.atTop
+        clickScreen: bar.screen
     }
 
-    // ── Tray menu ────────────────────────────────────────────────────────
-
-    PopupWindow {
+    TrayMenu {
         id: trayMenu
-
-        property var handle: null
-        property Item source: null
-
-        anchor.item: source
-        anchor.edges: bar.atTop ? Edges.Bottom : Edges.Top
-        anchor.gravity: bar.atTop ? Edges.Bottom : Edges.Top
-        anchor.margins.top: 7
-        implicitWidth: 230
-        implicitHeight: menuColumn.implicitHeight + 32
-        color: "transparent"
-        visible: false
-        grabFocus: true
-
-
-        QsMenuOpener {
-            id: menuOpener
-
-            menu: trayMenu.handle
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: 10
-            radius: 10
-            color: Theme.bg
-
-            Column {
-                id: menuColumn
-
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.margins: 6
-                spacing: 1
-
-                Repeater {
-                    model: menuOpener.children
-
-                    MouseArea {
-                        required property var modelData
-
-                        width: menuColumn.width
-                        height: modelData.isSeparator ? 7 : 26
-                        hoverEnabled: !modelData.isSeparator
-                        enabled: modelData.enabled && !modelData.isSeparator
-                        onClicked: {
-                            modelData.triggered();
-                            trayMenu.visible = false;
-                        }
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: 6
-                            visible: !modelData.isSeparator
-                            color: parent.containsMouse ? Theme.surface : "transparent"
-                        }
-
-                        Rectangle {
-                            anchors.left: parent.left
-                            anchors.right: parent.right
-                            anchors.verticalCenter: parent.verticalCenter
-                            visible: modelData.isSeparator
-                            height: 1
-                            color: Theme.surface
-                        }
-
-                        Label {
-                            anchors.left: parent.left
-                            anchors.leftMargin: 8
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - 16
-                            elide: Text.ElideRight
-                            visible: !modelData.isSeparator
-                            text: modelData.text
-                            color: modelData.enabled ? Theme.fg : Theme.gray
-                            font.pixelSize: 13
-                        }
-                    }
-                }
-            }
-        }
+        anchorItem: trayMenu.source ?? dateBtn
+        atTop: bar.atTop
     }
 
-    // ── Weather popup ────────────────────────────────────────────────────
-
-    PopupWindow {
+    WeatherPopup {
         id: weatherPopup
-
-        anchor.item: weatherBtn
-        anchor.edges: bar.atTop ? Edges.Bottom : Edges.Top
-        anchor.gravity: bar.atTop ? Edges.Bottom : Edges.Top
-        anchor.margins.top: 7
-        implicitWidth: 240
-        implicitHeight: 38 + column.implicitHeight
-        color: "transparent"
-        visible: false
-
-        ClickAway {
-            target: weatherPopup
-            screen: bar.screen
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: 10
-            anchors.topMargin: 10
-            radius: 10
-            color: Theme.bg
-
-            Column {
-                id: column
-
-                anchors.centerIn: parent
-                // the gap between indoor and outdoor is the only structure here
-                spacing: 16
-
-                Label {
-                    visible: Homelab.sensors.length === 0
-                    text: Homelab.hasHass ? "No sensors" : "Not configured"
-                    color: Theme.gray
-                    font.pixelSize: 11
-                }
-
-                Repeater {
-                    model: Homelab.sensorGroups
-
-                    Column {
-                        id: sensorGroup
-
-                        required property var modelData
-                        required property int index
-                        readonly property string groupName: modelData
-
-                        width: 196
-                        spacing: 2
-
-                        Rectangle {
-                            width: 196
-                            height: 1
-                            visible: sensorGroup.index > 0
-                            color: Theme.surface
-                        }
-
-                        Label {
-                            text: sensorGroup.groupName
-                            color: Theme.gray
-                            font.pixelSize: 10
-                            font.letterSpacing: 1
-                            font.bold: true
-                            topPadding: 4
-                            bottomPadding: 1
-                        }
-
-                        Repeater {
-                            model: Homelab.sensors
-
-                            Item {
-                                required property var modelData
-
-                                // each unit gets the range that makes a bar meaningful
-                                readonly property real value: Number(modelData.state)
-                                readonly property real ratio: {
-                                    const u = modelData.unit;
-                                    if (u === "%")
-                                        return value / 100;
-                                    if (u === "\u00b0C")
-                                        return (value + 10) / 55;
-                                    if (u === "ppm")
-                                        return (value - 400) / 1600;
-                                    if (u === "mm")
-                                        return value / 20;
-                                    return -1;
-                                }
-                                readonly property color tint: {
-                                    const u = modelData.unit;
-                                    if (u === "ppm")
-                                        return value > 1400 ? Theme.red : (value > 900 ? Theme.yellow : Theme.green);
-                                    if (u === "\u00b0C")
-                                        return value > 28 ? Theme.orange : (value < 5 ? Theme.blue : Theme.yellow);
-                                    if (u === "mm")
-                                        return Theme.aqua;
-                                    return Theme.blue;
-                                }
-
-                                visible: modelData.group === sensorGroup.groupName
-                                width: 196
-                                height: visible ? (ratio >= 0 ? 28 : 19) : 0
-
-                                Label {
-                                    anchors.left: parent.left
-                                    anchors.top: parent.top
-                                    width: parent.width * 0.6
-                                    elide: Text.ElideRight
-                                    text: modelData.name
-                                    color: Theme.fg
-                                    font.pixelSize: 12
-                                }
-
-                                Label {
-                                    anchors.right: parent.right
-                                    anchors.top: parent.top
-                                    width: parent.width * 0.38
-                                    horizontalAlignment: Text.AlignRight
-                                    elide: Text.ElideRight
-                                    text: modelData.state + " " + modelData.unit
-                                    color: parent.tint
-                                    font.pixelSize: 12
-                                    font.bold: true
-                                }
-
-                                Gauge {
-                                    anchors.left: parent.left
-                                    anchors.right: parent.right
-                                    anchors.bottom: parent.bottom
-                                    anchors.bottomMargin: 2
-                                    visible: parent.ratio >= 0
-                                    height: 5
-                                    value: parent.ratio
-                                    accent: parent.tint
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        anchorItem: weatherBtn
+        atTop: bar.atTop
+        clickScreen: bar.screen
     }
 
-    // ── Removable volumes ────────────────────────────────────────────────
-
-    PopupWindow {
+    UsbPopup {
         id: usbPopup
-
-        anchor.item: usbBtn
-        anchor.edges: bar.atTop ? Edges.Bottom : Edges.Top
-        anchor.gravity: bar.atTop ? Edges.Bottom : Edges.Top
-        anchor.margins.top: 7
-        implicitWidth: 300
-        implicitHeight: 36 + Math.max(1, usbColumn.implicitHeight)
-        color: "transparent"
-        visible: false
-
-        ClickAway {
-            target: usbPopup
-            screen: bar.screen
-        }
-
-        // the button hides itself once the last device is gone
-        onVisibleChanged: if (visible && usb.devices.length === 0) visible = false
-
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: 10
-            radius: 10
-            color: Theme.bg
-
-            Column {
-                id: usbColumn
-
-                anchors.centerIn: parent
-                width: parent.width - 16
-                spacing: 4
-
-                Repeater {
-                    model: usb.devices
-
-                    MouseArea {
-                        id: dev
-
-                        required property var modelData
-                        readonly property bool mounted: (modelData.mountpoint ?? "") !== ""
-
-                        width: usbColumn.width
-                        height: 38
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            bar.run("udisksctl " + (mounted ? "unmount" : "mount")
-                                    + " -b " + modelData.path
-                                    + " || notify-send -u critical 'Volume' '"
-                                    + modelData.path + "'");
-                            usbProbe.running = false;
-                            usbProbe.running = true;
-                        }
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: 8
-                            color: parent.containsMouse ? Theme.surface : "transparent"
-                        }
-
-                        Row {
-                            anchors.fill: parent
-                            anchors.leftMargin: 8
-                            anchors.rightMargin: 8
-                            spacing: 8
-
-                            Label {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: dev.mounted ? "" : ""
-                                color: dev.mounted ? Theme.green : Theme.gray
-                                font.pixelSize: 16
-                            }
-
-                            Column {
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: parent.width - 32
-                                spacing: 1
-
-                                Label {
-                                    width: parent.width
-                                    text: (modelData.label ?? "") !== ""
-                                        ? modelData.label
-                                        : modelData.path
-                                    color: Theme.fg
-                                    font.pixelSize: 13
-                                    font.bold: true
-                                    elide: Text.ElideRight
-                                }
-
-                                Label {
-                                    width: parent.width
-                                    text: modelData.size + " \u00b7 " + modelData.fstype
-                                        + (dev.mounted
-                                           ? " \u00b7 " + modelData.mountpoint
-                                           : " \u00b7 not mounted")
-                                    color: Theme.gray
-                                    font.pixelSize: 11
-                                    elide: Text.ElideRight
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        anchorItem: usbBtn
+        atTop: bar.atTop
+        clickScreen: bar.screen
+        devices: usb.devices
+        onRefresh: usbProbe.rerun()
     }
 
     // ── Right ────────────────────────────────────────────────────────────
@@ -1307,23 +811,28 @@ PanelWindow {
 
         Btn {
             label: {
-                if (net.netbird)
+                if (System.netbird)
                     return "\u{f0582}";
                 if (net.iface === "")
                     return "󰖪";
                 return net.iface.startsWith("wl") ? "󰤨" : "󰈀";
             }
-            fg: net.netbird ? Theme.aqua : Theme.blue
-            tip: net.iface === "" ? "No network" : net.iface + "  \u00b7  " + net.ip + (net.netbird ? "  \u00b7  NetBird" : "")
-            onClicked: bar.networkToggle()
+            fg: System.netbird ? Theme.aqua : Theme.blue
+            tip: net.iface === "" ? "No network" : net.iface + "  \u00b7  " + net.ip + (System.netbird ? "  \u00b7  NetBird" : "")
+            onClicked: mouse => mouse.button === Qt.RightButton
+                ? bar.run("ghostty -e impala")
+                : bar.networkToggle()
         }
 
         Btn {
             label: nightlight.icon
             fg: nightlight.warm ? Theme.purple : Theme.yellow
             tip: "Night Light  \u00b7  " + nightlight.temp
-            onClicked: {
-                bar.run("~/.config/scripts/nightlight --toggle");
+            // right click goes straight back to daylight, whatever the state
+            onClicked: mouse => {
+                bar.run(mouse.button === Qt.RightButton
+                    ? "hyprctl hyprsunset temperature 6500"
+                    : "~/.config/scripts/nightlight --toggle");
                 refreshTimer.restart();
             }
             onWheel: wheel => {
@@ -1352,6 +861,22 @@ PanelWindow {
             onClicked: mouse => mouse.button === Qt.RightButton
                 ? bar.dndToggle()
                 : bar.notificationsToggle()
+        }
+    }
+
+    IpcHandler {
+        target: "calendar"
+
+        function toggle(): void {
+            calendar.visible = !calendar.visible;
+        }
+
+        function next(): void {
+            calendar.shift(1);
+        }
+
+        function prev(): void {
+            calendar.shift(-1);
         }
     }
 

@@ -1,4 +1,5 @@
 import Quickshell
+import Quickshell.Io
 import QtQuick
 
 ShellRoot {
@@ -22,6 +23,15 @@ ShellRoot {
 
     Osd {
         id: osd
+    }
+
+    // `qs ipc call shell reload`: a config reload that keeps the running state
+    IpcHandler {
+        target: "shell"
+
+        function reload(): void {
+            Quickshell.reload(true);
+        }
     }
 
     // keyboard-driven states get the same notice as a volume change
