@@ -14,7 +14,6 @@ across machines with [chezmoi](https://www.chezmoi.io).
 | System | btop, fastfetch |
 | Desktop (Arch) | hyprland, quickshell |
 | Laptop (Debian) | hyprland, noctalia |
-| Theme | gruvbox |
 
 ## 🚀 Setup
 
