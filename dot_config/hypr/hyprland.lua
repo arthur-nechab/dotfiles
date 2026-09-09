@@ -26,7 +26,8 @@ local ALWAYS = sys.shell == "quickshell" and PER_SCREEN or 4
 -- no 1.75: no real resolution is divisible by it on both axes
 local SCALES = { 1, 1.25, 1.5, 2 }
 
--- nudge from the centre of the external row, in logical points; negative goes left
+-- nudge from the centre of the external row, in logical points; negative goes left.
+-- only applied with two or more externals
 local LAPTOP_SHIFT = -320
 
 -- the dpi rule would give 1.5, too little room. the lockscreen geometry in
@@ -85,7 +86,9 @@ local function arrange()
         local s = LAPTOP_SCALE
         -- centred under the whole external row: the cursor then crosses down from
         -- either screen, instead of from the left one only
-        local left = math.max(0, math.floor((x - math.floor(laptop.width / s)) / 2) + LAPTOP_SHIFT)
+        -- the nudge only means something across a row: under one screen, centred is aligned
+        local shift = #externals > 1 and LAPTOP_SHIFT or 0
+        local left = math.max(0, math.floor((x - math.floor(laptop.width / s)) / 2) + shift)
         hl.monitor({ output = laptop.name, mode = "preferred",
                      position = string.format("%dx%d", left, row_height), scale = s })
     end
