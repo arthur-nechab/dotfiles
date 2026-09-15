@@ -18,6 +18,7 @@ Library/
 # macOS or a Linux that .chezmoi.toml.tmpl does not know
 {{- if eq .system.shell "" }}
 .config/hypr/
+.config/systemd/
 .config/quickshell/
 .config/xdg-desktop-portal/
 .config/noctalia/

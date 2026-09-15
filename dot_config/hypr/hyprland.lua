@@ -265,6 +265,10 @@ hl.on("hyprland.start", function()
     -- the whole session environment, so portals and everything dbus starts
     -- see the same variables as hyprland itself
     hl.exec_cmd("dbus-update-activation-environment --systemd --all")
+    -- hyprland does not implement the XDG autostart spec, so nothing would run
+    -- the .desktop entries that other tools install in ~/.config/autostart;
+    -- hyprland-session.target pulls in the systemd targets that do
+    hl.exec_cmd("systemctl --user start hyprland-session.target")
     arrange()
     for _, cmd in ipairs(sh.autostart) do
         hl.exec_cmd(cmd)
