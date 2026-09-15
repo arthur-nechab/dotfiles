@@ -1,6 +1,7 @@
 README.md
 .config/niri/
 .local/state/noctalia/
+Library/
 
 {{- if eq .chezmoi.os "darwin" }}
 .config/fastfetch/
@@ -9,10 +10,7 @@ README.md
 .config/nvim/
 .config/scripts/
 .config/yazi/
-.config/zed/
 .local/share/nautilus/
-{{- else }}
-Library/
 {{- end }}
 
 # macOS or a Linux that .chezmoi.toml.tmpl does not know
