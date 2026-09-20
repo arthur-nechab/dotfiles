@@ -16,11 +16,11 @@ local sys = dofile(os.getenv("HOME") .. "/.config/hypr/system.lua")
 -- ── Workspace layout ─────────────────────────────────────────────────
 -- workspaces are global, so each screen owns a band: 1 to N on the main one,
 -- 11 to 10 + N on the second external, one workspace on the side screen
-local PER_SCREEN = sys.shell == "quickshell" and 4 or 8
+local PER_SCREEN = 8
 local SIDE_WS    = PER_SCREEN + 1
 
--- how many of each band stay in the bar while empty; quickshell keeps its whole row
-local ALWAYS = sys.shell == "quickshell" and PER_SCREEN or 4
+-- how many of each band stay in the bar while empty
+local ALWAYS = 4
 
 -- ── Monitors ─────────────────────────────────────────────────────────
 -- no 1.75: no real resolution is divisible by it on both axes

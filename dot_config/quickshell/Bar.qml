@@ -420,12 +420,27 @@ PanelWindow {
 
         MouseArea {
 
+            id: wsArea
+
             anchors.verticalCenter: parent.verticalCenter
             implicitWidth: wsRow.implicitWidth
             implicitHeight: wsRow.implicitHeight
 
+            // the band, plus any workspace that landed outside it on this screen
+            readonly property var ids: {
+                Hyprland.focusedWorkspace;
+                const mon = Hyprland.monitorFor(bar.screen);
+                const stray = Hyprland.workspaces.values
+                    .filter(w => w.id > 4 && w.monitor === mon)
+                    .map(w => w.id);
+                return [1, 2, 3, 4].concat(stray);
+            }
+
             function go(delta) {
-                const target = Math.max(1, Math.min(4, Hyprland.focusedWorkspace.id + delta));
+                const ids = wsArea.ids;
+                // this screen's workspace, not the focused one: the focus may sit on the side screen
+                const at = Math.max(0, ids.indexOf(Hyprland.monitorFor(bar.screen)?.activeWorkspace?.id));
+                const target = ids[Math.max(0, Math.min(ids.length - 1, at + delta))];
                 const l = Hyprland.workspaces.values;
                 for (let i = 0; i < l.length; i++) if (l[i].id === target) return l[i].activate();
                 Hyprland.dispatch("workspace " + target);
@@ -438,13 +453,13 @@ PanelWindow {
                 spacing: 4
 
                 Repeater {
-                    model: 4
+                    model: wsArea.ids
 
                     MouseArea {
                         id: ws
 
-                        required property int index
-                        readonly property int wsId: index + 1
+                        required property int modelData
+                        readonly property int wsId: modelData
                         readonly property var obj: {
                             Hyprland.focusedWorkspace;
                             const l = Hyprland.workspaces.values;

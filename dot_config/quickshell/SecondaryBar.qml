@@ -34,7 +34,7 @@ PanelWindow {
     // the workspace pinned to this monitor
     readonly property var ws: {
         Hyprland.focusedWorkspace;
-        return Hyprland.workspaces.values.find(w => w.id === 5) ?? null;
+        return Hyprland.workspaces.values.find(w => w.id === 9) ?? null;
     }
 
     component Pill: Rectangle {
@@ -62,7 +62,7 @@ PanelWindow {
 
         Label {
             anchors.verticalCenter: parent.verticalCenter
-            text: "5"
+            text: "9"
             color: bar.ws && bar.ws.focused ? Theme.yellow : (bar.ws && bar.ws.active ? Theme.fg : Theme.gray)
             font.pixelSize: 14
             font.bold: true
