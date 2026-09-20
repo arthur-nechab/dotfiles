@@ -5,9 +5,8 @@ import QtQuick
 PopupWindow {
     id: usbPopup
 
-    // the bar button the popup hangs from, and the bar's side and screen
+    // the bar button the popup hangs from, and the bar's screen
     required property Item anchorItem
-    property bool atTop: true
     property var clickScreen: null
 
     // the lsblk rows the bar keeps, and the signal that asks for a fresh read
@@ -21,8 +20,8 @@ PopupWindow {
 
 
     anchor.item: usbPopup.anchorItem
-    anchor.edges: usbPopup.atTop ? Edges.Bottom : Edges.Top
-    anchor.gravity: usbPopup.atTop ? Edges.Bottom : Edges.Top
+    anchor.edges: Edges.Bottom
+    anchor.gravity: Edges.Bottom
     anchor.margins.top: 7
     implicitWidth: 300
     implicitHeight: 36 + Math.max(1, usbColumn.implicitHeight)

@@ -252,10 +252,8 @@ QSplitter::handle {{ background: transparent; }}
                     f"general={font}\n"
                     'fixed="BerkeleyMono Nerd Font,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"\n'
                     "\n[Interface]\n"
-                    f"stylesheets=@Invalid()\n")
-    # the list is written raw: qt6ct stores it as a QStringList
-    main.write_text(main.read_text().replace(
-        "stylesheets=@Invalid()", f"stylesheets={qss}"))
+                    # written raw: qt6ct stores it as a QStringList
+                    f"stylesheets={qss}\n")
 
 
 def apply_gnome(accent):

@@ -13,9 +13,6 @@ import QtQuick.Controls
 PanelWindow {
     id: bar
 
-    // test position; flip to true to move the bar back to the top
-    property bool atTop: true
-
     signal notificationsToggle
     signal dndToggle
     signal audioToggle
@@ -45,8 +42,7 @@ PanelWindow {
     anchors {
         left: true
         right: true
-        top: bar.atTop
-        bottom: !bar.atTop
+        top: true
     }
 
     // gaps_out 10 plus the 1px border: windows sit at 11 and end at 2549
@@ -150,8 +146,8 @@ PanelWindow {
         id: tooltip
 
         anchor.item: tipDelay.owner
-        anchor.edges: bar.atTop ? Edges.Bottom : Edges.Top
-        anchor.gravity: bar.atTop ? Edges.Bottom : Edges.Top
+        anchor.edges: Edges.Bottom
+        anchor.gravity: Edges.Bottom
         anchor.margins.top: 4
         implicitWidth: tipText.implicitWidth + 28
         implicitHeight: tipText.implicitHeight + 18
@@ -246,12 +242,6 @@ PanelWindow {
         property string iface: ""
         property string ip: ""
     }
-
-    // shared readings live in System; the bar keeps what only it draws
-    readonly property var cpu: System.cpu
-    readonly property var ram: System.ram
-    readonly property var gpu: System.gpu
-    readonly property var llm: System.llm
 
     Process {
         id: probes
@@ -500,10 +490,10 @@ PanelWindow {
             acceptedButtons: Qt.RightButton
             onClicked: bar.run("ghostty -e btop")
             property bool monoTip: true
-            property string tip: "CPU  " + Math.round(cpu.usage * 100) + "%  \u00b7  " + cpu.temp + "\u00b0C  \u00b7  load " + cpu.load
-                + "\nGPU  " + gpu.usage + "%  \u00b7  " + gpu.temp + "\u00b0C  \u00b7  VRAM " + gpu.vramUsedGb.toFixed(1) + " / " + gpu.vramTotalGb.toFixed(0) + " GB"
-                + (llm.loaded ? "  (" + llm.vramGb.toFixed(1) + " GB model)" : "")
-                + "\nRAM  " + ram.usedGb.toFixed(1) + " / " + ram.totalGb.toFixed(0) + " GB  \u00b7  " + Math.round(ram.usage * 100) + "%"
+            property string tip: "CPU  " + Math.round(System.cpu.usage * 100) + "%  \u00b7  " + System.cpu.temp + "\u00b0C  \u00b7  load " + System.cpu.load
+                + "\nGPU  " + System.gpu.usage + "%  \u00b7  " + System.gpu.temp + "\u00b0C  \u00b7  VRAM " + System.gpu.vramUsedGb.toFixed(1) + " / " + System.gpu.vramTotalGb.toFixed(0) + " GB"
+                + (System.llm.loaded ? "  (" + System.llm.vramGb.toFixed(1) + " GB model)" : "")
+                + "\nRAM  " + System.ram.usedGb.toFixed(1) + " / " + System.ram.totalGb.toFixed(0) + " GB  \u00b7  " + Math.round(System.ram.usage * 100) + "%"
             onContainsMouseChanged: containsMouse ? tipDelay.show(this) : tipDelay.hide(this)
 
             Row {
@@ -525,7 +515,7 @@ PanelWindow {
 
                     Label {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: Math.round(cpu.usage * 100) + "%"
+                        text: Math.round(System.cpu.usage * 100) + "%"
                         color: Theme.green
                         font.pixelSize: 14
                         font.bold: true
@@ -538,7 +528,7 @@ PanelWindow {
 
                     Label {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: llm.loaded ? "\u{f06a9}" : "\u{f08ae}"
+                        text: System.llm.loaded ? "\u{f06a9}" : "\u{f08ae}"
                         color: Theme.purple
                         font.pixelSize: 16
                         font.bold: true
@@ -546,7 +536,7 @@ PanelWindow {
 
                     Label {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: gpu.usage + "%"
+                        text: System.gpu.usage + "%"
                         color: Theme.purple
                         font.pixelSize: 14
                         font.bold: true
@@ -567,7 +557,7 @@ PanelWindow {
 
                     Label {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: ram.usedGb.toFixed(1) + "G"
+                        text: System.ram.usedGb.toFixed(1) + "G"
                         color: Theme.blue
                         font.pixelSize: 14
                         font.bold: true
@@ -684,27 +674,23 @@ PanelWindow {
     CalendarPopup {
         id: calendar
         anchorItem: dateBtn
-        atTop: bar.atTop
         clickScreen: bar.screen
     }
 
     TrayMenu {
         id: trayMenu
         anchorItem: trayMenu.source ?? dateBtn
-        atTop: bar.atTop
     }
 
     WeatherPopup {
         id: weatherPopup
         anchorItem: weatherBtn
-        atTop: bar.atTop
         clickScreen: bar.screen
     }
 
     UsbPopup {
         id: usbPopup
         anchorItem: usbBtn
-        atTop: bar.atTop
         clickScreen: bar.screen
         devices: usb.devices
         onRefresh: usbProbe.rerun()

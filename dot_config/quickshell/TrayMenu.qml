@@ -5,9 +5,8 @@ import QtQuick
 PopupWindow {
     id: trayMenu
 
-    // the bar button the popup hangs from, and the bar's side and screen
+    // the bar button the popup hangs from, and the bar's screen
     required property Item anchorItem
-    property bool atTop: true
     property var clickScreen: null
 
 
@@ -15,8 +14,8 @@ PopupWindow {
     property Item source: null
 
     anchor.item: source
-    anchor.edges: trayMenu.atTop ? Edges.Bottom : Edges.Top
-    anchor.gravity: trayMenu.atTop ? Edges.Bottom : Edges.Top
+    anchor.edges: Edges.Bottom
+    anchor.gravity: Edges.Bottom
     anchor.margins.top: 7
     implicitWidth: 230
     implicitHeight: menuColumn.implicitHeight + 32

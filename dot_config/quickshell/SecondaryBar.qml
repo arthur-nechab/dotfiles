@@ -5,7 +5,6 @@ import QtQuick
 PanelWindow {
     id: bar
 
-    property bool atTop: true
     // bound to Notifications.dnd in shell.qml
     property bool dnd: false
 
@@ -20,8 +19,7 @@ PanelWindow {
     anchors {
         left: true
         right: true
-        top: bar.atTop
-        bottom: !bar.atTop
+        top: true
     }
 
     margins {
