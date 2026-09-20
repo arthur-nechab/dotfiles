@@ -24,9 +24,8 @@ PanelWindow {
     readonly property var actions: [
         { icon: "\u{f033e}", label: "Lock",      key: "l", color: Theme.blue,   cmd: "" },
         { icon: "\u{f0343}", label: "Log out",   key: "o", color: Theme.yellow, cmd: "loginctl terminate-session $XDG_SESSION_ID" },
-        { icon: "\u{f0904}", label: "Suspend",   key: "s", color: Theme.purple, cmd: "systemctl suspend" },
         { icon: "\u{f0709}", label: "Reboot",    key: "r", color: Theme.orange, cmd: "systemctl reboot" },
-        { icon: "\u{f0425}", label: "Shut down", key: "p", color: Theme.red,    cmd: "systemctl poweroff" }
+        { icon: "\u{f0425}", label: "Shut down", key: "s", color: Theme.red,    cmd: "systemctl poweroff" }
     ]
 
     property int current: 0
@@ -49,7 +48,7 @@ PanelWindow {
         if (!a)
             return;
         // reboot and shut down ask twice; the others are cheap to undo
-        if (i >= 3 && armed !== i) {
+        if (i >= 2 && armed !== i) {
             armed = i;
             return;
         }
@@ -90,7 +89,7 @@ PanelWindow {
             Keys.onTabPressed: menu.current = (menu.current + 1) % menu.actions.length
             Keys.onReturnPressed: menu.run(menu.current)
             Keys.onEnterPressed: menu.run(menu.current)
-            // l, o, s, r, p go straight to the action; the two red ones still ask twice
+            // l, o, r, s go straight to the action; the two red ones still ask twice
             Keys.onPressed: event => {
                 const i = menu.actions.findIndex(a => a.key === event.text.toLowerCase());
                 if (i < 0)
