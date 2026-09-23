@@ -466,6 +466,9 @@ hl.window_rule({ match = { class = "com.saivert.pwvucontrol" }, float = true })
 -- file chooser is tiled by default and reads better as a floating sheet
 hl.window_rule({ match = { float = true, title = "negative:^vlc$" }, center = true })
 hl.window_rule({ match = { class = "xdg-desktop-portal-gtk" }, float = true, center = true, size = "1200 800" })
+-- chromium browsers draw their screen-share banner as a toplevel with no app-id
+-- and Hide does nothing; park it out of sight instead of closing it
+hl.window_rule({ match = { class = "^$", title = ".* is sharing .*" }, workspace = "special:hidden silent" })
 hl.window_rule({ match = { class = ".*" }, suppress_event = "maximize" })
 
 -- ── Noctalia colors ──────────────────────────────────────────────────
