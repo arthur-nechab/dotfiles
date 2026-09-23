@@ -1,0 +1,9 @@
+#!/bin/sh
+# capture a region, copy it, then open swappy to annotate and blur it;
+# the region comes from the argument ("x,y wxh") or from slurp
+set -o pipefail
+selection=${1:-$(slurp 2>/dev/null)} || exit 0
+[ -z "$selection" ] && exit 0
+
+grim -g "$selection" - | wl-copy -t image/png || exit 1
+wl-paste -t image/png | swappy -f -

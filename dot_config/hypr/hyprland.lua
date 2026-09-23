@@ -179,7 +179,7 @@ local shells = {
         notifications = "noctalia msg panel-toggle notification-history",
         dnd       = "noctalia msg notification-dnd-toggle",
         record    = "noctalia msg plugin 'noctalia/screen_recorder:service' all toggle",
-        region    = "noctalia msg screenshot-region",
+        region    = scripts .. "shot",
         -- noctalia has no per-window capture; the key picks an output instead
         window    = "noctalia msg screenshot-fullscreen pick",
         output    = "noctalia msg screenshot-fullscreen",
@@ -232,7 +232,7 @@ local shells = {
         dnd       = "qs ipc call notifications dnd",
         nightlight = "qs ipc call nightlight toggle",
         record    = scripts .. "record",
-        region    = "qs ipc call screenshot region",
+        region    = scripts .. "shot",
         window    = "qs ipc call screenshot window",
         output    = "qs ipc call screenshot output",
         ocr       = "qs ipc call screenshot ocr",
