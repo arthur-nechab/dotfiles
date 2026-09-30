@@ -47,6 +47,10 @@ custom_schedule = true
 sunrise = "07:30"
 sunset = "20:30"
 
+[lockscreen]
+transition = [ "fade" ]
+transition_duration = 0
+
 {{- /* output, logical width, logical height: the size hypr/hyprland.lua gives each
      screen after its scale. change both files together. */ -}}
 {{- $outputs := list (list "eDP-1" 1536 960) (list "DVI-I-1" 1920 1080) (list "DVI-I-2" 1920 1080) }}
