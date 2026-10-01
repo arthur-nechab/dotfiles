@@ -47,6 +47,8 @@ end
 local function is_laptop(m) return m.name:match("^eDP") or m.name:match("^LVDS") end
 
 local ws_rules = {}
+-- what the last arrange placed: every workspace id, and the default of each screen
+local placed, defaults = {}, {}
 
 -- roles, refreshed on every hotplug
 local plan = {}
@@ -105,8 +107,11 @@ local function arrange()
 
     for _, r in ipairs(ws_rules) do r:set_enabled(false) end
     ws_rules = {}
+    placed, defaults = {}, {}
 
     local function place(ws, monitor, default, persist)
+        placed[ws] = true
+        if default then defaults[monitor] = ws end
         ws_rules[#ws_rules + 1] = hl.workspace_rule({
             workspace = tostring(ws), monitor = monitor, default = default, persistent = persist,
         })
@@ -123,7 +128,16 @@ end
 
 -- on a reload the monitors are already up; on a cold start they are not yet
 arrange()
-hl.on("monitor.added",   arrange)
+-- a screen that connects while the others still hold every band opens on the
+-- first free id, outside all of them: bring its default workspace over
+hl.on("monitor.added", function(m)
+    arrange()
+    local ws, def = m.active_workspace, defaults[m.name]
+    if ws and def and not placed[ws.id] then
+        hl.dispatch(hl.dsp.workspace.move({ workspace = def, monitor = m.name }))
+        hl.dispatch(hl.dsp.focus({ workspace = def }))
+    end
+end)
 hl.on("monitor.removed", arrange)
 
 local local_lua = os.getenv("HOME") .. "/.config/hypr/local.lua"
