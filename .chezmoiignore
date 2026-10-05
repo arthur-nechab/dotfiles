@@ -9,6 +9,7 @@ Library/
 .config/gtk-4.0/
 .config/nvim/
 .config/scripts/
+.config/swappy/
 .config/yazi/
 .local/share/nautilus/
 {{- end }}
