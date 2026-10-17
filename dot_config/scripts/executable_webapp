@@ -10,6 +10,8 @@ icon=$3
 
 [ -z "$url" ] && { echo "usage: webapp <name> <url> [icon-url-or-file]" >&2; exit 1; }
 
+# Exec= reads % as a field code, and \ " ` $ as special characters inside quotes
+exec_url=$(printf '%s' "$url" | sed -e 's/\\/\\\\\\\\/g' -e 's/["`$]/\\\\&/g' -e 's/%/%%/g')
 class=webapp-$(printf '%s' "$name" | tr '[:upper:] ' '[:lower:]-')
 dir=$HOME/.local/share/applications
 icons=$HOME/.local/share/icons/hicolor/256x256/apps
@@ -31,7 +33,7 @@ cat > "$dir/$class.desktop" <<DESKTOP
 Type=Application
 Name=$name
 GenericName=Web app
-Exec=$browser --app="$url" --class=$class
+Exec=$browser --app="$exec_url" --class=$class
 Icon=$iconname
 StartupWMClass=$class
 Categories=Network;
