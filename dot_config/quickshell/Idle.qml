@@ -23,6 +23,6 @@ Scope {
         timeout: 2100
         enabled: !root.playing
         respectInhibitors: true
-        onIsIdleChanged: Hyprland.dispatch(isIdle ? "dpms off" : "dpms on")
+        onIsIdleChanged: Hyprland.dispatch(`hl.dsp.dpms({ action = "${isIdle ? "off" : "on"}" })`)
     }
 }

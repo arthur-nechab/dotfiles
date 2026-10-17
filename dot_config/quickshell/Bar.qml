@@ -433,7 +433,7 @@ PanelWindow {
                 const target = ids[Math.max(0, Math.min(ids.length - 1, at + delta))];
                 const l = Hyprland.workspaces.values;
                 for (let i = 0; i < l.length; i++) if (l[i].id === target) return l[i].activate();
-                Hyprland.dispatch("workspace " + target);
+                Hyprland.dispatch(`hl.dsp.focus({ workspace = ${target} })`);
             }
 
             onWheel: wheel => go(wheel.angleDelta.y > 0 ? -1 : 1)
@@ -459,7 +459,7 @@ PanelWindow {
                         width: 22
                         height: 28
                         hoverEnabled: true
-                        onClicked: obj ? obj.activate() : Hyprland.dispatch("workspace " + wsId)
+                        onClicked: obj ? obj.activate() : Hyprland.dispatch(`hl.dsp.focus({ workspace = ${wsId} })`)
 
                         Rectangle {
                             anchors.fill: parent
