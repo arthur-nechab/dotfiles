@@ -85,14 +85,13 @@ local function arrange()
         row_height = math.max(row_height, math.floor(m.height / s))
     end
     if laptop then
-        local s = LAPTOP_SCALE
         -- centred under the whole external row: the cursor then crosses down from
         -- either screen, instead of from the left one only
         -- the nudge only means something across a row: under one screen, centred is aligned
         local shift = #externals > 1 and LAPTOP_SHIFT or 0
-        local left = math.max(0, math.floor((x - math.floor(laptop.width / s)) / 2) + shift)
+        local left = math.max(0, math.floor((x - math.floor(laptop.width / LAPTOP_SCALE)) / 2) + shift)
         hl.monitor({ output = laptop.name, mode = "preferred",
-                     position = string.format("%dx%d", left, row_height), scale = s })
+                     position = string.format("%dx%d", left, row_height), scale = LAPTOP_SCALE })
     end
 
     plan.main   = externals[1] and externals[1].name or laptop.name
@@ -162,7 +161,6 @@ if nvidia then
     hl.env("NVD_BACKEND",                "direct")
     hl.env("AQ_DRM_DEVICES",             "/dev/dri/nvidia")
 
-    -- G-Sync and VRR at driver level
     hl.env("__GL_GSYNC_ALLOWED", "1")
     hl.env("__GL_VRR_ALLOWED",   "1")
 end
@@ -292,21 +290,17 @@ end)
 -- ── Config ───────────────────────────────────────────────────────────
 hl.config({
     general = {
-        gaps_in     = 5,
         gaps_out    = 10,
-        border_size = 1,
         col = {
             active_border   = { colors = { "rgba(928374aa)", "rgba(a89984aa)" }, angle = 45 },
             inactive_border = "rgba(45475aaa)",
         },
-        layout           = "dwindle",
         resize_on_border = true,
     },
 
     input = {
         kb_layout          = "fr",
         numlock_by_default = true,
-        follow_mouse       = 1,
         sensitivity        = -0.1,
         accel_profile      = "flat",
     },
@@ -314,20 +308,8 @@ hl.config({
     decoration = {
         rounding = 10,
         blur = {
-            enabled = true,
-            size    = 6,
-            passes  = 1,
+            size = 6,
         },
-        shadow = {
-            enabled      = true,
-            range        = 4,
-            render_power = 3,
-            color        = "rgba(1a1a1aee)",
-        },
-    },
-
-    animations = {
-        enabled = true,
     },
 
     dwindle = {
@@ -394,17 +376,11 @@ hl.bind(mod .. " + X", hl.dsp.layout("togglesplit"))
 hl.bind(mod .. " + L", hl.dsp.exec_cmd(sh.lock))
 hl.bind(mod .. " + SHIFT + Q", hl.dsp.exec_cmd(sh.powermenu))
 
--- ── Focus ────────────────────────────────────────────────────────────
-hl.bind(mod .. " + left", hl.dsp.focus({ direction = "l" }))
-hl.bind(mod .. " + right", hl.dsp.focus({ direction = "r" }))
-hl.bind(mod .. " + up", hl.dsp.focus({ direction = "u" }))
-hl.bind(mod .. " + down", hl.dsp.focus({ direction = "d" }))
-
--- ── Move windows ─────────────────────────────────────────────────────
-hl.bind(mod .. " + SHIFT + left", hl.dsp.window.move({ direction = "l" }))
-hl.bind(mod .. " + SHIFT + right", hl.dsp.window.move({ direction = "r" }))
-hl.bind(mod .. " + SHIFT + up", hl.dsp.window.move({ direction = "u" }))
-hl.bind(mod .. " + SHIFT + down", hl.dsp.window.move({ direction = "d" }))
+-- ── Focus / move windows ─────────────────────────────────────────────
+for key, d in pairs({ left = "l", right = "r", up = "u", down = "d" }) do
+    hl.bind(mod .. " + " .. key, hl.dsp.focus({ direction = d }))
+    hl.bind(mod .. " + SHIFT + " .. key, hl.dsp.window.move({ direction = d }))
+end
 
 -- ── Workspaces ───────────────────────────────────────────────────────
 -- the number keys, by keycode: this azerty layout puts a symbol on their first level
