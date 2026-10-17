@@ -1,3 +1,6 @@
+[audio]
+enable_sounds = false
+
 [backdrop]
 enabled = true
 blur_intensity = 0.6
@@ -28,6 +31,10 @@ shortcuts = [
 
 [control_center.calendar]
 show_events_card = false
+show_week_numbers = true
+
+[notification]
+follow_focused_output = true
 
 [idle]
 pre_action_fade_seconds = 0
@@ -50,6 +57,9 @@ action = "reboot"
 
 [[shell.session.actions]]
 action = "shutdown"
+
+[osd]
+follow_focused_output = true
 
 [location]
 auto_locate = true
@@ -130,6 +140,9 @@ settings_show_advanced = false
     speed = 1.5
 
     [shell.launcher]
+    layout = "simple"
+    categories = false
+    show_app_origin_indicator = false
     compact = true
     sort_by_usage = true
     auto_paste = "auto"
