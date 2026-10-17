@@ -11,7 +11,6 @@ Scope {
     property bool dragging: false
     // "shot" saves an image, "ocr" copies the text it reads
     property string mode: "shot"
-    readonly property color accent: mode === "ocr" ? Theme.aqua : Theme.orange
     // kept in compositor coordinates: grim -g wants the global layout, not a screen
     property real x0: 0
     property real y0: 0
@@ -47,8 +46,8 @@ Scope {
     property int frozenAt: 0
     readonly property string freezeDir: Quickshell.env("XDG_RUNTIME_DIR") + "/quickshell-freeze"
 
-    function start(mode) {
-        root.mode = mode;
+    function start() {
+        root.mode = "ocr";
         Hyprland.refreshToplevels();
         dragging = false;
         freeze.command = ["sh", "-c", "mkdir -p " + JSON.stringify(freezeDir) + " && "
@@ -109,12 +108,8 @@ Scope {
     IpcHandler {
         target: "screenshot"
 
-        function region(): void {
-            root.start("shot");
-        }
-
         function ocr(): void {
-            root.start("ocr");
+            root.start();
         }
 
         function window(): void {
@@ -128,12 +123,6 @@ Scope {
             root.mode = "shot";
             if (Hyprland.focusedMonitor)
                 root.shoot("", Hyprland.focusedMonitor.name);
-        }
-
-        // the overlay takes an exclusive keyboard grab, so it needs a way out
-        // that does not depend on the overlay itself still answering keys
-        function cancel(): void {
-            root.cancel();
         }
     }
 
@@ -247,7 +236,7 @@ Scope {
                 height: root.selH
                 color: "transparent"
                 border.width: 1
-                border.color: root.accent
+                border.color: Theme.aqua
             }
 
             // the window a click would take
@@ -258,9 +247,9 @@ Scope {
                 width: root.hovered ? root.hovered.size[0] : 0
                 height: root.hovered ? root.hovered.size[1] : 0
                 radius: 10
-                color: Qt.alpha(root.accent, 0.08)
+                color: Qt.alpha(Theme.aqua, 0.08)
                 border.width: 2
-                border.color: root.accent
+                border.color: Theme.aqua
             }
 
             Rectangle {
@@ -276,7 +265,7 @@ Scope {
                     id: size
                     anchors.centerIn: parent
                     text: root.selW + " × " + root.selH
-                    color: root.accent
+                    color: Theme.aqua
                     font.pixelSize: 12
                     font.bold: true
                 }

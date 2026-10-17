@@ -105,12 +105,4 @@ Scope {
     }
 
     onPathChanged: if (root.path !== "") theming.running = true
-
-    IpcHandler {
-        target: "theme"
-
-        function refresh(): void {
-            Quickshell.execDetached([Quickshell.env("HOME") + "/.config/scripts/theme-from-wallpaper", "--force"]);
-        }
-    }
 }

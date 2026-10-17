@@ -39,15 +39,38 @@ Scope {
         root.popups = root.popups.filter(n => n.id !== id);
     }
 
+    // an image thumbnail, the app icon, or a plain bell
+    component NotifIcon: ClippingRectangle {
+        required property var n
+        property int size: 32
+        property int bell: 16
+        readonly property bool hasArt: n.image !== "" || n.appIcon !== ""
+
+        width: size
+        height: size
+        radius: 8
+        color: hasArt ? "transparent" : Qt.alpha(Theme.gray, 0.15)
+
+        IconImage {
+            anchors.fill: parent
+            visible: parent.hasArt
+            source: parent.n.image !== "" ? parent.n.image : Quickshell.iconPath(parent.n.appIcon, "")
+        }
+
+        Label {
+            anchors.centerIn: parent
+            visible: !parent.hasArt
+            text: "\u{f009a}"
+            color: Theme.gray
+            font.pixelSize: parent.bell
+        }
+    }
+
     NotificationServer {
         id: server
 
-        keepOnReload: true
-        bodySupported: true
         bodyMarkupSupported: true
-        bodyImagesSupported: true
         actionsSupported: true
-        actionIconsSupported: true
         imageSupported: true
         inlineReplySupported: true
         persistenceSupported: true
@@ -143,30 +166,11 @@ Scope {
                         anchors.rightMargin: 12
                         spacing: 12
 
-                        ClippingRectangle {
-                            id: popArt
-
-                            readonly property bool hasArt: modelData.image !== "" || modelData.appIcon !== ""
-
+                        NotifIcon {
                             anchors.verticalCenter: parent.verticalCenter
-                            width: 32
-                            height: 32
-                            radius: 8
-                            color: hasArt ? "transparent" : Qt.alpha(Theme.gray, 0.15)
-
-                            IconImage {
-                                anchors.fill: parent
-                                visible: popArt.hasArt
-                                source: modelData.image !== "" ? modelData.image : Quickshell.iconPath(modelData.appIcon, "")
-                            }
-
-                            Label {
-                                anchors.centerIn: parent
-                                visible: !popArt.hasArt
-                                text: "\u{f009a}"
-                                color: Theme.gray
-                                font.pixelSize: 16
-                            }
+                            n: modelData
+                            size: 32
+                            bell: 16
                         }
 
                         Column {
@@ -252,25 +256,15 @@ Scope {
     }
 
     function age(id) {
-        ageTick.tick;
         const t = root.seen[id];
         if (!t)
             return "";
-        const m = Math.round((Date.now() - t) / 60000);
+        const m = Math.round((Theme.now - t) / 60000);
         if (m < 1)
             return "now";
         if (m < 60)
             return m + " min";
         return Math.round(m / 60) + " h";
-    }
-
-    Timer {
-        id: ageTick
-        property int tick: 0
-        interval: 30000
-        running: center.visible
-        repeat: true
-        onTriggered: tick += 1
     }
 
     PanelWindow {
@@ -425,7 +419,6 @@ Scope {
                         required property int index
                         readonly property bool selected: root.navigating && root.sel === index
                         readonly property var n: modelData.n
-                        readonly property bool hasArt: n.image !== "" || n.appIcon !== ""
 
                         width: ListView.view.width
                         height: Math.max(56, histRow.implicitHeight + 16)
@@ -457,28 +450,11 @@ Scope {
                             spacing: 10
 
                             // an image thumbnail, the app icon, or a plain bell
-                            ClippingRectangle {
+                            NotifIcon {
                                 anchors.verticalCenter: parent.verticalCenter
-                                width: 36
-                                height: 36
-                                radius: 8
-                                color: row.hasArt ? "transparent" : Qt.alpha(Theme.gray, 0.15)
-
-                                IconImage {
-                                    anchors.fill: parent
-                                    visible: row.hasArt
-                                    source: row.n.image !== ""
-                                        ? row.n.image
-                                        : Quickshell.iconPath(row.n.appIcon, "")
-                                }
-
-                                Label {
-                                    anchors.centerIn: parent
-                                    visible: !row.hasArt
-                                    text: "\u{f009a}"
-                                    color: Theme.gray
-                                    font.pixelSize: 17
-                                }
+                                n: row.n
+                                size: 36
+                                bell: 17
                             }
 
                             Column {

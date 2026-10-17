@@ -1,5 +1,4 @@
 import Quickshell
-import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Widgets
 import Quickshell.Services.Mpris
@@ -67,14 +66,6 @@ PanelWindow {
         repeat: true
         triggeredOnStart: true
         onTriggered: panel.pos = panel.player.position
-    }
-
-    IpcHandler {
-        target: "media"
-
-        function toggle(): void {
-            panel.toggle();
-        }
     }
 
     Rectangle {

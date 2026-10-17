@@ -2,27 +2,16 @@ import Quickshell
 import QtQuick
 
 // the menu of one tray item; the bar sets handle and source then shows it
-PopupWindow {
+BarPopup {
     id: trayMenu
-
-    // the bar button the popup hangs from, and the bar's screen
-    required property Item anchorItem
-    property var clickScreen: null
-
 
     property var handle: null
     property Item source: null
 
     anchor.item: source
-    anchor.edges: Edges.Bottom
-    anchor.gravity: Edges.Bottom
-    anchor.margins.top: 7
     implicitWidth: 230
     implicitHeight: menuColumn.implicitHeight + 32
-    color: "transparent"
-    visible: false
     grabFocus: true
-
 
     QsMenuOpener {
         id: menuOpener

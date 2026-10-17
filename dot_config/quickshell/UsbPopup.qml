@@ -2,12 +2,8 @@ import Quickshell
 import QtQuick
 
 // removable volumes: a click mounts or unmounts, a right click browses
-PopupWindow {
+BarPopup {
     id: usbPopup
-
-    // the bar button the popup hangs from, and the bar's screen
-    required property Item anchorItem
-    property var clickScreen: null
 
     // the lsblk rows the bar keeps, and the signal that asks for a fresh read
     required property var devices
@@ -18,15 +14,8 @@ PopupWindow {
         Quickshell.execDetached(["sh", "-c", cmd]);
     }
 
-
-    anchor.item: usbPopup.anchorItem
-    anchor.edges: Edges.Bottom
-    anchor.gravity: Edges.Bottom
-    anchor.margins.top: 7
     implicitWidth: 300
     implicitHeight: 36 + Math.max(1, usbColumn.implicitHeight)
-    color: "transparent"
-    visible: false
 
     // udisks answers before the mount point shows up in lsblk
     Timer {

@@ -87,6 +87,49 @@ Singleton {
 
     property bool netbird: false
 
+    // default route, read from /proc/net/route; the source address is read when the interface changes
+    property string linkIface: ""
+    property string linkIp: ""
+    property string linkGateway: ""
+
+    onLinkIfaceChanged: {
+        ipProbe.running = false;
+        ipProbe.running = true;
+    }
+
+    FileView {
+        id: routeFile
+        path: "/proc/net/route"
+        onLoaded: {
+            for (const l of text().split("\n").slice(1)) {
+                const f = l.split(/\s+/);
+                if (f[1] === "00000000") {
+                    root.linkGateway = f[2] === "00000000" ? "" : f[2].match(/../g).reverse().map(h => parseInt(h, 16)).join(".");
+                    root.linkIface = f[0];
+                    return;
+                }
+            }
+            root.linkGateway = "";
+            root.linkIface = "";
+        }
+    }
+
+    Timer {
+        interval: 2000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: routeFile.reload()
+    }
+
+    Process {
+        id: ipProbe
+        command: ["sh", "-c", "ip -4 -o route get 1.1.1.1 2>/dev/null | sed -n 's/.* src \\([0-9.]*\\).*/\\1/p'"]
+        stdout: StdioCollector {
+            onStreamFinished: root.linkIp = this.text.trim()
+        }
+    }
+
     FileView {
         id: memFile
         path: "/proc/meminfo"

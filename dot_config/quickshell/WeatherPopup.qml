@@ -1,23 +1,11 @@
-import Quickshell
 import QtQuick
 
 // the home assistant sensors under the weather reading
-PopupWindow {
+BarPopup {
     id: weatherPopup
 
-    // the bar button the popup hangs from, and the bar's screen
-    required property Item anchorItem
-    property var clickScreen: null
-
-
-    anchor.item: weatherPopup.anchorItem
-    anchor.edges: Edges.Bottom
-    anchor.gravity: Edges.Bottom
-    anchor.margins.top: 7
     implicitWidth: 240
     implicitHeight: 38 + column.implicitHeight
-    color: "transparent"
-    visible: false
 
     ClickAway {
         target: weatherPopup

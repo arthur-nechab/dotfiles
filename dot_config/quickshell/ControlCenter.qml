@@ -234,10 +234,6 @@ PanelWindow {
     property bool wifiPowered: true
 
     // ── Link ─────────────────────────────────────────────────────────────
-    // the interface that carries the default route, wifi or not
-    property string linkIface: ""
-    property string linkIp: ""
-    property string linkGateway: ""
     property real ping: -1
     property int loss: -1
     property real rxRate: 0
@@ -245,7 +241,11 @@ PanelWindow {
     property real rxTotal: 0
     property real txTotal: 0
     property var prevDev: null
-    onLinkIfaceChanged: prevDev = null
+
+    Connections {
+        target: System
+        function onLinkIfaceChanged() { cc.prevDev = null; }
+    }
 
     readonly property var currentNet: networks.find(x => x.current) ?? null
     readonly property string currentSsid: currentNet ? currentNet.ssid : ""
@@ -262,19 +262,12 @@ PanelWindow {
         return (i === 0 ? b.toFixed(0) : b.toFixed(b < 10 ? 2 : 1)) + " " + u[i] + unit;
     }
 
-    // one shell round: the route on its first line, then ping's two summary lines
     Process {
         id: linkProbe
-        command: ["sh", "-c",
-            "ip -4 -o route show default | head -1; echo;"
-            + "ping -q -c 3 -i 0.2 -W 1 1.1.1.1 2>/dev/null | tail -2"]
+        command: ["sh", "-c", "ping -q -c 3 -i 0.2 -W 1 1.1.1.1 2>/dev/null | tail -2"]
         stdout: StdioCollector {
             onStreamFinished: {
                 const t = this.text;
-                const r = t.match(/via (\S+) dev (\S+).*? src (\S+)/);
-                cc.linkGateway = r ? r[1] : "";
-                cc.linkIface = r ? r[2] : "";
-                cc.linkIp = r ? r[3] : "";
                 const l = t.match(/(\d+)% packet loss/);
                 cc.loss = l ? parseInt(l[1]) : 100;
                 const a = t.match(/rtt [^=]+= [\d.]+\/([\d.]+)/);
@@ -300,8 +293,8 @@ PanelWindow {
         id: devFile
         path: "/proc/net/dev"
         onLoaded: {
-            const line = text().split("\n").find(x => x.trim().startsWith(cc.linkIface + ":"));
-            if (!line || cc.linkIface === "")
+            const line = text().split("\n").find(x => x.trim().startsWith(System.linkIface + ":"));
+            if (!line || System.linkIface === "")
                 return;
             const f = line.split(":")[1].trim().split(/\s+/).map(Number);
             const now = Date.now();
@@ -578,6 +571,54 @@ PanelWindow {
         }
     }
 
+    // default device row: the node may be null while pipewire settles
+    component VolumeRow: Row {
+        id: vol
+
+        property var node: null
+        property color accent: Theme.purple
+        property string onGlyph: ""
+        property string offGlyph: ""
+        readonly property bool ready: !!node && !!node.audio
+        readonly property real level: ready ? node.audio.volume : 0
+        readonly property bool muted: ready && node.audio.muted
+
+        width: parent.width
+        spacing: 10
+
+        MouseArea {
+            anchors.verticalCenter: parent.verticalCenter
+            width: 26
+            height: 26
+            onClicked: if (vol.ready) vol.node.audio.muted = !vol.muted
+
+            Label {
+                anchors.centerIn: parent
+                text: vol.muted ? vol.offGlyph : vol.onGlyph
+                color: vol.muted ? Theme.red : vol.accent
+                font.pixelSize: 16
+                font.bold: true
+            }
+        }
+
+        Slider {
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width - 90
+            accent: vol.accent
+            value: vol.level
+            onMoved: v => { if (vol.ready) vol.node.audio.volume = v; }
+        }
+
+        Label {
+            anchors.verticalCenter: parent.verticalCenter
+            width: 40
+            text: Math.round(vol.level * 100) + "%"
+            color: Theme.fg
+            font.pixelSize: 12
+            font.bold: true
+        }
+    }
+
     component Section: Label {
         color: Theme.gray
         font.pixelSize: 11
@@ -612,6 +653,7 @@ PanelWindow {
         property string label: ""
         property string value: ""
 
+        width: (parent.width - 24) / 2
         height: 18
 
         Label {
@@ -717,41 +759,10 @@ PanelWindow {
 
                 Section { text: "OUTPUT" }
 
-                Row {
-                    width: parent.width
-                    spacing: 10
-
-                    MouseArea {
-                        readonly property var sink: Pipewire.defaultAudioSink
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 26
-                        height: 26
-                        onClicked: if (sink && sink.audio) sink.audio.muted = !sink.audio.muted
-
-                        Label {
-                            anchors.centerIn: parent
-                            text: parent.sink && parent.sink.audio && parent.sink.audio.muted ? "" : ""
-                            color: parent.sink && parent.sink.audio && parent.sink.audio.muted ? Theme.red : Theme.purple
-                            font.pixelSize: 16
-                            font.bold: true
-                        }
-                    }
-
-                    Slider {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: parent.width - 90
-                        value: Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio ? Pipewire.defaultAudioSink.audio.volume : 0
-                        onMoved: v => { if (Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio) Pipewire.defaultAudioSink.audio.volume = v; }
-                    }
-
-                    Label {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 40
-                        text: Math.round((Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.audio ? Pipewire.defaultAudioSink.audio.volume : 0) * 100) + "%"
-                        color: Theme.fg
-                        font.pixelSize: 12
-                        font.bold: true
-                    }
+                VolumeRow {
+                    node: Pipewire.defaultAudioSink
+                    onGlyph: ""
+                    offGlyph: ""
                 }
 
                 Repeater {
@@ -769,42 +780,11 @@ PanelWindow {
 
                 Section { text: "MICROPHONE" }
 
-                Row {
-                    width: parent.width
-                    spacing: 10
-
-                    MouseArea {
-                        readonly property var src: Pipewire.defaultAudioSource
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 26
-                        height: 26
-                        onClicked: if (src && src.audio) src.audio.muted = !src.audio.muted
-
-                        Label {
-                            anchors.centerIn: parent
-                            text: parent.src && parent.src.audio && parent.src.audio.muted ? "\u{f036d}" : "\u{f036c}"
-                            color: parent.src && parent.src.audio && parent.src.audio.muted ? Theme.red : Theme.orange
-                            font.pixelSize: 16
-                            font.bold: true
-                        }
-                    }
-
-                    Slider {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: parent.width - 90
-                        accent: Theme.orange
-                        value: Pipewire.defaultAudioSource && Pipewire.defaultAudioSource.audio ? Pipewire.defaultAudioSource.audio.volume : 0
-                        onMoved: v => { if (Pipewire.defaultAudioSource && Pipewire.defaultAudioSource.audio) Pipewire.defaultAudioSource.audio.volume = v; }
-                    }
-
-                    Label {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: 40
-                        text: Math.round((Pipewire.defaultAudioSource && Pipewire.defaultAudioSource.audio ? Pipewire.defaultAudioSource.audio.volume : 0) * 100) + "%"
-                        color: Theme.fg
-                        font.pixelSize: 12
-                        font.bold: true
-                    }
+                VolumeRow {
+                    node: Pipewire.defaultAudioSource
+                    accent: Theme.orange
+                    onGlyph: "\u{f036c}"
+                    offGlyph: "\u{f036d}"
                 }
 
                 Repeater {
@@ -1045,8 +1025,8 @@ PanelWindow {
 
                     Label {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: cc.linkIface === "" ? "󰖪" : (cc.linkIface.startsWith("wl") ? "󰤨" : "󰈀")
-                        color: cc.linkIface === "" ? Theme.gray : Theme.blue
+                        text: System.linkIface === "" ? "󰖪" : (System.linkIface.startsWith("wl") ? "󰤨" : "󰈀")
+                        color: System.linkIface === "" ? Theme.gray : Theme.blue
                         font.pixelSize: 28
                     }
 
@@ -1059,11 +1039,11 @@ PanelWindow {
                             width: parent.width
                             elide: Text.ElideRight
                             text: {
-                                if (cc.linkIface === "")
+                                if (System.linkIface === "")
                                     return "Offline";
-                                if (!cc.linkIface.startsWith("wl"))
+                                if (!System.linkIface.startsWith("wl"))
                                     return "Ethernet";
-                                return cc.currentSsid !== "" ? cc.currentSsid : cc.linkIface;
+                                return cc.currentSsid !== "" ? cc.currentSsid : System.linkIface;
                             }
                             color: Theme.fg
                             font.pixelSize: 15
@@ -1098,14 +1078,14 @@ PanelWindow {
                     columnSpacing: 24
                     rowSpacing: 4
 
-                    Stat { width: (parent.width - 24) / 2; label: "Ping"; value: cc.ping < 0 ? "—" : Math.round(cc.ping) + " ms" }
-                    Stat { width: (parent.width - 24) / 2; label: "Packet loss"; value: cc.loss < 0 ? "—" : cc.loss + "%" }
-                    Stat { width: (parent.width - 24) / 2; label: "Receiving"; value: cc.fmtBytes(cc.rxRate, "/s") }
-                    Stat { width: (parent.width - 24) / 2; label: "Sending"; value: cc.fmtBytes(cc.txRate, "/s") }
-                    Stat { width: (parent.width - 24) / 2; label: "Downloaded"; value: cc.fmtBytes(cc.rxTotal, "") }
-                    Stat { width: (parent.width - 24) / 2; label: "Uploaded"; value: cc.fmtBytes(cc.txTotal, "") }
-                    Stat { width: (parent.width - 24) / 2; label: "IP address"; value: cc.linkIp === "" ? "—" : cc.linkIp }
-                    Stat { width: (parent.width - 24) / 2; label: "Gateway"; value: cc.linkGateway === "" ? "—" : cc.linkGateway }
+                    Stat { label: "Ping"; value: cc.ping < 0 ? "—" : Math.round(cc.ping) + " ms" }
+                    Stat { label: "Packet loss"; value: cc.loss < 0 ? "—" : cc.loss + "%" }
+                    Stat { label: "Receiving"; value: cc.fmtBytes(cc.rxRate, "/s") }
+                    Stat { label: "Sending"; value: cc.fmtBytes(cc.txRate, "/s") }
+                    Stat { label: "Downloaded"; value: cc.fmtBytes(cc.rxTotal, "") }
+                    Stat { label: "Uploaded"; value: cc.fmtBytes(cc.txTotal, "") }
+                    Stat { label: "IP address"; value: System.linkIp === "" ? "—" : System.linkIp }
+                    Stat { label: "Gateway"; value: System.linkGateway === "" ? "—" : System.linkGateway }
                 }
 
                 Rectangle {

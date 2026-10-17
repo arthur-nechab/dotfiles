@@ -1,23 +1,12 @@
-import Quickshell
 import QtQuick
 import QtQuick.Controls
 
 // the month under the clock; the bar owns the ipc that drives it
-PopupWindow {
+BarPopup {
     id: calendar
 
-    // the bar button the popup hangs from, and the bar's screen
-    required property Item anchorItem
-    property var clickScreen: null
-
-    anchor.item: calendar.anchorItem
-    anchor.edges: Edges.Bottom
-    anchor.gravity: Edges.Bottom
-    anchor.margins.top: 7
     implicitWidth: 260
     implicitHeight: calContent.implicitHeight + 45
-    color: "transparent"
-    visible: false
 
     // one month step, drawn like the bar's buttons
     component Arrow: MouseArea {

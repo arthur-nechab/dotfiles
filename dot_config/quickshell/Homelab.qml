@@ -200,29 +200,19 @@ Singleton {
         }
     }
 
-    // one prometheus instant query; value is the first sample, series keeps the
-    // whole vector when the query groups by host. HOST stands in for the label
+    // one prometheus instant query; value is the first sample. HOST stands in for the label
     component Prom: Fetch {
         property string query: ""
-        property bool needsHost: true
         property real value: -1
-        property var series: []
 
-        url: query !== "" && root.hasPrometheus && (!needsHost || root.hasOvh)
+        url: query !== "" && root.hasPrometheus && root.hasOvh
             ? local.prometheus.url + "/api/v1/query?query="
               + encodeURIComponent(query.replace(/HOST/g, local.ovh.host))
             : ""
-        onFailed: {
-            value = -1;
-            series = [];
-        }
+        onFailed: value = -1
         onParsed: data => {
             const r = data.data ? data.data.result : [];
             value = r.length > 0 ? Number(r[0].value[1]) : -1;
-            series = r.map(x => ({
-                host: x.metric.host ?? x.metric.instance ?? "?",
-                value: Number(x.value[1])
-            })).sort((a, b) => a.host.localeCompare(b.host));
         }
     }
 

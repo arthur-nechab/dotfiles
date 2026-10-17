@@ -26,8 +26,9 @@ PanelWindow {
     property int nlTemp: 6500
     // bound to Notifications.dnd in shell.qml, never written here
     property bool dnd: false
-    // mirrors the wf-recorder probe for the shell
-    readonly property bool recording: rec.active
+    // set by the wf-recorder probe, read by the shell
+    property bool recording: false
+    property var usbDevices: []
 
     screen: Theme.mainScreen
     color: "transparent"
@@ -81,7 +82,6 @@ PanelWindow {
         property string label: ""
         property color fg: Theme.fg
         property int size: 15
-        property bool hoverBg: true
         // shown under the pointer after a short rest
         property string tip: ""
 
@@ -95,7 +95,7 @@ PanelWindow {
         Rectangle {
             anchors.fill: parent
             radius: 8
-            color: btn.hoverBg && btn.containsMouse ? Theme.surface : "transparent"
+            color: btn.containsMouse ? Theme.surface : "transparent"
         }
 
         Label {
@@ -104,6 +104,31 @@ PanelWindow {
             text: btn.label
             color: btn.fg
             font.pixelSize: btn.size
+            font.bold: true
+        }
+    }
+
+    component Metric: Row {
+        property string icon
+        property string value
+        property color tint
+
+        anchors.verticalCenter: parent.verticalCenter
+        spacing: 5
+
+        Label {
+            anchors.verticalCenter: parent.verticalCenter
+            text: parent.icon
+            color: parent.tint
+            font.pixelSize: 16
+            font.bold: true
+        }
+
+        Label {
+            anchors.verticalCenter: parent.verticalCenter
+            text: parent.value
+            color: parent.tint
+            font.pixelSize: 14
             font.bold: true
         }
     }
@@ -180,15 +205,15 @@ PanelWindow {
         Quickshell.execDetached(["sh", "-c", cmd]);
     }
 
+    function nlRun(cmd) {
+        run(cmd);
+        refreshTimer.restart();
+    }
+
     // ── System readings ──────────────────────────────────────────────────
 
     PwObjectTracker {
         objects: [Pipewire.defaultAudioSink, Pipewire.defaultAudioSource]
-    }
-
-    QtObject {
-        id: usb
-        property var devices: []
     }
 
     Process {
@@ -213,7 +238,7 @@ PanelWindow {
                     };
                     for (const d of JSON.parse(this.text).blockdevices)
                         walk(d);
-                    usb.devices = out;
+                    bar.usbDevices = out;
                 } catch (e) {}
             }
         }
@@ -237,34 +262,11 @@ PanelWindow {
 
     Component.onCompleted: usbProbe.rerun()
 
-    QtObject {
-        id: net
-        property string iface: ""
-        property string ip: ""
-    }
-
     Process {
         id: probes
         command: ["sh", "-c", "pgrep -x wf-recorder >/dev/null && echo rec"]
         stdout: StdioCollector {
-            onStreamFinished: rec.active = this.text.indexOf("rec") >= 0
-        }
-    }
-
-    // the address only moves with the route, so it is read when the interface does
-    Process {
-        id: ipProbe
-        command: ["sh", "-c", "ip -4 -o route get 1.1.1.1 2>/dev/null | sed -n 's/.* src \\([0-9.]*\\).*/\\1/p'"]
-        stdout: StdioCollector {
-            onStreamFinished: net.ip = this.text.trim()
-        }
-    }
-
-    Connections {
-        target: net
-        function onIfaceChanged() {
-            ipProbe.running = false;
-            ipProbe.running = true;
+            onStreamFinished: bar.recording = this.text.indexOf("rec") >= 0
         }
     }
 
@@ -277,11 +279,6 @@ PanelWindow {
             probes.running = false;
             probes.running = true;
         }
-    }
-
-    QtObject {
-        id: rec
-        property bool active: false
     }
 
     Process {
@@ -297,29 +294,6 @@ PanelWindow {
         property var levels: new Array(18).fill(0)
 
         onRunningChanged: if (!running) levels = new Array(18).fill(0)
-    }
-
-    FileView {
-        id: routeFile
-        path: "/proc/net/route"
-        onLoaded: {
-            for (const l of text().split("\n").slice(1)) {
-                const f = l.split(/\s+/);
-                if (f[1] === "00000000") {
-                    net.iface = f[0];
-                    return;
-                }
-            }
-            net.iface = "";
-        }
-    }
-
-    Timer {
-        interval: 2000
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: routeFile.reload()
     }
 
     Process {
@@ -387,8 +361,7 @@ PanelWindow {
                 return;
             wanted = want;
             if (nightlight.warm !== want) {
-                bar.run("~/.config/scripts/nightlight --toggle");
-                refreshTimer.restart();
+                bar.nlRun("~/.config/scripts/nightlight --toggle");
             }
         }
     }
@@ -431,9 +404,9 @@ PanelWindow {
                 // this screen's workspace, not the focused one: the focus may sit on the side screen
                 const at = Math.max(0, ids.indexOf(Hyprland.monitorFor(bar.screen)?.activeWorkspace?.id));
                 const target = ids[Math.max(0, Math.min(ids.length - 1, at + delta))];
-                const l = Hyprland.workspaces.values;
-                for (let i = 0; i < l.length; i++) if (l[i].id === target) return l[i].activate();
-                Hyprland.dispatch(`hl.dsp.focus({ workspace = ${target} })`);
+                const w = Hyprland.workspaces.values.find(x => x.id === target);
+                if (w) w.activate();
+                else Hyprland.dispatch(`hl.dsp.focus({ workspace = ${target} })`);
             }
 
             onWheel: wheel => go(wheel.angleDelta.y > 0 ? -1 : 1)
@@ -452,9 +425,7 @@ PanelWindow {
                         readonly property int wsId: modelData
                         readonly property var obj: {
                             Hyprland.focusedWorkspace;
-                            const l = Hyprland.workspaces.values;
-                            for (let i = 0; i < l.length; i++) if (l[i].id === wsId) return l[i];
-                            return null;
+                            return Hyprland.workspaces.values.find(x => x.id === wsId) ?? null;
                         }
                         width: 22
                         height: 28
@@ -501,67 +472,22 @@ PanelWindow {
 
                 spacing: 13
 
-                Row {
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 5
-
-                    Label {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "\u{f0ee0}"
-                        color: Theme.green
-                        font.pixelSize: 16
-                        font.bold: true
-                    }
-
-                    Label {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: Math.round(System.cpu.usage * 100) + "%"
-                        color: Theme.green
-                        font.pixelSize: 14
-                        font.bold: true
-                    }
+                Metric {
+                    icon: "\u{f0ee0}"
+                    value: Math.round(System.cpu.usage * 100) + "%"
+                    tint: Theme.green
                 }
 
-                Row {
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 5
-
-                    Label {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: System.llm.loaded ? "\u{f06a9}" : "\u{f08ae}"
-                        color: Theme.purple
-                        font.pixelSize: 16
-                        font.bold: true
-                    }
-
-                    Label {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: System.gpu.usage + "%"
-                        color: Theme.purple
-                        font.pixelSize: 14
-                        font.bold: true
-                    }
+                Metric {
+                    icon: System.llm.loaded ? "\u{f06a9}" : "\u{f08ae}"
+                    value: System.gpu.usage + "%"
+                    tint: Theme.purple
                 }
 
-                Row {
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 5
-
-                    Label {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "\u{f035b}"
-                        color: Theme.blue
-                        font.pixelSize: 16
-                        font.bold: true
-                    }
-
-                    Label {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: System.ram.usedGb.toFixed(1) + "G"
-                        color: Theme.blue
-                        font.pixelSize: 14
-                        font.bold: true
-                    }
+                Metric {
+                    icon: "\u{f035b}"
+                    value: System.ram.usedGb.toFixed(1) + "G"
+                    tint: Theme.blue
                 }
             }
         }
@@ -574,8 +500,7 @@ PanelWindow {
 
             readonly property var player: {
                 const l = Mpris.players.values;
-                for (let i = 0; i < l.length; i++) if (l[i].isPlaying) return l[i];
-                return l.length > 0 ? l[0] : null;
+                return l.find(x => x.isPlaying) ?? l[0] ?? null;
             }
 
             anchors.verticalCenter: parent.verticalCenter
@@ -640,7 +565,7 @@ PanelWindow {
         // recording in progress; a click stops it
         MouseArea {
             anchors.verticalCenter: parent.verticalCenter
-            visible: rec.active
+            visible: bar.recording
             width: 22
             height: 28
             cursorShape: Qt.PointingHandCursor
@@ -692,7 +617,7 @@ PanelWindow {
         id: usbPopup
         anchorItem: usbBtn
         clickScreen: bar.screen
-        devices: usb.devices
+        devices: bar.usbDevices
         onRefresh: usbProbe.rerun()
     }
 
@@ -795,11 +720,7 @@ PanelWindow {
 
         Btn {
             readonly property var adapter: Bluetooth.defaultAdapter
-            readonly property var device: {
-                const l = Bluetooth.devices.values;
-                for (let i = 0; i < l.length; i++) if (l[i].connected) return l[i];
-                return null;
-            }
+            readonly property var device: Bluetooth.devices.values.find(x => x.connected) ?? null
 
             label: !adapter || !adapter.enabled ? "󰂲" : (device ? "󰂱" : "󰂯")
             fg: Theme.aqua
@@ -814,12 +735,12 @@ PanelWindow {
             label: {
                 if (System.netbird)
                     return "\u{f0582}";
-                if (net.iface === "")
+                if (System.linkIface === "")
                     return "󰖪";
-                return net.iface.startsWith("wl") ? "󰤨" : "󰈀";
+                return System.linkIface.startsWith("wl") ? "󰤨" : "󰈀";
             }
             fg: System.netbird ? Theme.aqua : Theme.blue
-            tip: net.iface === "" ? "No network" : net.iface + "  \u00b7  " + net.ip + (System.netbird ? "  \u00b7  NetBird" : "")
+            tip: System.linkIface === "" ? "No network" : System.linkIface + "  \u00b7  " + System.linkIp + (System.netbird ? "  \u00b7  NetBird" : "")
             onClicked: mouse => mouse.button === Qt.RightButton
                 ? bar.run("ghostty -e impala")
                 : bar.networkToggle()
@@ -831,17 +752,15 @@ PanelWindow {
             tip: "Night Light  \u00b7  " + nightlight.temp
             // right click goes straight back to daylight, whatever the state
             onClicked: mouse => {
-                bar.run(mouse.button === Qt.RightButton
+                bar.nlRun(mouse.button === Qt.RightButton
                     ? "hyprctl hyprsunset temperature 6500"
                     : "~/.config/scripts/nightlight --toggle");
-                refreshTimer.restart();
             }
             onWheel: wheel => {
                 const up = wheel.angleDelta.y > 0;
                 bar.nlTemp = Math.max(1000, Math.min(6500, bar.nlTemp + (up ? 200 : -200)));
                 bar.nightlightChanged(bar.nlTemp, bar.nlTemp <= 4500);
-                bar.run("~/.config/scripts/nightlight " + (up ? "--up" : "--down"));
-                refreshTimer.restart();
+                bar.nlRun("~/.config/scripts/nightlight " + (up ? "--up" : "--down"));
             }
         }
 
@@ -850,7 +769,7 @@ PanelWindow {
 
             label: ""
             fg: usbPopup.visible ? Theme.yellow : Theme.green
-            visible: usb.devices.length > 0
+            visible: bar.usbDevices.length > 0
             onClicked: usbPopup.visible = !usbPopup.visible
         }
 
@@ -871,40 +790,13 @@ PanelWindow {
         function toggle(): void {
             calendar.visible = !calendar.visible;
         }
-
-        function next(): void {
-            calendar.shift(1);
-        }
-
-        function prev(): void {
-            calendar.shift(-1);
-        }
-    }
-
-    IpcHandler {
-        target: "weather"
-
-        function toggle(): void {
-            weatherPopup.visible = !weatherPopup.visible;
-        }
     }
 
     IpcHandler {
         target: "nightlight"
 
         function toggle(): void {
-            bar.run("~/.config/scripts/nightlight --toggle");
-            refreshTimer.restart();
-        }
-
-        function up(): void {
-            bar.run("~/.config/scripts/nightlight --up");
-            refreshTimer.restart();
-        }
-
-        function down(): void {
-            bar.run("~/.config/scripts/nightlight --down");
-            refreshTimer.restart();
+            bar.nlRun("~/.config/scripts/nightlight --toggle");
         }
     }
 

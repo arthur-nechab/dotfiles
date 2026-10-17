@@ -1,5 +1,4 @@
 import Quickshell
-import Quickshell.Io
 import Quickshell.Wayland
 import QtQuick
 
@@ -42,55 +41,6 @@ PanelWindow {
         Claude.panelOpen = visible;
         if (visible)
             Homelab.refreshAll();
-    }
-
-    IpcHandler {
-        target: "homelab"
-
-        function toggle(): void {
-            panel.toggle();
-        }
-    }
-
-    // same card as a toggle, for an action with no state to read back
-    component Card: MouseArea {
-        property string glyph: ""
-        property string label: ""
-        property color accent: Theme.yellow
-
-        width: 84
-        height: 54
-        hoverEnabled: true
-
-        Rectangle {
-            anchors.fill: parent
-            anchors.margins: 2
-            radius: 10
-            color: parent.containsMouse ? Theme.surface : "transparent"
-            border.width: 1
-            border.color: Theme.surface
-        }
-
-        Column {
-            anchors.centerIn: parent
-            spacing: 4
-
-            Label {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: parent.parent.glyph
-                color: parent.parent.accent
-                font.pixelSize: 20
-                font.bold: true
-            }
-
-            Label {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: parent.parent.label
-                color: Theme.gray
-                font.pixelSize: 11
-                font.bold: true
-            }
-        }
     }
 
     component Meter: Item {
@@ -147,6 +97,54 @@ PanelWindow {
             font.pixelSize: 12
             font.letterSpacing: 1
             font.bold: true
+        }
+    }
+
+    component StatCard: Rectangle {
+        id: card
+
+        property var stats: []
+
+        width: parent.width
+        height: 62
+        radius: 10
+        color: "transparent"
+        border.width: 1
+        border.color: Theme.surface
+
+        Row {
+            id: row
+
+            anchors.fill: parent
+            anchors.margins: 12
+
+            Repeater {
+                model: card.stats
+
+                Column {
+                    required property var modelData
+
+                    width: row.width / card.stats.length
+                    spacing: 2
+
+                    Label {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: modelData.v
+                        color: modelData.c
+                        font.pixelSize: 18
+                        font.bold: true
+                    }
+
+                    Label {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: modelData.l
+                        color: Theme.gray
+                        font.pixelSize: 10
+                        font.letterSpacing: 1
+                        font.bold: true
+                    }
+                }
+            }
         }
     }
 
@@ -276,12 +274,44 @@ PanelWindow {
                             offMsg: "GPU memory freed"
                         }
 
-                        Card {
-                            glyph: "󰓅"
-                            label: "Speedtest"
+                        // a plain button: ActionToggle would colour the glyph gray and run a probe
+                        MouseArea {
+                            width: 84
+                            height: 54
+                            hoverEnabled: true
                             onClicked: {
                                 Quickshell.execDetached(["ghostty", "-e", "cloudflare-speed-cli"]);
                                 panel.visible = false;
+                            }
+
+                            Rectangle {
+                                anchors.fill: parent
+                                anchors.margins: 2
+                                radius: 10
+                                color: parent.containsMouse ? Theme.surface : "transparent"
+                                border.width: 1
+                                border.color: Theme.surface
+                            }
+
+                            Column {
+                                anchors.centerIn: parent
+                                spacing: 4
+
+                                Label {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    text: "󰓅"
+                                    color: Theme.yellow
+                                    font.pixelSize: 20
+                                    font.bold: true
+                                }
+
+                                Label {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    text: "Speedtest"
+                                    color: Theme.gray
+                                    font.pixelSize: 11
+                                    font.bold: true
+                                }
                             }
                         }
                     }
@@ -386,54 +416,16 @@ PanelWindow {
 
                     // same card as pi-hole: three summary figures read better
                     // centred than as label/value rows
-                    Rectangle {
+                    StatCard {
                         visible: parent.reachable
-                        width: parent.width
-                        height: 62
-                        radius: 10
-                        color: "transparent"
-                        border.width: 1
-                        border.color: Theme.surface
-
-                        Row {
-                            anchors.fill: parent
-                            anchors.margins: 12
-
-                            Repeater {
-                                model: [
-                                    { v: String(Homelab.gatusUp), l: "UP", c: Theme.green },
-                                    { v: String(Homelab.gatusDown), l: "DOWN",
-                                      c: Homelab.gatusDown > 0 ? Theme.red : Theme.gray },
-                                    { v: Homelab.gatusUptime < 0
-                                          ? "-" : Homelab.gatusUptime.toFixed(1) + "%",
-                                      l: "UPTIME", c: Theme.fg }
-                                ]
-
-                                Column {
-                                    required property var modelData
-
-                                    width: parent.width / 3
-                                    spacing: 2
-
-                                    Label {
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        text: modelData.v
-                                        color: modelData.c
-                                        font.pixelSize: 18
-                                        font.bold: true
-                                    }
-
-                                    Label {
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        text: modelData.l
-                                        color: Theme.gray
-                                        font.pixelSize: 10
-                                        font.letterSpacing: 1
-                                        font.bold: true
-                                    }
-                                }
-                            }
-                        }
+                        stats: [
+                            { v: String(Homelab.gatusUp), l: "UP", c: Theme.green },
+                            { v: String(Homelab.gatusDown), l: "DOWN",
+                              c: Homelab.gatusDown > 0 ? Theme.red : Theme.gray },
+                            { v: Homelab.gatusUptime < 0
+                                  ? "-" : Homelab.gatusUptime.toFixed(1) + "%",
+                              l: "UPTIME", c: Theme.fg }
+                        ]
                     }
 
                     Repeater {
@@ -450,9 +442,18 @@ PanelWindow {
                 }
 
                 Section {
+                    id: dns
+
                     title: "DNS"
                     visible: Homelab.hasDns
                     spacing: 8
+
+                    readonly property var parts: [
+                        { c: Theme.purple, l: "blocked",   v: Homelab.blockedToday },
+                        { c: Theme.aqua,   l: "cached",    v: Homelab.cachedToday },
+                        { c: Theme.blue,   l: "recursive", v: Homelab.recursiveToday },
+                        { c: Theme.green,  l: "local",     v: Homelab.authoritativeToday }
+                    ]
 
                     Label {
                         visible: Homelab.blockedPercent < 0
@@ -557,31 +558,21 @@ PanelWindow {
                         readonly property int total: Math.max(1, Homelab.queriesToday)
 
                         Row {
+                            id: shares
+
                             anchors.fill: parent
                             spacing: 0
 
-                            Rectangle {
-                                width: parent.width * Homelab.blockedToday / parent.parent.total
-                                height: parent.height
-                                color: Theme.purple
-                            }
+                            Repeater {
+                                model: dns.parts
 
-                            Rectangle {
-                                width: parent.width * Homelab.cachedToday / parent.parent.total
-                                height: parent.height
-                                color: Theme.aqua
-                            }
+                                Rectangle {
+                                    required property var modelData
 
-                            Rectangle {
-                                width: parent.width * Homelab.recursiveToday / parent.parent.total
-                                height: parent.height
-                                color: Theme.blue
-                            }
-
-                            Rectangle {
-                                width: parent.width * Homelab.authoritativeToday / parent.parent.total
-                                height: parent.height
-                                color: Theme.green
+                                    width: shares.width * modelData.v / shares.parent.total
+                                    height: shares.height
+                                    color: modelData.c
+                                }
                             }
                         }
                     }
@@ -592,12 +583,7 @@ PanelWindow {
                         spacing: 12
 
                         Repeater {
-                            model: [
-                                { c: Theme.purple, l: "blocked",   v: Homelab.blockedToday },
-                                { c: Theme.aqua,   l: "cached",    v: Homelab.cachedToday },
-                                { c: Theme.blue,   l: "recursive", v: Homelab.recursiveToday },
-                                { c: Theme.green,  l: "local",     v: Homelab.authoritativeToday }
-                            ]
+                            model: dns.parts
 
                             Row {
                                 required property var modelData
@@ -629,15 +615,17 @@ PanelWindow {
 
                     // same card as gatus: ram on the left, vram captioned by the loaded model
                     // on the right; without a model the card only says so
-                    Rectangle {
+                    StatCard {
                         readonly property bool loaded: System.llm.models.length > 0
 
-                        width: parent.width
-                        height: 62
-                        radius: 10
-                        color: "transparent"
-                        border.width: 1
-                        border.color: Theme.surface
+                        stats: loaded ? [
+                            { v: System.ram.usedGb.toFixed(1) + " / " + System.ram.totalGb.toFixed(0) + " GB",
+                              l: "RAM", c: Theme.blue },
+                            { v: System.gpu.vramUsedGb.toFixed(1) + " / " + System.gpu.vramTotalGb.toFixed(0) + " GB",
+                              l: System.llm.models[0].name.toUpperCase()
+                                 + (System.llm.models.length > 1 ? " +" + (System.llm.models.length - 1) : ""),
+                              c: Theme.purple }
+                        ] : []
 
                         Label {
                             anchors.centerIn: parent
@@ -645,49 +633,6 @@ PanelWindow {
                             text: "No model running"
                             color: Theme.gray
                             font.pixelSize: 13
-                        }
-
-                        Row {
-                            anchors.fill: parent
-                            anchors.margins: 12
-                            visible: parent.loaded
-
-                            Repeater {
-                                model: [
-                                    { v: System.ram.usedGb.toFixed(1) + " / " + System.ram.totalGb.toFixed(0) + " GB",
-                                      l: "RAM", c: Theme.blue },
-                                    { v: System.gpu.vramUsedGb.toFixed(1) + " / " + System.gpu.vramTotalGb.toFixed(0) + " GB",
-                                      l: System.llm.models.length > 0
-                                          ? System.llm.models[0].name.toUpperCase()
-                                            + (System.llm.models.length > 1 ? " +" + (System.llm.models.length - 1) : "")
-                                          : "VRAM",
-                                      c: Theme.purple }
-                                ]
-
-                                Column {
-                                    required property var modelData
-
-                                    width: parent.width / 2
-                                    spacing: 2
-
-                                    Label {
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        text: modelData.v
-                                        color: modelData.c
-                                        font.pixelSize: 18
-                                        font.bold: true
-                                    }
-
-                                    Label {
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        text: modelData.l
-                                        color: Theme.gray
-                                        font.pixelSize: 10
-                                        font.letterSpacing: 1
-                                        font.bold: true
-                                    }
-                                }
-                            }
                         }
                     }
                 }
@@ -868,28 +813,14 @@ PanelWindow {
 
                 anchors.centerIn: parent
                 // the icon alone; it turns orange once the data is stale
-                readonly property int age: {
-                    clockTick.tick;
-                    return Homelab.lastUpdate === 0 ? 0
-                        : Math.round((Date.now() - Homelab.lastUpdate) / 1000);
-                }
+                readonly property int age: Homelab.lastUpdate === 0 ? 0
+                    : Math.round((Theme.now - Homelab.lastUpdate) / 1000)
 
                 text: "\u{f0450}"
                 color: age > 120 ? Theme.orange : Theme.gray
                 font.pixelSize: 14
                 font.bold: true
             }
-        }
-
-        Timer {
-            id: clockTick
-
-            property int tick: 0
-
-            interval: 1000
-            running: panel.visible
-            repeat: true
-            onTriggered: tick += 1
         }
     }
 }
