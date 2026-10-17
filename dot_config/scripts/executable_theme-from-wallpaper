@@ -54,7 +54,8 @@ def measure(path):
     x = sum(math.cos(h * 2 * math.pi) * wi for (h, _, _), wi in zip(hsv, w))
     y = sum(math.sin(h * 2 * math.pi) * wi for (h, _, _), wi in zip(hsv, w))
     hue = (math.degrees(math.atan2(y, x)) + 360) % 360
-    sat = sum(s * v for _, s, v in hsv) / sum(v for _, _, v in hsv)
+    # an all-black image has no value to divide by
+    sat = sum(s * v for _, s, v in hsv) / (sum(v for _, _, v in hsv) or 1)
     lum = sum(v for _, _, v in hsv) / len(hsv)
     return hue, sat, lum
 
@@ -159,7 +160,7 @@ def apply_ghostty(theme):
     # window is its own process, so the shortcut has to reach each one by address
     clients = subprocess.run(["hyprctl", "-j", "clients"], capture_output=True, text=True)
     for c in json.loads(clients.stdout or "[]"):
-        if c.get("class") != "com.mitchellh.ghostty":
+        if c.get("class") not in ("com.mitchellh.ghostty", "herdr.ghostty"):
             continue
         subprocess.run(
             ["hyprctl", "eval",
