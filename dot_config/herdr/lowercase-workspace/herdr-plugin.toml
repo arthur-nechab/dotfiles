@@ -1,0 +1,10 @@
+id = "local.lowercase-workspace"
+name = "Lowercase workspace"
+version = "0.1.0"
+min_herdr_version = "0.9.0"
+description = "Lowercase the label of each new workspace"
+platforms = ["linux", "macos"]
+
+[[events]]
+on = "workspace.created"
+command = ["bash", "rename.sh"]

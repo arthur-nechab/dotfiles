@@ -50,6 +50,14 @@ once after the first apply, and again when that file changes:
 ya pkg install
 ```
 
+herdr keeps its plugins out of this repo too. `config.toml` binds their keys, so install them
+once after the first apply:
+
+```sh
+herdr plugin install jeffarese/herdr-bar --ref v0.9.1
+herdr plugin link ~/.config/herdr/lowercase-workspace
+```
+
 The same command gives a different result on each machine. `.chezmoi.toml.tmpl` reads
 `/etc/os-release` and sets three values: an OS id, a compositor (`de`) and a shell layer
 (`shell`). `.chezmoiignore` uses them to select the configs.
