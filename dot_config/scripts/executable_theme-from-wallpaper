@@ -17,8 +17,6 @@ HOME = Path.home()
 CACHE = HOME / ".cache"
 QS_THEMES = HOME / ".config/quickshell/themes"
 THUMBS = CACHE / "wallpaper-thumbs"
-GHOSTTY_THEMES = Path("/usr/share/ghostty/themes")
-MIN_CONTRAST = 4.0
 
 # quickshell name -> (ghostty theme, btop theme, nvim colorscheme, zed theme, yazi flavor)
 # the yazi flavors come from package.toml; horizon, night-owl and twilight have none,
@@ -112,50 +110,10 @@ def apply_hyprland(palette):
     subprocess.run(["hyprctl", "eval", lua], capture_output=True)
 
 
-def luminance(hexc):
-    def chan(v):
-        v = int(hexc[v:v + 2], 16) / 255
-        return v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4
-    return 0.2126 * chan(0) + 0.7152 * chan(2) + 0.0722 * chan(4)
-
-
-def contrast(a, b):
-    la, lb = sorted((luminance(a), luminance(b)))
-    return (lb + 0.05) / (la + 0.05)
-
-
-def lift(colour, bg):
-    """the same hue, light enough to read on bg"""
-    h, l, sat = colorsys.rgb_to_hls(*(int(colour[i:i + 2], 16) / 255 for i in (0, 2, 4)))
-    while l < 1:
-        l = min(1.0, l + 0.02)
-        out = "%02x%02x%02x" % tuple(round(v * 255) for v in colorsys.hls_to_rgb(h, l, sat))
-        if contrast(out, bg) >= MIN_CONTRAST:
-            return out
-    return "ffffff"
-
-
-def readable_palette(theme):
-    """most themes ship a bright black under 3:1; twilight also breaks its blue"""
-    try:
-        text = (GHOSTTY_THEMES / theme).read_text()
-    except OSError:
-        return ""
-    bg = re.search(r"^background\s*=\s*#?(\w{6})", text, re.M)
-    if not bg:
-        return ""
-    out = ""
-    for index, colour in re.findall(r"palette\s*=\s*(\d+)=#?(\w{6})", text):
-        # 0 is the background of half the TUIs, never a foreground
-        if index != "0" and contrast(colour, bg.group(1)) < MIN_CONTRAST:
-            out += f"palette = {index}=#{lift(colour, bg.group(1))}\n"
-    return out
-
-
 def apply_ghostty(theme):
     out = HOME / ".config/ghostty/themes/dynamic"
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(f"theme = {theme}\n" + readable_palette(theme))
+    out.write_text(f"theme = {theme}\n")
     # ghostty 1.3 only reloads through its keybind; without single-instance every
     # window is its own process, so the shortcut has to reach each one by address
     clients = subprocess.run(["hyprctl", "-j", "clients"], capture_output=True, text=True)
@@ -199,48 +157,6 @@ def apply_qt(palette):
                     f"disabled_colors={', '.join(off)}\n"
                     f"inactive_colors={', '.join(roles)}\n")
 
-    # fusion draws flat boxes; the sheet rounds the selection and pads the toolbar
-    qss = HOME / ".config/qt6ct/qss/dynamic.qss"
-    qss.parent.mkdir(parents=True, exist_ok=True)
-    qss.write_text(f"""QToolBar {{ border: 0; padding: 4px; spacing: 2px; }}
-QToolButton {{ border: 0; border-radius: 6px; padding: 5px; }}
-QToolButton:hover {{ background: {sf}; }}
-QToolButton:checked, QToolButton:pressed {{ background: {palette["blue"]}; color: {bg}; }}
-
-QAbstractItemView {{ border: 0; outline: 0; }}
-QAbstractItemView::item {{ border-radius: 6px; padding: 3px; }}
-QAbstractItemView::item:hover {{ background: {sf}; }}
-QAbstractItemView::item:selected {{ background: {palette["blue"]}; color: {bg}; }}
-
-QHeaderView::section {{ background: {sf}; border: 0; padding: 5px; }}
-
-QTabBar::tab {{ background: transparent; border: 0; padding: 6px 12px;
-                border-radius: 6px; margin: 2px; }}
-QTabBar::tab:selected {{ background: {sf}; }}
-
-QLineEdit, QComboBox, QSpinBox {{ background: {bg}; border: 1px solid {sf};
-                                  border-radius: 6px; padding: 4px 8px; }}
-QLineEdit:focus, QComboBox:focus {{ border-color: {palette["blue"]}; }}
-
-QMenu {{ background: {sf}; border: 1px solid {gy}; border-radius: 8px; padding: 4px; }}
-QMenu::item {{ border-radius: 5px; padding: 5px 22px; }}
-QMenu::item:selected {{ background: {palette["blue"]}; color: {bg}; }}
-QMenuBar {{ background: transparent; border: 0; }}
-QMenuBar::item {{ border-radius: 5px; padding: 5px 9px; }}
-QMenuBar::item:selected {{ background: {sf}; }}
-
-QScrollBar:vertical {{ background: transparent; width: 11px; margin: 0; }}
-QScrollBar:horizontal {{ background: transparent; height: 11px; margin: 0; }}
-QScrollBar::handle {{ background: {gy}; border-radius: 5px; min-height: 28px;
-                      min-width: 28px; }}
-QScrollBar::handle:hover {{ background: {palette["fg"]}; }}
-QScrollBar::add-line, QScrollBar::sub-line {{ height: 0; width: 0; }}
-QScrollBar::add-page, QScrollBar::sub-page {{ background: transparent; }}
-
-QStatusBar {{ border: 0; color: {gy}; }}
-QSplitter::handle {{ background: transparent; }}
-""")
-
     main = HOME / ".config/qt6ct/qt6ct.conf"
     font = '"Inter,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"'
     main.write_text("[Appearance]\n"
@@ -251,24 +167,7 @@ QSplitter::handle {{ background: transparent; }}
                     "standard_dialogs=default\n"
                     "\n[Fonts]\n"
                     f"general={font}\n"
-                    'fixed="BerkeleyMono Nerd Font,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"\n'
-                    "\n[Interface]\n"
-                    # written raw: qt6ct stores it as a QStringList
-                    f"stylesheets={qss}\n")
-
-
-def apply_gnome(accent):
-    # libadwaita takes one of nine named accents; slate is the grey of the folders
-    subprocess.run(["gsettings", "set", "org.gnome.desktop.interface",
-                    "accent-color", accent], capture_output=True)
-
-
-def apply_folders(color):
-    # deliberately not theme-driven: the file manager keeps one neutral look.
-    # papirus-folders rewrites /usr/share/icons, so it needs the sudoers rule;
-    # without it -n fails at once and the folders keep the colour they had
-    subprocess.run(["sudo", "-n", "papirus-folders", "-C", color,
-                    "--theme", "Papirus-Dark"], capture_output=True)
+                    'fixed="BerkeleyMono Nerd Font,10,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"\n')
 
 
 def apply_btop(theme):
@@ -365,11 +264,8 @@ def index_wallpapers():
 
 def main():
     index_wallpapers()
-    args = [a for a in sys.argv[1:] if not a.startswith("-")]
-    if "--theme" in sys.argv:
-        args = args[:0]
-    if args:
-        wallpaper = args[0]
+    if len(sys.argv) > 1:
+        wallpaper = sys.argv[1]
     else:
         pointer = CACHE / "hypr/current-wallpaper"
         if not pointer.exists():
@@ -379,14 +275,11 @@ def main():
         return 1
 
     stem = os.path.splitext(os.path.basename(wallpaper))[0]
-    if "--theme" in sys.argv:
-        name = sys.argv[sys.argv.index("--theme") + 1]
-    else:
-        name = OVERRIDES.get(stem) or classify(*measure(wallpaper))
+    name = OVERRIDES.get(stem) or classify(*measure(wallpaper))
     ghostty, btop, nvim, zed, yazi = THEMES[name]
 
     stamp = CACHE / "quickshell-theme.name"
-    if "--force" not in sys.argv and stamp.exists() and stamp.read_text().strip() == name:
+    if stamp.exists() and stamp.read_text().strip() == name:
         return 0
 
     palette = apply_quickshell(name)
@@ -398,8 +291,6 @@ def main():
     apply_nvim(nvim)
     apply_zed(zed)
     apply_qt(palette)
-    apply_gnome("slate")
-    apply_folders("grey")
     stamp.write_text(name + "\n")
     print(name)
     return 0
