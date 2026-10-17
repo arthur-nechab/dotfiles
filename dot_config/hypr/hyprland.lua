@@ -226,7 +226,7 @@ local shells = {
     quickshell = {
         autostart = {
             -- a different wallpaper each session; the theme follows it
-            "sh -c 'ls ~/Pictures/Wallpapers/* | shuf -n 1 > ~/.cache/hypr/current-wallpaper'",
+            "sh -c 'mkdir -p ~/.cache/hypr && ls ~/Pictures/Wallpapers/* | shuf -n 1 > ~/.cache/hypr/current-wallpaper'",
             "qs",
             "hyprsunset -t 3500",
             -- its unit has Requisite=graphical-session.target, which hyprland
