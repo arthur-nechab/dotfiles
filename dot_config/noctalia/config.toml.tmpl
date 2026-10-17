@@ -11,13 +11,9 @@ background_opacity = 0.85
 center = [ "date", "clock" ]
 end = [ "tray", "spacer_3", "clipboard", "network", "bluetooth", "input_volume", "volume", "battery", "notifications" ]
 margin_edge = 6
-margin_ends = 100
-radius = 12
 start = [ "control-center", "workspaces", "spacer_1", "cpu", "gpu", "ram" ]
 widget_spacing = 8
 contact_shadow = true
-hover_highlight = true
-shadow = true
 
 [control_center]
 shortcuts = [
@@ -144,8 +140,6 @@ settings_show_advanced = false
     categories = false
     show_app_origin_indicator = false
     compact = true
-    sort_by_usage = true
-    auto_paste = "auto"
 
         [shell.launcher.providers.calculator]
         global = true
@@ -155,7 +149,6 @@ settings_show_advanced = false
 
     [shell.screen_corners]
     enabled = true
-    size = 32
 
     [shell.screenshot]
     directory = "{{ .chezmoi.homeDir }}/Pictures/Screenshots"
@@ -165,15 +158,12 @@ source = "wallpaper"
 wallpaper_scheme = "vibrant"
 
     [theme.templates]
-    enable_community_templates = true
     builtin_ids = [ "gtk3", "gtk4", "ghostty", "btop", "hyprland" ]
 
 [wallpaper]
 directory = "{{ .chezmoi.homeDir }}/Pictures/Wallpapers"
-fill_mode = "crop"
 transition = [ "fade" ]
 transition_duration = 1200
-transition_on_startup = false
 edge_smoothness = 0.15
 
 [widget.battery]
@@ -181,7 +171,6 @@ show_label = false
 
 [widget.cpu]
 show_value = true
-stat = "cpu_usage"
 visualization = "graph"
 
 [widget.gpu]
