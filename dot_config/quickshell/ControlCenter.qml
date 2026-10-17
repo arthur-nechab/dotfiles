@@ -54,7 +54,7 @@ PanelWindow {
             else
                 r.paired ? r.connect() : r.pair();
         } else {
-            if (known[r.ssid] === true)
+            if (known[r.ssid] === true || r.security === "open")
                 wifiRun(["iwctl", "station", wifiDevice, "connect", r.ssid]);
             else
                 asking = r.ssid;
@@ -206,7 +206,8 @@ PanelWindow {
     Timer {
         interval: 15000
         repeat: true
-        running: cc.visible && cc.tab === "network"
+        // a refresh rebuilds the rows and wipes a passphrase being typed
+        running: cc.visible && cc.tab === "network" && cc.asking === ""
         triggeredOnStart: true
         onTriggered: cc.wifiRefresh()
     }
@@ -244,6 +245,7 @@ PanelWindow {
     property real rxTotal: 0
     property real txTotal: 0
     property var prevDev: null
+    onLinkIfaceChanged: prevDev = null
 
     readonly property var currentNet: networks.find(x => x.current) ?? null
     readonly property string currentSsid: currentNet ? currentNet.ssid : ""

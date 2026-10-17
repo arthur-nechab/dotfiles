@@ -42,6 +42,7 @@ PopupWindow {
 
     // the button hides itself once the last device is gone
     onVisibleChanged: if (visible && usbPopup.devices.length === 0) visible = false
+    onDevicesChanged: if (devices.length === 0) visible = false
 
     Rectangle {
         anchors.fill: parent

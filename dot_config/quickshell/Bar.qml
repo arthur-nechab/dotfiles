@@ -780,7 +780,7 @@ PanelWindow {
             readonly property real vol: sink && sink.audio ? sink.audio.volume : 0
             readonly property bool muted: sink && sink.audio ? sink.audio.muted : false
 
-            label: muted ? "\U000f0581" : (vol > 0.66 ? "\uf028" : (vol > 0.33 ? "\uf027" : "\uf026"))
+            label: muted ? "\u{f0581}" : (vol > 0.66 ? "\uf028" : (vol > 0.33 ? "\uf027" : "\uf026"))
             fg: muted ? Theme.red : Theme.purple
             tip: (sink ? (sink.description || sink.nickname || sink.name) : "No output device") + "  \u00b7  " + Math.round(vol * 100) + "%"
             onClicked: mouse => mouse.button === Qt.RightButton

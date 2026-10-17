@@ -58,6 +58,9 @@ Scope {
             // which layer is on screen; the other one takes the next file
             property bool showA: true
 
+            // a screen plugged in later gets no pathChanged
+            Component.onCompleted: if (root.path !== "") layerA.source = "file://" + root.path
+
             Layer {
                 id: layerA
                 opacity: wall.showA ? 1 : 0

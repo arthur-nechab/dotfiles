@@ -165,6 +165,7 @@ Scope {
         onCompleted: result => {
             if (result === PamResult.Success) {
                 root.status = "";
+                root.typed = "";
                 session.locked = false;
             } else {
                 root.status = "Incorrect password";

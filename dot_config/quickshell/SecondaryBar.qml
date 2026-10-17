@@ -9,7 +9,7 @@ PanelWindow {
     property bool dnd: false
 
     // kept apart from the window's own screen, whose change would loop back into visible
-    readonly property var other: Quickshell.screens.find(s => !s.model.includes(Theme.mainModel)) ?? null
+    readonly property var other: Quickshell.screens.find(s => s !== Theme.mainScreen) ?? null
 
     screen: other ?? Quickshell.screens[0]
     visible: other !== null

@@ -90,7 +90,10 @@ PanelWindow {
         if (!r)
             return;
         close();
-        if (mode === "apps")
+        // execute() ignores runInTerminal
+        if (mode === "apps" && r.runInTerminal)
+            Quickshell.execDetached(["ghostty", "-e"].concat(r.command));
+        else if (mode === "apps")
             r.execute();
         else
             Quickshell.clipboardText = mode === "calc" ? r.text : r.char;
