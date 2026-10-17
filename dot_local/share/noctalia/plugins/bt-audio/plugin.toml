@@ -1,0 +1,13 @@
+id = "local/bt-audio"
+name = "BT audio"
+version = "1.0.0"
+plugin_api = 26
+author = "local"
+license = "MIT"
+tags = ["audio"]
+icon = "headphones"
+description = "Show the Bluetooth headset profile and switch it back to A2DP."
+
+[[shortcut]]
+id = "tile"
+entry = "tile.luau"

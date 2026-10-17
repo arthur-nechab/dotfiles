@@ -1,0 +1,25 @@
+#!/bin/sh
+# put the Bluetooth headset back in A2DP when no call holds the mic; --reconnect drops and reopens the link
+dump=$(pw-dump)
+card=$(printf '%s' "$dump" | jq -r '.[] | select(.type=="PipeWire:Interface:Device" and .info.props["device.api"]=="bluez5") | .id' | head -1)
+[ -n "$card" ] || { notify-send -a bt-audio-fix "No Bluetooth headset"; exit 1; }
+
+if [ "${1:-}" = --reconnect ]; then
+    mac=$(printf '%s' "$dump" | jq -r --argjson c "$card" '.[] | select(.id==$c) | .info.props["api.bluez5.address"]')
+    bluetoothctl disconnect "$mac" >/dev/null
+    sleep 2
+    bluetoothctl connect "$mac" >/dev/null || { notify-send -a bt-audio-fix "Reconnect failed"; exit 1; }
+    notify-send -a bt-audio-fix "Headset reconnected"
+    exit 0
+fi
+
+# any app that records audio means a live call: leave HFP alone
+busy=$(printf '%s' "$dump" | jq -r '[.[] | select(.type=="PipeWire:Interface:Node" and .info.props["media.class"]=="Stream/Input/Audio")] | length')
+if [ "$busy" -gt 0 ]; then
+    notify-send -a bt-audio-fix "Mic in use by $busy stream(s), profile kept"
+    exit 0
+fi
+
+profile=$(printf '%s' "$dump" | jq -r --argjson c "$card" '.[] | select(.id==$c) | .info.params.EnumProfile[] | select(.name=="a2dp-sink") | .index')
+[ -n "$profile" ] && wpctl set-profile "$card" "$profile" || { notify-send -a bt-audio-fix "No A2DP profile on the headset"; exit 1; }
+notify-send -a bt-audio-fix "Headset back to A2DP"

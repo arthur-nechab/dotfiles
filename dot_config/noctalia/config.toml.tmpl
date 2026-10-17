@@ -16,6 +16,16 @@ contact_shadow = true
 hover_highlight = true
 shadow = true
 
+[control_center]
+shortcuts = [
+    { type = "wifi" },
+    { type = "bluetooth" },
+    { type = "local/bt-audio:tile" },
+    { type = "caffeine" },
+    { type = "notification" },
+    { type = "power_profile" },
+]
+
 [control_center.calendar]
 show_events_card = false
 
@@ -107,7 +117,7 @@ widget_order = [ {{ range $i, $o := $outputs }}{{ if $i }}, {{ end }}"lockscreen
 enabled = true
 
 [plugins]
-enabled = [ "noctalia/screen_recorder" ]
+enabled = [ "noctalia/screen_recorder", "local/bt-audio" ]
 
 [shell]
 telemetry_enabled = false

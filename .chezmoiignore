@@ -21,10 +21,12 @@ Library/
 .config/quickshell/
 .config/xdg-desktop-portal/
 .config/noctalia/
+.local/share/noctalia/
 {{- end }}
 
 {{- if eq .system.shell "quickshell" }}
 .config/noctalia/
+.local/share/noctalia/
 .config/quickshell/local.json
 .config/btop/btop.conf
 .config/lazygit/config.yml
