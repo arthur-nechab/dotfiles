@@ -19,7 +19,8 @@
     "terraform": true,
     "toml": true,
     "xml": true,
-    "qml": true
+    "qml": true,
+    "rainbow-csv": true
   },
   "buffer_font_family": "BerkeleyMono Nerd Font",
   "buffer_font_size": 16,
