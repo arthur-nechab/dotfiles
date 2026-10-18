@@ -1,5 +1,5 @@
 #!/bin/sh
-# capture a region, copy it, then open swappy to annotate and blur it;
+# capture a region and copy it (shot-edit opens the editor afterwards);
 # the region comes from the argument ("x,y wxh") or from slurp
 set -o pipefail
 # hyprpicker shows a still of the screen, so a menu that slurp's grab closes stays in the shot
@@ -10,6 +10,4 @@ sleep 0.2
 selection=${1:-$(slurp 2>/dev/null)} || exit 0
 [ -z "$selection" ] && exit 0
 
-grim -g "$selection" - | wl-copy -t image/png || exit 1
-kill $freeze
-wl-paste -t image/png | swappy -f -
+grim -g "$selection" - | wl-copy -t image/png

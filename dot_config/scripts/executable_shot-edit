@@ -1,0 +1,4 @@
+#!/bin/sh
+# open the editor on the clipboard image, the last capture
+wl-paste -l | grep -q image/png || exit 0
+wl-paste -t image/png | swappy -f -

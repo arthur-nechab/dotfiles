@@ -411,6 +411,7 @@ hl.bind(mod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 hl.bind("Print", hl.dsp.exec_cmd(sh.output))
 hl.bind(mod .. " + SHIFT + S", hl.dsp.exec_cmd(sh.region))
 hl.bind(mod .. " + SHIFT + Print", hl.dsp.exec_cmd(sh.window))
+hl.bind(mod .. " + ALT + S", hl.dsp.exec_cmd(scripts .. "shot-edit"))
 
 -- ── Volume ───────────────────────────────────────────────────────────
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd(sh.volume.raise), { repeating = true, locked = true })
