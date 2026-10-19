@@ -77,6 +77,14 @@ width = "80%"
 height = "80%"
 
 [[keys.command]]
+key = "prefix+alt+b"
+type = "popup"
+command = "$HOME/.config/herdr/scripts/beads-picker.sh"
+description = "pick a bead"
+width = "90%"
+height = "80%"
+
+[[keys.command]]
 key = "prefix+f"
 type = "plugin_action"
 command = "herdr-bar.open"
