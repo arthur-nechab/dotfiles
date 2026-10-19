@@ -19,7 +19,7 @@ green = "#b8bb26"
 directory = "~/.herdr/worktrees"
 
 [ui]
-agent_panel_sort = "priority"
+agent_panel_sort = "spaces"
 tab_bar_right = [{ type = "zoom" }]
 sidebar_width = 30
 prompt_new_tab_name = false
@@ -31,12 +31,30 @@ delivery = "terminal"
 delay_seconds = 3
 
 [ui.sidebar.spaces]
-rows = [["state_icon", "workspace"], ["branch", "git_status"]]
-
-[ui.sidebar.agents.rows_by_agent]
-claude = [
+# Second row: git status written by the sidebar plugin (empty outside a repo).
+rows = [
   ["state_icon", "workspace"],
-  ["terminal_title_stripped"],
+  [
+    { token = "$git_clean", fg = "#95bba2" },
+    { token = "$git_dirty", fg = "#c78a1f" },
+    { token = "$git_conflict", fg = "#c04a4a", bold = true },
+  ],
+]
+
+[ui.sidebar.agents]
+# Tokens written by the sidebar plugin. Sidebar cells take hex colours only.
+rows = [
+  [{ token = "$group", fg = "#a8abbd", bold = true }, { token = "$group_alert", fg = "#c04a4a", bold = true }],
+  [
+    { token = "$logo", fg = "#d97757" },
+    { token = "$line_working", fg = "#d97757", bold = true },
+    { token = "$line_blocked", fg = "#c04a4a", bold = true },
+    { token = "$line_done", fg = "#4c9a5a" },
+    { token = "$line_fresh", fg = "#95bba2" },
+    { token = "$line_idle", fg = "#a99e92" },
+    { token = "$line_stale", fg = "#8b8e9c", dim = true },
+    { token = "$line_unknown", fg = "#907aa9" },
+  ],
 ]
 
 [keys]
@@ -63,3 +81,58 @@ key = "prefix+f"
 type = "plugin_action"
 command = "herdr-bar.open"
 description = "command bar"
+
+# Alt + the AZERTY digit row focuses agent 1-9 of the panel; [keys.indexed] knows digits only.
+[[keys.command]]
+key = "alt+&"
+type = "shell"
+command = "python3 $HOME/.config/herdr/sidebar/sidebar.py --focus 1"
+description = "focus agent 1"
+
+[[keys.command]]
+key = "alt+é"
+type = "shell"
+command = "python3 $HOME/.config/herdr/sidebar/sidebar.py --focus 2"
+description = "focus agent 2"
+
+[[keys.command]]
+key = "alt+\""
+type = "shell"
+command = "python3 $HOME/.config/herdr/sidebar/sidebar.py --focus 3"
+description = "focus agent 3"
+
+[[keys.command]]
+key = "alt+'"
+type = "shell"
+command = "python3 $HOME/.config/herdr/sidebar/sidebar.py --focus 4"
+description = "focus agent 4"
+
+[[keys.command]]
+key = "alt+("
+type = "shell"
+command = "python3 $HOME/.config/herdr/sidebar/sidebar.py --focus 5"
+description = "focus agent 5"
+
+[[keys.command]]
+key = "alt+minus"
+type = "shell"
+command = "python3 $HOME/.config/herdr/sidebar/sidebar.py --focus 6"
+description = "focus agent 6"
+
+[[keys.command]]
+key = "alt+è"
+type = "shell"
+command = "python3 $HOME/.config/herdr/sidebar/sidebar.py --focus 7"
+description = "focus agent 7"
+
+[[keys.command]]
+key = "alt+_"
+type = "shell"
+command = "python3 $HOME/.config/herdr/sidebar/sidebar.py --focus 8"
+description = "focus agent 8"
+
+[[keys.command]]
+key = "alt+ç"
+type = "shell"
+command = "python3 $HOME/.config/herdr/sidebar/sidebar.py --focus 9"
+description = "focus agent 9"

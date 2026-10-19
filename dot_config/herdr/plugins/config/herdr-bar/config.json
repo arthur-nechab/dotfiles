@@ -1,4 +1,5 @@
 {
   "lowercase_titles": true,
-  "tab_status": true
+  "tab_status": true,
+  "agent_icons": "none"
 }

@@ -50,12 +50,14 @@ once after the first apply, and again when that file changes:
 ya pkg install
 ```
 
-herdr keeps its plugins out of this repo too. `config.toml` binds their keys, so install them
-once after the first apply:
+herdr registers its plugins itself, the two local ones included. `config.toml` binds their keys,
+so register them once after the first apply. The sidebar logos need the Herdr Agent Icons Max
+font, which this repo does not ship:
 
 ```sh
 herdr plugin install jeffarese/herdr-bar --ref v0.9.1
 herdr plugin link ~/.config/herdr/lowercase-workspace
+herdr plugin link ~/.config/herdr/sidebar
 ```
 
 The same command gives a different result on each machine. `.chezmoi.toml.tmpl` reads

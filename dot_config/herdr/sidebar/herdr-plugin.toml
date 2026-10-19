@@ -1,0 +1,24 @@
+id = "local.sidebar"
+name = "Sidebar"
+version = "0.1.0"
+min_herdr_version = "0.9.5"
+description = "Agent tree and git line for the herdr sidebar"
+platforms = ["linux", "macos"]
+
+[[startup]]
+command = ["python3", "sidebar.py"]
+
+# Watchdog: restart a dead daemon; a no-op when one runs or was stopped on purpose.
+[[events]]
+on = "pane.agent_detected"
+command = ["python3", "sidebar.py"]
+
+[[actions]]
+id = "stop"
+title = "Stop and clear the sidebar tokens"
+command = ["python3", "sidebar.py", "--stop"]
+
+[[actions]]
+id = "start"
+title = "Start the sidebar again"
+command = ["python3", "sidebar.py", "--start"]
