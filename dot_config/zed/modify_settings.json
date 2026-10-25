@@ -1,0 +1,5 @@
+{{- /* chezmoi:modify-template */ -}}
+{{- /* theme-from-wallpaper owns the "theme" line: keep the one already there */ -}}
+{{- $theme := regexFind "\"theme\": *\"[^\"]*\"" .chezmoi.stdin -}}
+{{- $base := includeTemplate "zed-settings.json" . -}}
+{{- if $theme }}{{ regexReplaceAll "\"theme\": *\"[^\"]*\"" $base $theme }}{{ else }}{{ $base }}{{ end -}}

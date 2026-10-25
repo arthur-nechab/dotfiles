@@ -1,9 +1,22 @@
 {
   // ── Appearance ─────────────────────────────────────────────────────
+  "diagnostics": {
+    "button": false
+  },
   "cli_default_open_behavior": "existing_window",
   "theme": "Kanagawa Dragon",
   "icon_theme": "Material Icon Theme",
   "auto_install_extensions": {
+    // one extension per theme the wallpaper script can pick
+    "tokyo-night": true,
+    "dracula": true,
+    "nord": true,
+    "everforest": true,
+    "night-owlz": true,
+    "horizon": true,
+    "flexoki-themes": true,
+    "twilight": true,
+    "ktrz-monokai": true,
     "kanagawa-themes": true,
     "ansible": true,
     "dockerfile": true,
@@ -71,9 +84,13 @@
   "lsp": {
     "lua-language-server": {
       "settings": {
+        // hl is the table Hyprland injects into hyprland.lua; no annotations ship with it
         "Lua": { "diagnostics": { "globals": ["hl"] } }
       }
     }
+  },
+  "languages": {
+    "Ruby": { "language_servers": [] }
   },
 
   // ── File type overrides ────────────────────────────────────────────
@@ -85,6 +102,6 @@
     "INI": ["config.tmpl", "*.conf", "*.conf.tmpl"],
     "Git Config": ["gitconfig*"],
     "Ruby": ["Brewfile"],
-    "Jinja2": ["*.j2", "*.jinja", "*.jinja2"]
+    "Jinja2": ["*.j2", "*.jinja", "*.jinja2", "modify_*"]
   }
 }

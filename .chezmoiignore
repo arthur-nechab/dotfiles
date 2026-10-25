@@ -28,10 +28,8 @@ Library/
 .config/noctalia/
 .local/share/noctalia/
 .config/quickshell/local.json
-.config/btop/btop.conf
 .config/lazygit/config.yml
 .config/yazi/theme.toml
-.config/zed/settings.json
 .config/ghostty/themes/dynamic
 .config/qt6ct/
 .config/scripts/bt-audio-fix
