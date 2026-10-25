@@ -41,6 +41,8 @@ Scope {
 
     // an image thumbnail, the app icon, or a plain bell
     component NotifIcon: ClippingRectangle {
+        id: icon
+
         required property var n
         property int size: 32
         property int bell: 16
@@ -53,16 +55,16 @@ Scope {
 
         IconImage {
             anchors.fill: parent
-            visible: parent.hasArt
-            source: parent.n.image !== "" ? parent.n.image : Quickshell.iconPath(parent.n.appIcon, "")
+            visible: icon.hasArt
+            source: icon.n.image !== "" ? icon.n.image : Quickshell.iconPath(icon.n.appIcon, "")
         }
 
         Label {
             anchors.centerIn: parent
-            visible: !parent.hasArt
+            visible: !icon.hasArt
             text: "\u{f009a}"
             color: Theme.gray
-            font.pixelSize: parent.bell
+            font.pixelSize: icon.bell
         }
     }
 
