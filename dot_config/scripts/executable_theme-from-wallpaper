@@ -6,7 +6,6 @@ import json
 import math
 import os
 import re
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -17,27 +16,24 @@ HOME = Path.home()
 CACHE = HOME / ".cache"
 QS_THEMES = HOME / ".config/quickshell/themes"
 THUMBS = CACHE / "wallpaper-thumbs"
+# caches older than this script were made by older rules
+SCRIPT_MTIME = Path(__file__).stat().st_mtime
 
 # quickshell name -> (ghostty theme, btop theme, nvim colorscheme, zed theme, yazi flavor)
-# the yazi flavors come from package.toml; horizon, night-owl and twilight have none,
+# the yazi flavors come from package.toml; horizon and night-owl have none,
 # so they take the closest dark
 THEMES = {
-    "ayu-mirage":       ("Ayu Mirage",           "ayu",                   "ayu-mirage",       "Ayu Mirage",                     "ayu-dark"),
     "dracula":          ("Dracula",              "dracula",               "dracula",          "Dracula",                        "dracula"),
     "everforest":       ("Everforest Dark Hard", "everforest-dark-hard",  "everforest",       "Everforest Dark Hard (regular)", "everforest-medium"),
     "flexoki-dark":     ("Flexoki Dark",         "flexoki-dark",          "flexoki-dark",     "Flexoki Dark",                   "flexoki-dark"),
     "gruvbox":          ("Gruvbox Dark Hard",    "gruvbox_dark",          "gruvbox",          "Gruvbox Baby",                   "gruvbox-dark"),
-    "gruvbox-material": ("Gruvbox Material Dark", "gruvbox_material_dark", "gruvbox-material", "Gruvbox Dark Soft",             "gruvbox-material"),
+    "gruvbox-material": ("Gruvbox Material Dark", "gruvbox_material_dark", "gruvbox-material", "Gruvbox Material",              "gruvbox-material"),
     "horizon":          ("Horizon",              "horizon",               "horizon",          "Horizon",                        "monokai"),
     "kanagawa-dragon":  ("Kanagawa Dragon",      "kanagawa-dragon",       "kanagawa-dragon",  "Kanagawa Dragon",                "kanagawa-dragon"),
     "kanagawa-wave":    ("Kanagawa Wave",        "kanagawa-wave",         "kanagawa-wave",    "Kanagawa Wave",                  "kanagawa"),
-    "monokai":          ("Monokai Pro",          "monokai",               "monokai-pro",      "KTRZ Monokai",                   "monokai"),
     "night-owl":        ("Night Owl",            "night-owl",             "night-owl",        "Night Owl Dark",                 "tokyo-night"),
     "nord":             ("Nord",                 "nord",                  "nord",             "Nord Dark",                      "nord"),
     "tokyonight":       ("TokyoNight",           "tokyo-night",           "tokyonight-night", "Tokyo Night",                    "tokyo-night"),
-    "tokyonight-storm": ("TokyoNight Storm",     "tokyo-storm",           "tokyonight-storm", "Tokyo Night Storm",              "tokyo-night"),
-    # no twilight port for neovim; tokyonight-night is the closest purple dark
-    "twilight":         ("Twilight",             "twilight",              "tokyonight-night", "Twilight",                       "tokyo-night"),
 }
 
 
@@ -63,8 +59,8 @@ def classify(hue, sat, lum):
     if sat < 0.10:
         return "kanagawa-dragon"
     # the warm band holds three quarters of the collection, so it is the one
-    # that has to be split finely; every theme picked here clears 11:1 on its
-    # own background with at least 4.5 of spread between its accents
+    # that has to be split finely; every theme picked here clears 8:1 on its
+    # own background
     if hue >= 330 or hue < 90:
         if sat >= 0.55:
             return "flexoki-dark"
@@ -73,8 +69,8 @@ def classify(hue, sat, lum):
         if sat >= 0.32:
             return "gruvbox-material"
         if lum < 0.45:
-            return "nord" if sat < 0.20 else "twilight"
-        return "kanagawa-wave" if sat < 0.25 else "twilight"
+            return "nord" if sat < 0.20 else "gruvbox-material"
+        return "kanagawa-wave" if sat < 0.25 else "gruvbox-material"
     if hue < 190:
         return "night-owl"
     if hue < 230:
@@ -87,15 +83,19 @@ OVERRIDES = {
     "Against the Storm": "kanagawa-dragon",
     "The Vigil": "gruvbox",
     "Fair Winds": "night-owl",
+    # green woods under a golden light: the hue reads warm, the eye sees green
+    "Pastoral": "everforest",
     # grey stone in fog: the muted dragon palette, not the grey fallback
     "Grey Chapel": "kanagawa-dragon",
 }
 
 
 def apply_quickshell(name):
-    src = QS_THEMES / f"{name}.json"
-    shutil.copyfile(src, CACHE / "quickshell-theme.json")
-    return json.loads(src.read_text())
+    palette = json.loads((QS_THEMES / f"{name}.json").read_text())
+    for key in ("fg", "gray", "red", "green", "yellow", "blue", "purple", "aqua", "orange"):
+        palette[key] = legible(palette[key], palette["bg"], palette.get("opacity", 1))
+    (CACHE / "quickshell-theme.json").write_text(json.dumps(palette, indent=2))
+    return palette
 
 
 def apply_hyprland(palette):
@@ -110,10 +110,45 @@ def apply_hyprland(palette):
     subprocess.run(["hyprctl", "eval", lua], capture_output=True)
 
 
+def luminance(hexa):
+    lin = [int(hexa[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+    lin = [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in lin]
+    return lin, 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2]
+
+
+def clamp(hexa, lo, hi):
+    """Move a colour into a luminance range, keeping its hue."""
+    lin, lum = luminance(hexa)
+    target = min(max(lum, lo), hi)
+    if target == lum or lum == 0:
+        return hexa
+    srgb = [min(1.0, c * target / lum) for c in lin]
+    srgb = [c * 12.92 if c <= 0.0031308 else 1.055 * c ** (1 / 2.4) - 0.055 for c in srgb]
+    return "#" + "".join(f"{round(c * 255):02x}" for c in srgb)
+
+
+def legible(hexa, bg, opacity):
+    """At least 3:1 on bg as seen over a bright wallpaper, and no white above gruvbox's #ebdbb2."""
+    # shortcut: assumes a bright wallpaper patch behind; measure the real one if dark themes look washed out
+    seen = "#" + "".join(f"{round(int(bg[i:i + 2], 16) * opacity + 0xd0 * (1 - opacity)):02x}"
+                         for i in (1, 3, 5))
+    return clamp(hexa, 3 * (luminance(seen)[1] + 0.05) - 0.05, 0.72)
+
+
 def apply_ghostty(theme):
     out = HOME / ".config/ghostty/themes/dynamic"
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(f"theme = {theme}\n")
+    lines = [f"theme = {theme}"]
+    src = Path("/usr/share/ghostty/themes") / theme
+    text = src.read_text() if src.exists() else ""
+    bg = re.search(r"^background\s*=\s*(#[0-9a-fA-F]{6})", text, re.M)
+    for key in ["foreground"] + [f"palette = {i}" for i in range(1, 16)]:
+        m = bg and re.search(rf"^{key}\s*=\s*(#[0-9a-fA-F]{{6}})", text, re.M)
+        # 0.9 is background-opacity in ghostty/config; this also keeps every colour
+        # above minimum-contrast, which would otherwise turn it white
+        if m and (new := legible(m[1], bg[1], 0.9)) != m[1]:
+            lines.append(f"{key}={new}")
+    out.write_text("\n".join(lines) + "\n")
     # ghostty 1.3 only reloads through its keybind; without single-instance every
     # window is its own process, so the shortcut has to reach each one by address
     clients = subprocess.run(["hyprctl", "-j", "clients"], capture_output=True, text=True)
@@ -213,9 +248,13 @@ def apply_nvim(name):
     # running instances listen on their default socket, so switch them too
     runtime = Path(os.environ.get("XDG_RUNTIME_DIR", "/run/user/1000"))
     for sock in runtime.glob("nvim.*.0"):
-        subprocess.run(["nvim", "--server", str(sock), "--remote-expr",
-                        f"execute('colorscheme {name}')"],
-                       capture_output=True, timeout=5)
+        # a hung instance must not stop the apps that come after it
+        try:
+            subprocess.run(["nvim", "--server", str(sock), "--remote-expr",
+                            f"execute('colorscheme {name}')"],
+                           capture_output=True, timeout=5)
+        except subprocess.TimeoutExpired:
+            continue
 
 
 def apply_zed(theme):
@@ -231,14 +270,18 @@ def index_wallpapers():
     folder = HOME / "Pictures/Wallpapers"
     out = CACHE / "wallpaper-themes.json"
     try:
-        cache = json.loads(out.read_text())
+        # a classifier change must reach files already measured
+        cache = json.loads(out.read_text()) if out.stat().st_mtime > SCRIPT_MTIME else {}
     except (OSError, ValueError):
         cache = {}
     fresh = {}
     THUMBS.mkdir(parents=True, exist_ok=True)
-    for f in sorted(folder.glob("*")):
-        if f.suffix.lower() not in (".jpg", ".jpeg", ".png", ".webp"):
-            continue
+    images = [f for f in sorted(folder.glob("*")) if f.suffix.lower() in (".jpg", ".jpeg", ".png", ".webp")]
+    keep = {f.stem + ".jpg" for f in images}
+    for thumb in THUMBS.glob("*.jpg"):
+        if thumb.name not in keep:
+            thumb.unlink()
+    for f in images:
         key = f.name
         # the picker shows these instead of decoding 6 MB originals on every open
         thumb = THUMBS / (f.stem + ".jpg")
@@ -262,8 +305,23 @@ def index_wallpapers():
         out.write_text(json.dumps(fresh, indent=1))
 
 
+def selftest():
+    # 0.01 of slack: hex rounding moves a luminance by about that much
+    assert luminance(legible("#ffffff", "#141414", 0.9))[1] <= 0.72 + 0.01
+    # the wallpaper behind only makes the background lighter, so 3:1 on it implies more on the bare one
+    lifted = luminance(legible("#404040", "#141414", 0.9))[1]
+    assert (lifted + 0.05) / (luminance("#141414")[1] + 0.05) >= 3
+    assert legible("#ebdbb2", "#1d2021", 0.9) == "#ebdbb2"
+    print("ok")
+
+
 def main():
+    if sys.argv[1:] == ["--selftest"]:
+        return selftest()
     index_wallpapers()
+    # the picker asks for the index alone when it opens
+    if sys.argv[1:] == ["--index"]:
+        return 0
     if len(sys.argv) > 1:
         wallpaper = sys.argv[1]
     else:
@@ -279,7 +337,8 @@ def main():
     ghostty, btop, nvim, zed, yazi = THEMES[name]
 
     stamp = CACHE / "quickshell-theme.name"
-    if stamp.exists() and stamp.read_text().strip() == name:
+    if (stamp.exists() and stamp.stat().st_mtime > SCRIPT_MTIME
+            and stamp.read_text().strip() == name):
         return 0
 
     palette = apply_quickshell(name)

@@ -32,6 +32,7 @@ PanelWindow {
         visible = !visible;
         if (visible) {
             index.reload();
+            indexer.running = true;
             scan.running = false;
             scan.running = true;
             grid.forceActiveFocus();
@@ -58,6 +59,13 @@ PanelWindow {
                 grid.currentIndex = at >= 0 ? at : 0;
             }
         }
+    }
+
+    // a file added since the last wallpaper change has no theme yet
+    Process {
+        id: indexer
+        command: [Quickshell.env("HOME") + "/.config/scripts/theme-from-wallpaper", "--index"]
+        onExited: index.reload()
     }
 
     FileView {

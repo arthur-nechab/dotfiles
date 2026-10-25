@@ -6,6 +6,25 @@
   "cli_default_open_behavior": "existing_window",
   "theme": "Kanagawa Dragon",
   "icon_theme": "Material Icon Theme",
+  // each of these themes ships line numbers or comments under 3:1 on its background
+  "theme_overrides": {
+    "Horizon": {
+      "editor.line_number": "#656871",
+      "syntax": { "comment": { "color": "#71727c" } }
+    },
+    "Flexoki Dark": {
+      "editor.line_number": "#605f5c",
+      "syntax": { "comment": { "color": "#6a6966" } }
+    },
+    "Gruvbox Baby": {
+      "editor.line_number": "#6a615c",
+      "syntax": { "comment": { "color": "#766b62" } }
+    },
+    "Gruvbox Material": {
+      "editor.line_number": "#796f67",
+      "syntax": { "comment": { "color": "#87796d" } }
+    }
+  },
   "auto_install_extensions": {
     // one extension per theme the wallpaper script can pick
     "tokyo-night": true,
@@ -15,8 +34,8 @@
     "night-owlz": true,
     "horizon": true,
     "flexoki-themes": true,
-    "twilight": true,
-    "ktrz-monokai": true,
+    "gruvbox-baby": true,
+    "gruvbox-material": true,
     "kanagawa-themes": true,
     "ansible": true,
     "dockerfile": true,

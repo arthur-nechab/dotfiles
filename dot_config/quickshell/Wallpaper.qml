@@ -97,12 +97,24 @@ Scope {
 
     // ── Palette picked from the wallpaper ────────────────────────────────
 
-    // the script classifies the image and copies themes/<name>.json into the
+    // the script classifies the image and writes themes/<name>.json, made legible, into the
     // cache file Theme watches, then restyles every app it knows
     Process {
         id: theming
+
+        // a change that lands while the script runs needs one more pass
+        property bool pending: false
+
         command: [Quickshell.env("HOME") + "/.config/scripts/theme-from-wallpaper"]
+        onExited: if (pending) { pending = false; running = true; }
     }
 
-    onPathChanged: if (root.path !== "") theming.running = true
+    onPathChanged: {
+        if (root.path === "")
+            return;
+        if (theming.running)
+            theming.pending = true;
+        else
+            theming.running = true;
+    }
 }

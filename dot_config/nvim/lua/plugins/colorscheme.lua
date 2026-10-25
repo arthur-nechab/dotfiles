@@ -37,8 +37,6 @@ return {
   { "sainnhe/everforest", lazy = true, init = function() vim.g.everforest_background = "hard" end },
   { "sainnhe/gruvbox-material", lazy = true },
   { "oxfist/night-owl.nvim", lazy = true },
-  { "loctvl842/monokai-pro.nvim", lazy = true },
-  { "Shatur/neovim-ayu", lazy = true },
   { "lunarvim/horizon.nvim", lazy = true },
   { "kepano/flexoki-neovim", lazy = true },
 
