@@ -1,0 +1,13 @@
+id = "local/vpn-status"
+name = "VPN status"
+version = "1.0.0"
+plugin_api = 26
+author = "local"
+license = "MIT"
+tags = ["network"]
+icon = "shield"
+description = "Show whether each active NetworkManager tunnel carries traffic."
+
+[[widget]]
+id = "widget"
+entry = "widget.luau"

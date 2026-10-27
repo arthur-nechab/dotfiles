@@ -9,7 +9,7 @@ tint_intensity = 0.35
 [bar.default]
 background_opacity = 0.85
 center = [ "date", "clock" ]
-end = [ "tray", "spacer_3", "clipboard", "network", "bluetooth", "input_volume", "volume", "battery", "notifications" ]
+end = [ "tray", "spacer_3", "clipboard", "network", "vpn", "bluetooth", "input_volume", "volume", "battery", "notifications" ]
 margin_edge = 6
 start = [ "control-center", "workspaces", "spacer_1", "cpu", "gpu", "ram" ]
 widget_spacing = 8
@@ -123,7 +123,7 @@ widget_order = [ {{ range $i, $o := $outputs }}{{ if $i }}, {{ end }}"lockscreen
 enabled = true
 
 [plugins]
-enabled = [ "noctalia/screen_recorder", "local/bt-audio" ]
+enabled = [ "noctalia/screen_recorder", "local/bt-audio", "local/vpn-status" ]
 
 [shell]
 telemetry_enabled = false
@@ -166,6 +166,9 @@ transition = [ "fade" ]
 transition_duration = 1200
 edge_smoothness = 0.15
 
+[widget.vpn]
+type = "local/vpn-status:widget"
+
 [widget.battery]
 show_label = false
 
@@ -192,6 +195,7 @@ type = "spacer"
 type = "spacer"
 
 [widget.network]
+vpn_status = "hidden"
 show_label = false
 
 [widget.volume]
