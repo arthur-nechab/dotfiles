@@ -319,6 +319,7 @@ hl.config({
     misc = {
         disable_hyprland_logo    = true,
         disable_splash_rendering = true,
+        background_color         = 0xff000000,
         vrr                      = 2,
         -- a link opened from another app raises the browser, workspace included
         focus_on_activate        = true,
