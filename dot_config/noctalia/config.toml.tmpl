@@ -66,15 +66,17 @@ sunset = "20:30"
 [lockscreen]
 transition = [ "fade" ]
 transition_duration = 0
+blur_intensity = 0.8
 
-{{- /* output, logical width, logical height: the size hypr/hyprland.lua gives each
-     screen after its scale. change both files together. */ -}}
-{{- $outputs := list (list "eDP-1" 1536 960) (list "DVI-I-1" 1920 1080) (list "DVI-I-2" 1920 1080) }}
+{{- /* output, logical width, logical height: the native size divided by the scale that
+     hypr/hyprland.lua picks. Noctalia 5.3 matches a login box by connector only, so list
+     every DP-N the dock gives the external screen. */ -}}
+{{- $outputs := list (list "eDP-1" 1536 960) (list "DP-1" 2560 1440) (list "DP-2" 2560 1440) (list "DP-10" 2560 1440) (list "DVI-I-1" 1920 1080) (list "DVI-I-2" 1920 1080) }}
 
 [lockscreen_widgets]
 enabled = true
 schema_version = 2
-widget_order = [ {{ range $i, $o := $outputs }}{{ if $i }}, {{ end }}"lockscreen-clock@{{ index $o 0 }}", "lockscreen-login-box@{{ index $o 0 }}"{{ end }} ]
+widget_order = [ {{ range $i, $o := $outputs }}{{ if $i }}, {{ end }}"lockscreen-clock@{{ index $o 0 }}", "lockscreen-date@{{ index $o 0 }}", "lockscreen-login-box@{{ index $o 0 }}"{{ end }} ]
 {{ range $o := $outputs }}
 {{- $n := index $o 0 }}{{ $w := float64 (index $o 1) }}{{ $h := float64 (index $o 2) }}
     [lockscreen_widgets.widget."lockscreen-clock@{{ $n }}"]
@@ -93,7 +95,24 @@ widget_order = [ {{ range $i, $o := $outputs }}{{ if $i }}, {{ end }}"lockscreen
         font_family = "Inter"
         format = "{:%H:%M}"
 
+    [lockscreen_widgets.widget."lockscreen-date@{{ $n }}"]
+    box_height = 45.0
+    box_width = 400.0
+    cx = {{ printf "%.1f" (divf $w 2) }}
+    cy = {{ printf "%.1f" (subf (divf $h 2) 105.5) }}
+    output = "{{ $n }}"
+    placement_height = {{ printf "%.1f" $h }}
+    placement_width = {{ printf "%.1f" $w }}
+    rotation = 0.0
+    type = "clock"
+
+        [lockscreen_widgets.widget."lockscreen-date@{{ $n }}".settings]
+        background_opacity = 0.0
+        font_family = "Inter"
+        format = "{:%A %d %B}"
+
     [lockscreen_widgets.widget."lockscreen-login-box@{{ $n }}"]
+    # the compact layout sets its own height; a box_height of 0 would also reset box_width
     box_height = 196.0
     box_width = 380.0
     cx = {{ printf "%.1f" (divf $w 2) }}
@@ -106,16 +125,17 @@ widget_order = [ {{ range $i, $o := $outputs }}{{ if $i }}, {{ end }}"lockscreen
 
         [lockscreen_widgets.widget."lockscreen-login-box@{{ $n }}".settings]
         background_color = "surface_variant"
-        background_opacity = 0.88
+        background_opacity = 0.0
         background_radius = 12.0
         center_password_text = true
-        input_opacity = 1.0
+        input_opacity = 0.85
         input_radius = 6.0
         layout = "compact"
         show_caps_lock = true
         show_keyboard_layout = true
         show_login_button = false
         show_media = false
+        show_password_reveal = false
         show_session_buttons = false
         show_unlock_hint = false
         show_weather = false
