@@ -419,7 +419,7 @@ hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd(sh.volume.raise), { repeating = 
 hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd(sh.volume.lower), { repeating = true, locked = true })
 hl.bind("XF86AudioMute", hl.dsp.exec_cmd(sh.volume.mute), { locked = true })
 hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd(sh.volume.mic_mute), { locked = true })
-hl.bind("mouse:275", hl.dsp.exec_cmd(sh.volume.mic_mute), { mouse = true, locked = true })
+hl.bind("mouse:275", hl.dsp.exec_cmd(sh.volume.mic_mute), { locked = true })
 
 -- ── Brightness ───────────────────────────────────────────────────────
 hl.bind("XF86MonBrightnessUp", function() hl.dispatch(hl.dsp.exec_cmd(sh.brightness.raise())) end,
