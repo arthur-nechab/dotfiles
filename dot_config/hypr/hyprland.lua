@@ -327,6 +327,7 @@ hl.config({
 
     cursor = {
         no_hardware_cursors  = true,
+        warp_on_monitor_change = "enable",
     },
 
     xwayland = {
