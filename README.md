@@ -51,11 +51,9 @@ ya pkg install
 ```
 
 herdr registers its plugins itself, the two local ones included. `config.toml` binds their keys,
-so register them once after the first apply. The sidebar logos need the Herdr Agent Icons Max
-font, which this repo does not ship:
+so register them once after the first apply:
 
 ```sh
-herdr plugin install jeffarese/herdr-bar --ref v0.9.1
 herdr plugin link ~/.config/herdr/lowercase-workspace
 herdr plugin link ~/.config/herdr/sidebar
 ```
