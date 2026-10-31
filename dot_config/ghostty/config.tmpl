@@ -12,7 +12,7 @@ adjust-cell-height = -3%
 
 # ── Window & Layout ───────────────────────────────────────────────────
 window-padding-x        = 10
-window-padding-y        = 8
+window-padding-y        = 10
 window-padding-balance  = true
 unfocused-split-opacity = 0.8
 
@@ -35,7 +35,7 @@ clipboard-trim-trailing-spaces = true
 keybind                        = shift+insert=paste_from_clipboard
 
 # ── Shell Integration & SSH ───────────────────────────────────────────
-shell-integration-features = sudo,title,ssh-env,no-cursor
+shell-integration-features = sudo,title,ssh-env,ssh-terminfo,no-cursor
 
 {{ if eq .chezmoi.os "darwin" -}}
 # ── macOS only ────────────────────────────────────────────────────────
@@ -45,6 +45,7 @@ font-thicken                   = true
 font-thicken-strength          = 60
 macos-titlebar-style           = tabs
 macos-option-as-alt            = left
+copy-on-select                 = clipboard
 window-save-state              = always
 window-step-resize             = true
 window-vsync                   = true
@@ -56,6 +57,7 @@ keybind = global:super+alt+ctrl+shift+space=toggle_quick_terminal
 {{ else -}}
 # ── Linux / GTK ───────────────────────────────────────────────────────
 gtk-single-instance            = false
+background-blur                = true
 {{ end -}}
 {{ if eq .system.shell "quickshell" }}
 # ── Dynamic theme ─────────────────────────────────────────────────────
