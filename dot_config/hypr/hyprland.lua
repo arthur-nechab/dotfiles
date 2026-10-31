@@ -316,6 +316,11 @@ hl.config({
         preserve_split = true,
     },
 
+    render = {
+        -- the HDR switch on fullscreen video blanks the main screen for a second
+        cm_auto_hdr = 0,
+    },
+
     misc = {
         disable_hyprland_logo    = true,
         disable_splash_rendering = true,
@@ -327,7 +332,6 @@ hl.config({
 
     cursor = {
         no_hardware_cursors  = true,
-        warp_on_monitor_change = "enable",
     },
 
     xwayland = {
