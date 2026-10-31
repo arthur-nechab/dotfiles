@@ -20,14 +20,12 @@ SOURCE = "local.sidebar"
 SOCK = os.environ.get("HERDR_SOCKET_PATH") or os.path.expanduser("~/.config/herdr/herdr.sock")
 STATE = os.path.join(os.environ.get("XDG_STATE_HOME") or os.path.expanduser("~/.local/state"), "herdr-sidebar")
 ACTIVITY = os.path.join(STATE, "activity.json")
+SINCE = os.path.join(STATE, "since.json")
 PID = os.path.join(STATE, "pid")
 STOPPED = os.path.join(STATE, "stopped")
 FRAMES = "⣷⣯⣟⡿⢿⣻⣽⣾"
-# Glyphs of the Herdr Agent Icons Max font; the terminal maps their codepoints to it.
-LOGOS = {"claude": ""}
 BRANCH = ""  # nerd font git branch
 FRESH_S = 15 * 60
-STALE_S = 2 * 3600
 TICK_S = 0.5      # spinner cadence, 2 fps: each write redraws every attached terminal
 RELIST_S = 2      # while animating, re-read herdr's lists this often for new titles
 GIT_S = 10        # refresh the git line of each space this often, events aside
@@ -35,10 +33,10 @@ GIT_MIN_S = 2     # and never more often than this
 # Our own sort key keeps each header above its rows and each worktree under its checkout.
 # A "plugin:" source lets herdr drop the view when the plugin is disabled or unlinked.
 VIEW = {"source": "plugin:" + SOURCE, "label": "groups", "sort": [{"field": {"token": "sort_key"}}]}
-STATES = ("working", "done", "blocked", "fresh", "idle", "stale", "unknown")
+STATES = ("working", "done", "blocked", "fresh", "idle", "unknown")
 # Groups sort by their most urgent agent, then by their most recent work.
 URGENCY = {"blocked": 0, "working": 1, "done": 2}
-TOKENS = ("group", "group_alert", "logo", "sort_key") + tuple(f"line_{s}" for s in STATES)
+TOKENS = ("group", "group_alert", "sort_key") + tuple(f"line_{s}" for s in STATES)
 SPACE_TOKENS = ("git_clean", "git_dirty", "git_conflict")
 # Structural events only (metadata ones echo our writes); status changes need a pane_id each.
 EVENTS = (
@@ -89,22 +87,67 @@ def display_state(agent, last_work, now):
     status = agent.get("agent_status") or "unknown"
     if status == "idle":
         age = now - last_work
-        return "fresh" if age < FRESH_S else "stale" if age >= STALE_S else "idle"
+        return "fresh" if age < FRESH_S else "idle"
     return status if status in STATES else "unknown"
 
 
-def git_tokens(cwd):
+def lead(state, step):
+    return {"working": FRAMES[step % len(FRAMES)], "done": "✓", "blocked": "?", "fresh": "○", "idle": "·", "unknown": "◌"}.get(state, "")
+
+
+def resumed_since(saved, last_work, now):
+    """Work start times saved by a previous daemon, kept only for agents still working when it stopped."""
+    # activity.json is saved every 30 s: an agent seen working within 2 min was still working at the restart.
+    return {k: t for k, t in saved.items() if now - last_work.get(k, 0) < 120}
+
+
+def duration(seconds):
+    m = int(seconds // 60)
+    return f"{m}m" if m < 60 else f"{m // 60}h{m % 60:02d}"
+
+
+def tab_titles(agents, tabs):
+    """Tabs whose only agent is Claude follow its session title (/rename): tab id -> new label."""
+    by_tab = {}
+    for a in agents:
+        by_tab.setdefault(a.get("tab_id"), []).append(a)
+    out = {}
+    for t in tabs:
+        group = by_tab.get(t["tab_id"], [])
+        if len(group) != 1 or group[0].get("agent") != "claude":
+            continue
+        a = group[0]
+        title = (a.get("terminal_title_stripped") or "").strip().lower()
+        # Claude leads its own titles with an activity glyph that herdr strips; a title without one
+        # is the shell's, seen while a restored session starts, and would rename the tab twice.
+        own = (a.get("terminal_title") or "").strip().lower() != title
+        if own and title not in ("", "claude", "claude code") and title != t.get("label"):
+            out[t["tab_id"]] = title
+    return out
+
+
+def git_tokens(cwd, label="", worktree=False):
     """The git row of a space, or None outside a repository."""
-    try:
+    def git(*args):
         # --no-optional-locks: never take the index lock from under an agent's git.
-        out = subprocess.run(["git", "--no-optional-locks", "-C", cwd, "status", "--porcelain=v2", "--branch", "--show-stash"],
-                             capture_output=True, text=True, timeout=2)
-    except (OSError, subprocess.TimeoutExpired):
+        return subprocess.run(["git", "--no-optional-locks", "-C", cwd, *args], capture_output=True, text=True, timeout=2)
+
+    try:
+        out = git("status", "--porcelain=v2", "--branch", "--show-stash")
+        unmerged = None
+        if worktree and not out.returncode:
+            # A bead branch has no upstream: count what main does not have yet.
+            for base in ("main", "master"):
+                count = git("rev-list", "--count", f"{base}..HEAD")
+                if not count.returncode:
+                    unmerged = int(count.stdout)
+                    break
+    except (OSError, ValueError, subprocess.TimeoutExpired):
         return None
-    return None if out.returncode else parse_status(out.stdout)
+    return None if out.returncode else parse_status(out.stdout, label, unmerged)
 
 
-def parse_status(text):
+def parse_status(text, label="", unmerged=None):
     head = oid = ""
     ahead = behind = staged = changed = untracked = conflicts = stash = 0
     for line in text.splitlines():
@@ -124,12 +167,18 @@ def parse_status(text):
             conflicts += 1
         elif line.startswith("? "):
             untracked += 1
+    if unmerged is not None:
+        ahead = unmerged  # a worktree counts what main lacks, not what its upstream lacks
     # Three blocks, two spaces apart: the remote, the work tree, the stash.
     blocks = ((("↑", ahead), ("↓", behind)), (("+", staged), ("~", changed), ("?", untracked), ("!", conflicts)), (("≡", stash),))
     parts = [" ".join(f"{s}{n}" for s, n in block if n) for block in blocks]
-    text = "  ".join([f"{BRANCH} {oid if head == '(detached)' else head}"] + [p for p in parts if p])
+    branch = oid if head == "(detached)" else head
+    # The default branch is the expected case, and a branch named like its space says nothing new.
+    named = [] if branch in ("main", "master", label) else [f"{BRANCH} {branch}"]
+    text = "  ".join(named + [p for p in parts if p])
     tokens = dict.fromkeys(SPACE_TOKENS)
-    tokens["git_conflict" if conflicts else "git_dirty" if staged or changed or untracked else "git_clean"] = text
+    if text:
+        tokens["git_conflict" if conflicts else "git_dirty" if staged or changed or untracked else "git_clean"] = text
     return tokens
 
 
@@ -159,7 +208,7 @@ def layout(agents, workspaces, tab_rank, score):
     return sorted(agents, key=key), parent
 
 
-def compose(agents, workspaces, parent, states, step):
+def compose(agents, workspaces, parent, states, step, elapsed={}):
     """Tokens per pane. `agents` must be in panel order (see layout)."""
     info = {w["workspace_id"]: w for w in workspaces}
     first, blocked = {}, set()
@@ -180,15 +229,15 @@ def compose(agents, workspaces, parent, states, step):
             label = f"{indent(1)}{corner}{BRANCH} {label}"
         elif wt.get("is_linked_worktree"):
             label = f"{wt.get('repo_name', '')} {BRANCH} {label}".strip()
-        lead = {"working": FRAMES[step % len(FRAMES)], "done": "✓", "blocked": "?", "unknown": "◌"}.get(state, "")
-        logo = LOGOS.get(a.get("agent") or "", "")
         title = a.get("terminal_title_stripped") or a.get("name") or a.get("agent") or pane
+        if elapsed.get(pane, 0) >= 60:
+            title += " " + duration(elapsed[pane])
         # A head's row sits under its header, a continuation row herdr already indents.
         pad = indent(depth if head else depth + 1)
         tokens = dict.fromkeys(TOKENS)
         tokens["group_alert" if ws in blocked else "group"] = label if head else None
-        tokens["logo"] = pad + logo if logo else None
-        tokens[f"line_{state}"] = ("" if logo else pad) + " ".join(p for p in (lead, title) if p)
+        # One token per row: herdr puts " · " between two tokens.
+        tokens[f"line_{state}"] = pad + " ".join(p for p in (lead(state, step), title) if p)
         tokens["sort_key"] = f"{i:05d}"
         out[pane] = tokens
     return out
@@ -211,6 +260,11 @@ class Daemon:
                 self.last_work = json.load(f)  # activity key -> wall time last seen working
         except (OSError, ValueError):
             self.last_work = {}
+        try:
+            with open(SINCE) as f:
+                self.since = resumed_since(json.load(f), self.last_work, time.time())  # activity key -> work start
+        except (OSError, ValueError):
+            self.since = {}
 
     def subscribe(self):
         lost = True  # first connection, or the server went away since
@@ -261,27 +315,33 @@ class Daemon:
             # The space's directory is the one its active tab is in.
             pane = next((p for p in mine if p.get("tab_id") == w.get("active_tab_id")), mine[0] if mine else None)
             cwd = pane and (pane.get("foreground_cwd") or pane.get("cwd"))
-            tokens = (git_tokens(cwd) if cwd else None) or dict.fromkeys(SPACE_TOKENS)
+            linked = (w.get("worktree") or {}).get("is_linked_worktree", False)
+            tokens = (git_tokens(cwd, w.get("label", ""), linked) if cwd else None) or dict.fromkeys(SPACE_TOKENS)
             if self.ws_sent.get(ws) != tokens:
                 if call("workspace.report_metadata", {"workspace_id": ws, "source": SOURCE, "tokens": tokens}) is not None:
                     self.ws_sent[ws] = tokens
 
     def save_activity(self, now, live):
         self.last_work = {k: t for k, t in self.last_work.items() if k in live or now - t < 7 * 86400}
-        tmp = ACTIVITY + ".tmp"
-        with open(tmp, "w") as f:
-            json.dump(self.last_work, f)
-        os.replace(tmp, ACTIVITY)  # a kill mid-write leaves the old file whole
+        for path, data in ((ACTIVITY, self.last_work), (SINCE, self.since)):
+            tmp = path + ".tmp"
+            with open(tmp, "w") as f:
+                json.dump(data, f)
+            os.replace(tmp, path)  # a kill mid-write leaves the old file whole
         self.saved_at = now
 
     def relist(self, now):
         workspaces = listing("workspace.list", "workspaces")
-        tab_rank = {t["tab_id"]: t.get("number", 0) for t in listing("tab.list", "tabs")}
+        tabs = listing("tab.list", "tabs")
+        tab_rank = {t["tab_id"]: t.get("number", 0) for t in tabs}
         agents = listing("agent.list", "agents")
+        for tab_id, label in tab_titles(agents, tabs).items():
+            call("tab.rename", {"tab_id": tab_id, "label": label})
         for a in agents:
             key = activity_key(a)
             if a.get("agent_status") == "working" or key not in self.last_work:
                 self.last_work[key] = now
+        self.since = {k: self.since.get(k, now) for k in (activity_key(a) for a in agents if a.get("agent_status") == "working")}
         score = {}
         for a in agents:
             last = self.last_work[activity_key(a)]
@@ -311,7 +371,8 @@ class Daemon:
             self.relist(now)
         agents, workspaces, parent = self.lists
         states = {a["pane_id"]: display_state(a, self.last_work.get(activity_key(a), now), now) for a in agents}
-        for pane, tokens in compose(agents, workspaces, parent, states, self.step).items():
+        elapsed = {a["pane_id"]: now - self.since[activity_key(a)] for a in agents if activity_key(a) in self.since}
+        for pane, tokens in compose(agents, workspaces, parent, states, self.step, elapsed).items():
             # A pane we have not written yet gets every token, so leftovers are cleared.
             old = self.sent.get(pane)
             delta = tokens if old is None else {k: v for k, v in tokens.items() if old.get(k) != v}
@@ -412,18 +473,32 @@ def selftest():
     agents[2] = dict(agents[2], agent_status="blocked")
     states = {a["pane_id"]: display_state(a, 0, 1) for a in agents}
     out = compose(agents, workspaces, parent, states, 0)
-    g = ""
-    assert out["a:1"]["group"] == "homelab" and out["a:1"]["logo"] == g and out["a:1"]["line_working"] == "⣷ x"
-    assert out["a:2"]["group"] is None and out["a:2"]["logo"] == indent(1) + g and out["a:2"]["line_fresh"] == "y"
+    assert out["a:1"]["group"] == "homelab" and out["a:1"]["line_working"] == "⣷ x"
+    assert out["a:2"]["group"] is None and out["a:2"]["line_fresh"] == indent(1) + "○ y"
     assert out["c:1"]["group_alert"] == indent(1) + "└─ " + BRANCH + " feat" and out["c:1"]["group"] is None
-    assert out["c:1"]["logo"] == indent(1) + g and out["c:1"]["line_blocked"] == "? q"
-    assert out["b:1"]["logo"] is None and out["b:1"]["line_done"] == "✓ z" and out["b:1"]["sort_key"] == "00003"
+    assert out["c:1"]["line_blocked"] == indent(1) + "? q"
+    assert out["b:1"]["group"] == "claude" and out["b:1"]["line_done"] == "✓ z" and out["b:1"]["sort_key"] == "00003"
+    timed = compose(agents, workspaces, parent, states, 0, {"a:1": 59, "a:2": 3725})
+    assert timed["a:1"]["line_working"] == "⣷ x" and timed["a:2"]["line_fresh"] == indent(1) + "○ y 1h02"
+    assert resumed_since({"a": 100, "b": 100}, {"a": 950, "b": 500}, 1000) == {"a": 100}
+    tabs = [{"tab_id": "t1", "label": "1"}, {"tab_id": "t2", "label": "old"}, {"tab_id": "t3", "label": "same"}, {"tab_id": "t4", "label": "x"}]
+    def ag_t(tab, title, glyph="✳ ", agent="claude"):
+        return {"tab_id": tab, "agent": agent, "terminal_title": glyph + title, "terminal_title_stripped": title}
+    titled = [ag_t("t1", "Fix Login"), ag_t("t2", "Claude Code"), ag_t("t3", "same"), ag_t("t4", "a"), ag_t("t4", "b", agent="codex"),
+              ag_t("t5", "~/src/app", glyph="")]
+    tabs.append({"tab_id": "t5", "label": "app"})
+    assert tab_titles(titled, tabs) == {"t1": "fix login"}
     status = "# branch.oid abcdef0123\n# branch.head main\n# branch.ab +2 -1\n1 M. N...\n1 .M N...\n? x\n"
-    assert parse_status(status + "# stash 2\n")["git_dirty"] == f"{BRANCH} main  ↑2 ↓1  +1 ~1 ?1  ≡2"
+    assert parse_status(status + "# stash 2\n")["git_dirty"] == "↑2 ↓1  +1 ~1 ?1  ≡2"
     assert parse_status("# branch.oid abcdef0123\n# branch.head (detached)\n")["git_clean"] == f"{BRANCH} abcdef0"
     assert parse_status("# branch.head main\nu UU N...\n")["git_conflict"]
+    assert parse_status("# branch.head main\n") == dict.fromkeys(SPACE_TOKENS)
+    assert parse_status("# branch.head proj-a1b\n")["git_clean"] == f"{BRANCH} proj-a1b"
+    assert parse_status("# branch.head proj-a1b\n", "proj-a1b") == dict.fromkeys(SPACE_TOKENS)
+    assert parse_status("# branch.head proj-a1b\n", "proj-a1b", 3)["git_clean"] == "↑3"
+    assert parse_status("# branch.head proj-a1b\n# branch.ab +0 -0\n", "proj-a1b", 2)["git_clean"] == "↑2"
     idle = {"agent_status": "idle"}
-    assert [display_state(idle, 0, s) for s in (1, FRESH_S, STALE_S)] == ["fresh", "idle", "stale"]
+    assert [display_state(idle, 0, s) for s in (1, FRESH_S, 30 * 86400)] == ["fresh", "idle", "idle"]
     print("ok")
 
 

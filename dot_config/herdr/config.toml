@@ -3,17 +3,16 @@ onboarding = false
 [theme]
 name = "terminal"
 
+# Neutral greys only: the terminal palette paints selected rows white. Text colours follow the terminal theme.
 [theme.custom]
-accent = "#ebdbb2"
 overlay0 = "#665c54"
 surface_dim = "#282828"
 active_row_bg = "#3a3a3a"
 selection_bg = "#4d4d4d"
-text = "#ebdbb2"
-subtext0 = "#bdae93"
-red = "#fb4934"
-yellow = "#fabd2f"
-green = "#b8bb26"
+# A named colour is an ANSI slot, so it follows the terminal theme; the default accent is ANSI blue.
+accent = "gray"
+# Inactive tab labels: ANSI gray, one step under the terminal foreground and still from the theme.
+overlay1 = "gray"
 
 [worktrees]
 directory = "~/.herdr/worktrees"
@@ -24,36 +23,35 @@ tab_bar_right = [{ type = "zoom" }]
 sidebar_width = 30
 prompt_new_tab_name = false
 pane_scrollbars = false
-status_indicators = "dots"
+status_indicators = "symbols"
 
 [ui.toast]
 delivery = "terminal"
 delay_seconds = 3
 
 [ui.sidebar.spaces]
-# Second row: git status written by the sidebar plugin (empty outside a repo).
+# Git status written by the sidebar plugin on the same row; empty for a clean default branch.
 rows = [
-  ["state_icon", "workspace"],
   [
-    { token = "$git_clean", fg = "#95bba2" },
+    "state_icon",
+    "workspace",
+    { token = "$git_clean", fg = "#8ec07c" },
     { token = "$git_dirty", fg = "#c78a1f" },
-    { token = "$git_conflict", fg = "#c04a4a", bold = true },
+    { token = "$git_conflict", fg = "#e06c6c", bold = true },
   ],
 ]
 
 [ui.sidebar.agents]
 # Tokens written by the sidebar plugin. Sidebar cells take hex colours only.
 rows = [
-  [{ token = "$group", fg = "#a8abbd", bold = true }, { token = "$group_alert", fg = "#c04a4a", bold = true }],
+  [{ token = "$group", fg = "#a69e91", bold = true }, { token = "$group_alert", fg = "#e06c6c", bold = true }],
   [
-    { token = "$logo", fg = "#d97757" },
     { token = "$line_working", fg = "#d97757", bold = true },
-    { token = "$line_blocked", fg = "#c04a4a", bold = true },
-    { token = "$line_done", fg = "#4c9a5a" },
-    { token = "$line_fresh", fg = "#95bba2" },
-    { token = "$line_idle", fg = "#a99e92" },
-    { token = "$line_stale", fg = "#8b8e9c", dim = true },
-    { token = "$line_unknown", fg = "#907aa9" },
+    { token = "$line_blocked", fg = "#e06c6c", bold = true },
+    { token = "$line_done", fg = "#8ec07c", bold = true },
+    { token = "$line_fresh", fg = "#8ec07c" },
+    { token = "$line_idle", fg = "#887e72" },
+    { token = "$line_unknown", fg = "#887e72" },
   ],
 ]
 
@@ -83,12 +81,6 @@ command = "$HOME/.config/herdr/scripts/beads-picker.sh"
 description = "pick a bead"
 width = "90%"
 height = "80%"
-
-[[keys.command]]
-key = "prefix+f"
-type = "plugin_action"
-command = "herdr-bar.open"
-description = "command bar"
 
 # Alt + the AZERTY digit row focuses agent 1-9 of the panel; [keys.indexed] knows digits only.
 [[keys.command]]
