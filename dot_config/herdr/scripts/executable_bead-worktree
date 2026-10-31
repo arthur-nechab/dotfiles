@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# bead-worktree <id> [name]: open a worktree for a bead in herdr and start Claude on it. Run it from the repo.
+set -eu
+id=$1
+name=${2:-$id}
+herdr=${HERDR_BIN_PATH:-herdr}
+# A typo must not create a branch.
+bd show "$id" >/dev/null
+if git worktree list --porcelain | grep -qFx "branch refs/heads/$id"; then
+  echo "bead-worktree: $id already has a worktree" >&2
+  exit 1
+fi
+ws=$("$herdr" worktree create --cwd "$PWD" --branch "$id" --label "$id" --focus)
+pane=$(jq -r '.result.root_pane.pane_id' <<<"$ws")
+# Claude asks once to trust each new worktree folder: that choice stays with the user.
+"$herdr" pane run "$pane" "claude -n $(printf %q "${name,,}") $(printf %q "Work on bead $id. Read it first with: bd show $id")" >/dev/null
+echo "$pane"

@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# bead-finish <id>: land a bead branch, then remove its worktree and branch. Run it from the main checkout.
+# git config bead.finish picks how the branch lands: merge (default) merges it into main locally; mr, for a repo whose
+# main is protected, pushes it for a merge request and cleans up on a later run, once the request is merged.
+set -eu
+id=$1
+herdr=${HERDR_BIN_PATH:-herdr}
+mode=$(git config --get bead.finish || echo merge)
+path=$(git worktree list --porcelain | awk -v b="branch refs/heads/$id" '/^worktree /{p=substr($0, 10)} $0 == b {print p}')
+[ -n "$path" ] || { echo "bead-finish: $id has no worktree" >&2; exit 1; }
+# Uncommitted work in the worktree would be lost with it, or left out of the merge request.
+[ -z "$(git -C "$path" status --porcelain)" ] || { echo "bead-finish: $path has uncommitted changes" >&2; exit 1; }
+
+remove() {
+  ws=$("$herdr" workspace list | jq -r --arg p "$path" '.result.workspaces[] | select(.worktree.checkout_path == $p) | .workspace_id')
+  if [ -n "$ws" ]; then
+    "$herdr" worktree remove --workspace "$ws" >/dev/null
+  else
+    git worktree remove "$path"
+  fi
+}
+
+case $mode in
+  merge)
+    [ "$(git branch --show-current)" = main ] || { echo "bead-finish: run it from the main checkout, on main" >&2; exit 1; }
+    git merge --no-edit "$id"
+    remove
+    # -d, not -D: git refuses if the merge did not land.
+    git branch -d "$id"
+    ;;
+  mr)
+    git fetch --quiet --prune origin
+    base=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD || echo origin/main)
+    # Landed when merging the branch into the remote main changes nothing: true after a merge, a squash or a rebase,
+    # false after a merge request closed without merging.
+    if [ "$(git merge-tree --write-tree "$base" "$id" 2>/dev/null | head -n1)" != "$(git rev-parse "$base^{tree}")" ]; then
+      git push --set-upstream origin "$id"
+      echo "bead-finish: $id is pushed; run it again once the merge request is merged"
+      exit 0
+    fi
+    remove
+    # -D: after a squash git cannot see the branch as merged; the tree check above stands in for -d.
+    git branch -D "$id"
+    ;;
+  *)
+    echo "bead-finish: bead.finish must be merge or mr, not $mode" >&2
+    exit 1
+    ;;
+esac
