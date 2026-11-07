@@ -35,6 +35,31 @@ ShellRoot {
         }
     }
 
+    // `qs ipc call panels <name>`: open a bar panel without the pointer
+    IpcHandler {
+        target: "panels"
+
+        function audio(): void {
+            controlCenter.toggle("audio");
+        }
+
+        function bluetooth(): void {
+            controlCenter.toggle("bluetooth");
+        }
+
+        function network(): void {
+            controlCenter.toggle("network");
+        }
+
+        function homelab(): void {
+            homelabPanel.toggle();
+        }
+
+        function media(): void {
+            mediaPanel.toggle();
+        }
+    }
+
     // keyboard-driven states get the same notice as a volume change
     Connections {
         target: notifications
