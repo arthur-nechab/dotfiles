@@ -31,6 +31,14 @@ PanelWindow {
     property int current: 0
     // index waiting for its second confirmation, -1 otherwise
     property int armed: -1
+    property double armedAt: 0
+
+    // an armed tile that nobody confirms goes back to idle
+    Timer {
+        id: armTimer
+        interval: 4000
+        onTriggered: menu.armed = -1
+    }
 
     function toggle() {
         visible = !visible;
@@ -50,8 +58,13 @@ PanelWindow {
         // log out, reboot and shut down ask twice; lock is cheap to undo
         if (i >= 1 && armed !== i) {
             armed = i;
+            armedAt = Date.now();
+            armTimer.restart();
             return;
         }
+        // a double-click or a held key would arm and fire in one gesture
+        if (i >= 1 && Date.now() - armedAt < 400)
+            return;
         visible = false;
         armed = -1;
         if (a.cmd === "")
@@ -87,13 +100,18 @@ PanelWindow {
             Keys.onLeftPressed: menu.current = (menu.current + menu.actions.length - 1) % menu.actions.length
             Keys.onRightPressed: menu.current = (menu.current + 1) % menu.actions.length
             Keys.onTabPressed: menu.current = (menu.current + 1) % menu.actions.length
-            Keys.onReturnPressed: menu.run(menu.current)
-            Keys.onEnterPressed: menu.run(menu.current)
+            // a held Enter must not arm and fire in one press
+            Keys.onReturnPressed: event => { if (!event.isAutoRepeat) menu.run(menu.current); }
+            Keys.onEnterPressed: event => { if (!event.isAutoRepeat) menu.run(menu.current); }
             // l, o, r, s go straight to the action; all but lock still ask twice
             Keys.onPressed: event => {
                 const i = menu.actions.findIndex(a => a.key === event.text.toLowerCase());
                 if (i < 0)
                     return;
+                if (event.isAutoRepeat) {
+                    event.accepted = true;
+                    return;
+                }
                 menu.current = i;
                 menu.run(i);
                 event.accepted = true;
@@ -143,7 +161,7 @@ PanelWindow {
 
                         Label {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            text: menu.armed === parent.parent.index ? "Confirm" : modelData.label
+                            text: menu.armed === parent.parent.index ? modelData.label + "?" : modelData.label
                             color: menu.armed === parent.parent.index ? modelData.color : Theme.fg
                             font.pixelSize: 12
                             font.bold: true

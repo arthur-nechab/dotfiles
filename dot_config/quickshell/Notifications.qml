@@ -203,7 +203,7 @@ Scope {
 
                             Row {
                                 spacing: 6
-                                visible: modelData.actions.length > 0
+                                visible: modelData.actions.some(x => x.text !== "")
 
                                 Repeater {
                                     model: modelData.actions
@@ -211,6 +211,8 @@ Scope {
                                     MouseArea {
                                         required property var modelData
 
+                                        // the default action has no label: a click on the card runs it
+                                        visible: modelData.text !== ""
                                         implicitWidth: actionLabel.implicitWidth + 18
                                         implicitHeight: 24
                                         onClicked: modelData.invoke()
@@ -399,8 +401,6 @@ Scope {
                     }
                 }
 
-                Label {
-                    visible: server.trackedNotifications.values.length === 0
                 Column {
                     id: health
 
@@ -463,6 +463,8 @@ Scope {
                     }
                 }
 
+                Label {
+                    visible: server.trackedNotifications.values.length === 0
                     text: "No notifications"
                     color: Theme.gray
                     font.pixelSize: 13
@@ -570,6 +572,8 @@ Scope {
                                     height: 30
                                     radius: 8
                                     color: Theme.bg
+                                    border.width: 1
+                                    border.color: reply.activeFocus ? Theme.fg : Theme.gray
                                     visible: row.n.hasInlineReply
 
                                     TextInput {

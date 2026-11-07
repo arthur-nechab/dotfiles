@@ -132,8 +132,9 @@ BarPopup {
                     Label {
                         anchors.centerIn: parent
                         text: model.day
-                        color: model.today ? Theme.red : (model.month === calendar.shownMonth ? Theme.fg : Theme.gray)
-                        opacity: model.month === calendar.shownMonth ? 1 : 0.4
+                        color: model.today ? Theme.yellow : (model.month === calendar.shownMonth ? Theme.fg : Theme.gray)
+                        // days of the next and previous month are inactive: dimmed, exempt from the 4.5:1 floor
+                        opacity: model.month === calendar.shownMonth ? 1 : 0.55
                         font.pixelSize: 14
                         font.bold: true
                     }

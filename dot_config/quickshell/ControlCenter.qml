@@ -555,7 +555,7 @@ PanelWindow {
             Slider {
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - 84
-                accent: stream.accent
+                accent: stream.node.audio.muted ? Theme.gray : stream.accent
                 value: stream.node.audio.volume
                 onMoved: v => stream.node.audio.volume = v
             }
@@ -604,7 +604,7 @@ PanelWindow {
         Slider {
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width - 90
-            accent: vol.accent
+            accent: vol.muted ? Theme.gray : vol.accent
             value: vol.level
             onMoved: v => { if (vol.ready) vol.node.audio.volume = v; }
         }
@@ -701,7 +701,7 @@ PanelWindow {
     Rectangle {
         anchors.fill: parent
         radius: 14
-        color: Qt.alpha(Theme.bg, 0.96)
+        color: Qt.alpha(Theme.bg, Theme.panelAlpha)
 
         Behavior on color {
             ColorAnimation { duration: 300 }

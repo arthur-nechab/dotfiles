@@ -71,7 +71,7 @@ PanelWindow {
     Rectangle {
         anchors.fill: parent
         radius: 14
-        color: Qt.alpha(Theme.bg, 0.96)
+        color: Qt.alpha(Theme.bg, Theme.panelAlpha)
 
         Behavior on color {
             ColorAnimation { duration: 300 }

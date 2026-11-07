@@ -206,11 +206,16 @@ PanelWindow {
 
                     Label {
                         text: {
-                            if (launcher.mode === "apps")
-                                return entry?.genericName ?? "";
+                            if (launcher.mode === "apps") {
+                                // two entries can share a name: the desktop id tells them apart
+                                if (launcher.results.filter(e => e.name === entry?.name).length > 1)
+                                    return entry?.id ?? "";
+                                const g = entry?.genericName ?? "";
+                                return g !== "" && g !== entry?.name ? g : (entry?.comment ?? "");
+                            }
                             if (launcher.mode === "emoji")
                                 return entry?.keywords ?? "";
-                            return "Press Enter to copy";
+                            return "";
                         }
                         visible: text !== "" && text !== entry?.name
                         color: Theme.gray
