@@ -4,6 +4,8 @@ import QtQuick
 Text {
     color: Theme.fg
     font.family: Theme.uiFont
+    // shell text shows notification, polkit and network data: never parse it as rich text
+    textFormat: Text.PlainText
 
     // a theme change slides instead of cutting
     Behavior on color {

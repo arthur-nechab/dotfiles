@@ -50,7 +50,7 @@ Scope {
         root.mode = "ocr";
         Hyprland.refreshToplevels();
         dragging = false;
-        freeze.command = ["sh", "-c", "mkdir -p " + JSON.stringify(freezeDir) + " && "
+        freeze.command = ["sh", "-c", "mkdir -m 700 -p " + JSON.stringify(freezeDir) + " && "
             + Quickshell.screens.map(s => "grim -t ppm -o " + JSON.stringify(s.name) + " "
                 + JSON.stringify(freezeDir + "/" + s.name + ".ppm") + " &").join(" ") + " wait"];
         freeze.running = true;
@@ -62,6 +62,17 @@ Scope {
             root.frozenAt = Date.now();
             root.active = true;
         }
+    }
+
+    // every exit (cancel, grab, escape) sets active false; the captures hold the screen's contents
+    onActiveChanged: {
+        if (!active)
+            wipe.running = true;
+    }
+
+    Process {
+        id: wipe
+        command: ["rm", "-rf", root.freezeDir]
     }
 
     function cancel() {

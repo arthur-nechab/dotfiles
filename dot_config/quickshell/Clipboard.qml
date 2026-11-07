@@ -52,7 +52,7 @@ PanelWindow {
             return;
         close();
         if (r.image) {
-            paste.command = ["sh", "-c", "wl-copy --type image/png < " + JSON.stringify(r.path)];
+            paste.command = ["sh", "-c", 'wl-copy --type image/png < "$1"', "sh", r.path];
             paste.running = true;
         } else {
             Quickshell.clipboardText = r.value;
@@ -77,7 +77,14 @@ PanelWindow {
         search.jump(search.selected);
     }
 
+    Process { id: unlink }
+
     function remove() {
+        const r = current;
+        if (r && r.image) {
+            unlink.command = ["rm", "-f", "--", r.path];
+            unlink.running = true;
+        }
         rewrite((list, r) => list.filter(e => !same(e, r)));
     }
 

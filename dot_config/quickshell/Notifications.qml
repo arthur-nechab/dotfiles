@@ -71,7 +71,7 @@ Scope {
     NotificationServer {
         id: server
 
-        bodyMarkupSupported: true
+        bodyMarkupSupported: false
         actionsSupported: true
         imageSupported: true
         inlineReplySupported: true
@@ -194,7 +194,6 @@ Scope {
                                 text: modelData.body
                                 color: Theme.gray
                                 font.pixelSize: 12
-                                textFormat: Text.MarkdownText
                                 wrapMode: Text.Wrap
                                 maximumLineCount: 3
                                 elide: Text.ElideRight

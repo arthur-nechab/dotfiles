@@ -147,12 +147,16 @@ Singleton {
 
         Process {
             id: proc
+            // headers go through the environment: argv is readable in /proc
+            environment: {
+                const e = {};
+                fetch.headers.forEach((h, i) => e["FETCH_H" + i] = h);
+                return e;
+            }
             command: {
-                const c = ["curl", "-sfk", "-m", "6"];
-                for (const h of fetch.headers) {
-                    c.push("-H");
-                    c.push(h);
-                }
+                // printf is a builtin and curl reads the headers from stdin, so no token reaches argv
+                const hs = fetch.headers.length ? "printf '%s\\n'" + fetch.headers.map((_, i) => ' "$FETCH_H' + i + '"').join("") + " | " : "";
+                const c = ["sh", "-c", hs + 'curl -sf -m 6' + (hs ? " -H @-" : "") + ' "$@"', "sh"];
                 if (fetch.method !== "") {
                     c.push("-X");
                     c.push(fetch.method);
@@ -177,9 +181,9 @@ Singleton {
         }
 
         function refresh() {
-            if (!enabled)
+            // a restart would kill the run in flight and its exit would blank the data
+            if (!enabled || proc.running)
                 return;
-            proc.running = false;
             proc.running = true;
         }
 
@@ -234,7 +238,16 @@ Singleton {
     Fetch {
         url: root.hasPrometheus ? local.prometheus.url + "/api/v1/alerts" : ""
         always: true
+        // -1 is "unknown"; the panel only shows alerts when firing > 0
+        onFailed: {
+            root.firing = -1;
+            root.alerts = [];
+        }
         onParsed: data => {
+            if (!data.data || !Array.isArray(data.data.alerts)) {
+                failed();
+                return;
+            }
             const noise = ["InfoInhibitor"];
             const list = data.data.alerts
                 .filter(a => a.state === "firing")
@@ -263,6 +276,8 @@ Singleton {
         url: root.hasProxmox ? local.proxmox.url + "/api2/json/cluster/resources" : ""
         headers: ["Authorization: PVEAPIToken=" + proxmoxSecret.value]
         enabled: root.hasProxmox && proxmoxSecret.value !== ""
+        // lastUpdate stays, so the freshness icon turns orange
+        onFailed: root.nodes = []
         onParsed: data => {
             const res = data.data;
             root.nodes = res.filter(r => r.type === "node")
@@ -303,6 +318,12 @@ Singleton {
     Fetch {
         url: root.hasGatus ? local.gatus.url + "/api/v1/endpoints/statuses" : ""
         interval: 60000
+        onFailed: {
+            root.gatusList = [];
+            root.gatusUp = 0;
+            root.gatusDown = 0;
+            root.gatusUptime = -1;
+        }
         onParsed: data => {
             let ok = 0;
             let total = 0;
@@ -357,6 +378,10 @@ Singleton {
         headers: ["Authorization: Bearer " + hassSecret.value]
         enabled: root.hasHass && hassSecret.value !== ""
         interval: 120000
+        onFailed: {
+            root.sensors = [];
+            root.sensorGroups = [];
+        }
         onParsed: data => {
             // a QML list<string> is not a JS array, copy before using indexOf
             const wanted = [];
