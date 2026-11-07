@@ -12,97 +12,74 @@ across machines with [chezmoi](https://www.chezmoi.io).
 | Navigation | yazi, eza, bat, fd, ripgrep, fzf, zoxide |
 | Git | lazygit |
 | System | btop, fastfetch |
-| Desktop (Arch) | hyprland, quickshell |
-| Laptop (Debian) | hyprland, noctalia |
 
 ## 🚀 Setup
 
-If chezmoi is not installed, use this command:
-
-```sh
-sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply arthur-nechab/dotfiles
-```
-
-If chezmoi is already installed (Homebrew, pacman, and others):
+Run this command on a new machine:
 
 ```sh
 chezmoi init --apply arthur-nechab/dotfiles
 ```
 
-To inspect the changes before you apply them:
+If chezmoi is not installed yet, this one-liner installs it and then runs the same command:
 
 ```sh
-chezmoi init arthur-nechab/dotfiles
-chezmoi diff
-chezmoi apply
+sh -c "$(curl -fsLS get.chezmoi.io)" -- init --apply arthur-nechab/dotfiles
 ```
 
-To pull later changes:
+To read the changes before they are applied, leave out `--apply` and run `chezmoi diff`.
 
-```sh
-chezmoi update
-```
+The same command gives a different result on each machine. `.chezmoi.toml.tmpl` reads
+`/etc/os-release` and sets three values: an OS id, a compositor (`de`) and a shell layer
+(`shell`). `.chezmoiignore` uses them to decide which configs each machine receives.
 
-yazi keeps its plugins and flavors out of this repo. `package.toml` pins them, so fetch them
-once after the first apply, and again when that file changes:
+### After the first apply
+
+Two tools need a one-time step. yazi keeps its plugins and flavors out of this repo and pins
+them in `package.toml`, so fetch them after the first apply, and again whenever that file
+changes:
 
 ```sh
 ya pkg install
 ```
 
-herdr registers its plugins itself, the two local ones included. `config.toml` binds their keys,
-so register them once after the first apply:
+herdr registers its plugins itself, the two local ones included, and `config.toml` binds their
+keys. Link the local plugins once:
 
 ```sh
 herdr plugin link ~/.config/herdr/lowercase-workspace
 herdr plugin link ~/.config/herdr/sidebar
 ```
 
-The same command gives a different result on each machine. `.chezmoi.toml.tmpl` reads
-`/etc/os-release` and sets three values: an OS id, a compositor (`de`) and a shell layer
-(`shell`). `.chezmoiignore` uses them to select the configs.
+## 🧰 Runtime tools (Arch)
+
+The Hyprland and quickshell setup on Arch calls the tools below, and this repo does not install
+them. The names are the Arch package names.
+
+| Used for | Packages |
+| --- | --- |
+| Session | `quickshell`, `hyprland`, `hyprsunset`, `hyprpicker`, `xdg-desktop-portal-gnome`, `dbus`, `systemd` |
+| Audio, network, hardware | `wireplumber`, `pipewire`, `brightnessctl`, `iwd`, `bluez-utils`, `iputils`, `cava`, `nvidia-utils`, `udisks2` |
+| Screenshot, recording, clipboard, OCR | `grim`, `slurp`, `swappy`, `wf-recorder`, `wl-clipboard`, `clipse`, `tesseract` |
+| Launcher calculator | `libqalculate` |
+| Apps opened from the bar and keybinds | `ghostty`, `nautilus`, `btop`, `yazi`, `bluetuith`, `impala`, `pwvucontrol`, `cloudflare-speed-cli` |
+| Notifications, desktop glue, scripts | `libnotify`, `xdg-utils`, `gtk3`, `desktop-file-utils`, `python-pillow`, `curl`, `jq` |
 
 ## 📂 XDG Directories
 
-Everything here follows the [XDG Base Directory
-spec](https://specifications.freedesktop.org/basedir-spec/latest/). `$HOME` stays clean, and
-config, data, cache and state stay separate. `dot_zshenv.tmpl` exports these variables. zsh
-reads that file first:
+The config follows the
+[XDG Base Directory spec](https://specifications.freedesktop.org/basedir-spec/latest/), so `$HOME`
+stays clean, and `dot_zshenv.tmpl` exports the XDG variables.
 
-| Variable | Path | Holds |
-| --- | --- | --- |
-| `XDG_CONFIG_HOME` | `~/.config` | configuration, the files this repo writes |
-| `XDG_DATA_HOME` | `~/.local/share` | application data that must persist |
-| `XDG_CACHE_HOME` | `~/.cache` | regenerable cache, safe to delete |
-| `XDG_STATE_HOME` | `~/.local/state` | logs, history, runtime state |
-| `ZDOTDIR` | `~/.config/zsh` | keeps `.zshrc` out of `$HOME` |
+zsh reads `~/.zshenv` only from `$HOME`, which makes it the one dotfile that stays there. That
+file sets `ZDOTDIR` to `~/.config/zsh`, and this moves `.zshrc` out of `$HOME`.
 
-`ZDOTDIR` is the exception. zsh reads `~/.zshenv` only from `$HOME`. Therefore `~/.zshenv` is the
-only dotfile in `$HOME`. It exports the other variables and points zsh at `~/.config/zsh`.
+## 🌳 Layout
 
-## 🌳 Directory structure
+Each tool has its own directory under `dot_config/`, which becomes `~/.config/`. A `dot_` prefix
+gives a leading `.`, `private_` sets mode 0700, and a `.tmpl` suffix marks a template.
+`.chezmoiignore` decides which directories a machine receives.
 
-```
-.
-├── .chezmoi.toml.tmpl                  # per-machine values (OS id, compositor, shell) and sourceDir
-├── .chezmoiignore                      # the configs each machine does not receive
-├── dot_zshenv.tmpl                     # → ~/.zshenv, exports XDG vars and ZDOTDIR
-├── private_dot_gnupg/                  # → ~/.gnupg, gpg-agent (0700)
-├── Library/                            # → macOS only, VS Code settings
-├── dot_local/share/nautilus/scripts/   # → Nautilus context-menu scripts
-└── dot_config/                         # → ~/.config
-    ├── zsh/                            # .zshrc, .zprofile
-    ├── ohmyposh/                       # prompt
-    ├── ghostty/                        # terminal
-    ├── nvim/  zed/                     # editors
-    ├── git/                            # neutral git preferences, global gitignore
-    ├── herdr/  yazi/  lazygit/  btop/  # TUIs
-    ├── fastfetch/                      # system info
-    ├── gtk-3.0/  gtk-4.0/              # GTK theme, icons, font, cursor
-    ├── hypr/                           # Hyprland (de = hyprland)
-    ├── xdg-desktop-portal/             # portal backends (shell = quickshell)
-    ├── quickshell/                     # quickshell shell (shell = quickshell)
-    ├── noctalia/                       # noctalia shell (shell = noctalia)
-    ├── niri/
-    └── scripts/                        # scripts that the bar and the keybinds call
-```
+`dot_config/hypr/` holds Hyprland. Its shell is in `dot_config/quickshell/` or
+`dot_config/noctalia/`, depending on the machine. `dot_config/scripts/` holds the scripts that the
+bar and the keybinds call.
