@@ -1,5 +1,5 @@
 #!/bin/sh
-out=$(curl -s -m 8 "wttr.in/?format=%C|%t") || exit 0
+out=$(curl -sf -m 8 "https://wttr.in/?format=%C|%t") || exit 0
 cond=${out%%|*}
 temp=$(printf '%s' "${out#*|}" | xargs)
 [ -z "$temp" ] && exit 0

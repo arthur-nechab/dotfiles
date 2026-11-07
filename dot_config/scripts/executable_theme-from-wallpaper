@@ -216,10 +216,9 @@ def apply_btop(theme):
 
 def apply_yazi(flavor):
     conf = HOME / ".config/yazi/theme.toml"
-    if not conf.exists():
-        return
-    text = re.sub(r'^dark = ".*"$', f'dark = "{flavor}"', conf.read_text(), flags=re.M)
-    conf.write_text(text)
+    conf.parent.mkdir(parents=True, exist_ok=True)
+    text = conf.read_text() if conf.exists() else f'[flavor]\ndark = "{flavor}"\n'
+    conf.write_text(re.sub(r'^dark = ".*"$', f'dark = "{flavor}"', text, flags=re.M))
 
 
 def apply_lazygit(palette):

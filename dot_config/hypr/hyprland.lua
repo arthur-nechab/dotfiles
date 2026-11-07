@@ -30,8 +30,8 @@ local SCALES = { 1, 1.25, 1.5, 2 }
 -- only applied with two or more externals
 local LAPTOP_SHIFT = -320
 
--- the dpi rule would give 1.5, too little room. the lockscreen geometry in
--- noctalia/config.toml follows this value: change both
+-- the dpi rule would give 1.5, too little room. on the noctalia branch the
+-- lockscreen geometry in noctalia/config.toml follows this value: change both
 local LAPTOP_SCALE = 1.25
 
 -- same apparent text size on every screen, with a whole logical resolution
@@ -224,11 +224,10 @@ local shells = {
     quickshell = {
         autostart = {
             -- a different wallpaper each session; the theme follows it
-            "sh -c 'mkdir -p ~/.cache/hypr && ls ~/Pictures/Wallpapers/* | shuf -n 1 > ~/.cache/hypr/current-wallpaper'",
+            "sh -c 'mkdir -p ~/.cache/hypr && f=$(find ~/Pictures/Wallpapers -maxdepth 1 -type f | shuf -n 1); [ -n \"$f\" ] && echo \"$f\" > ~/.cache/hypr/current-wallpaper'",
             "qs",
             "hyprsunset -t 3500",
-            -- its unit has Requisite=graphical-session.target, which hyprland
-            -- never activates; without it libadwaita gets no accent colour
+            -- its unit has Requisite=graphical-session.target, which hyprland-session.target only brings up later; start it directly or libadwaita gets no accent colour
             "/usr/lib/xdg-desktop-portal-gnome",
             "sh -c 'export PATH=/usr/bin:$PATH; clipse -listen'",
         },
@@ -276,11 +275,11 @@ local sh = assert(shells[sys.shell], "unknown shell layer in system.lua: " .. to
 hl.on("hyprland.start", function()
     -- the whole session environment, so portals and everything dbus starts
     -- see the same variables as hyprland itself
-    hl.exec_cmd("dbus-update-activation-environment --systemd --all")
     -- hyprland does not implement the XDG autostart spec, so nothing would run
     -- the .desktop entries that other tools install in ~/.config/autostart;
-    -- hyprland-session.target pulls in the systemd targets that do
-    hl.exec_cmd("systemctl --user start hyprland-session.target")
+    -- hyprland-session.target pulls in the systemd targets that do, and must
+    -- start after the import
+    hl.exec_cmd("sh -c 'dbus-update-activation-environment --systemd --all; systemctl --user start hyprland-session.target'")
     arrange()
     for _, cmd in ipairs(sh.autostart) do
         hl.exec_cmd(cmd)

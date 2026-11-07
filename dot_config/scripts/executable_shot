@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # capture a region and copy it (shot-edit opens the editor afterwards);
 # the region comes from the argument ("x,y wxh") or from slurp
 set -o pipefail
