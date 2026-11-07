@@ -82,7 +82,7 @@ Scope {
             const m = Object.assign({}, root.seen);
             m[n.id] = Date.now();
             root.seen = m;
-            if (root.dnd)
+            if (root.dnd && n.urgency !== NotificationUrgency.Critical)
                 return;
             root.popups = [n].concat(root.popups.filter(p => p.id !== n.id)).slice(0, 5);
         }

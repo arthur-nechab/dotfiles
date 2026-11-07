@@ -47,8 +47,8 @@ PanelWindow {
         const a = actions[i];
         if (!a)
             return;
-        // reboot and shut down ask twice; the others are cheap to undo
-        if (i >= 2 && armed !== i) {
+        // log out, reboot and shut down ask twice; lock is cheap to undo
+        if (i >= 1 && armed !== i) {
             armed = i;
             return;
         }
@@ -89,7 +89,7 @@ PanelWindow {
             Keys.onTabPressed: menu.current = (menu.current + 1) % menu.actions.length
             Keys.onReturnPressed: menu.run(menu.current)
             Keys.onEnterPressed: menu.run(menu.current)
-            // l, o, r, s go straight to the action; the two red ones still ask twice
+            // l, o, r, s go straight to the action; all but lock still ask twice
             Keys.onPressed: event => {
                 const i = menu.actions.findIndex(a => a.key === event.text.toLowerCase());
                 if (i < 0)
