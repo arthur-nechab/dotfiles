@@ -204,4 +204,41 @@ Singleton {
             probes.running = true;
         }
     }
+
+    // failed systemd units (system + user) and hours since the newest root snapshot (-1: unknown)
+    property var failedNames: []
+    readonly property int failedUnits: failedNames.length
+    property real snapshotAgeHours: -1
+    readonly property var healthItems: [
+        ...(failedUnits > 0 ? [{ title: "Failed units", detail: failedNames.join(", "), bad: true, icon: "\u{f0026}" }] : []),
+        ...(snapshotAgeHours > 6 ? [{ title: "Old snapshot", detail: Math.round(snapshotAgeHours) + " h old", bad: false, icon: "\u{f0150}" }] : [])
+    ]
+    readonly property string healthText: healthItems.map(x => x.title + "  " + x.detail).join("\n")
+
+    Process {
+        id: health
+        command: ["sh", "-c",
+            "d=$(snapper -c root --jsonout list --columns date 2>/dev/null | jq -r '.root[-1].date' 2>/dev/null);"
+            + "[ -n \"$d\" ] && t=$(date -d \"$d\" +%s 2>/dev/null) && echo $(( ($(date +%s) - t) / 60 )) || echo -1;"
+            + "{ systemctl --failed --plain --no-legend; systemctl --user --failed --plain --no-legend; } 2>/dev/null | cut -d' ' -f1"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const v = this.text.split("\n").filter(x => x !== "");
+                root.snapshotAgeHours = Number(v[0]) >= 0 ? Math.round(Number(v[0]) / 60) : -1;
+                // a fresh array every minute would rebuild the cards under an open panel
+                const names = v.slice(1);
+                if (names.join() !== root.failedNames.join())
+                    root.failedNames = names;
+            }
+        }
+    }
+
+    Timer {
+        interval: 60000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        // a stalled snapper must not be killed and respawned every minute
+        onTriggered: if (!health.running) health.running = true
+    }
 }

@@ -9,6 +9,7 @@ ShellRoot {
         id: bar
 
         dnd: notifications.dnd
+        notifCount: notifications.count
 
         onNotificationsToggle: notifications.toggle()
         onDndToggle: notifications.dnd = !notifications.dnd

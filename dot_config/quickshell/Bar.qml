@@ -26,6 +26,8 @@ PanelWindow {
     property int nlTemp: 6500
     // bound to Notifications.dnd in shell.qml, never written here
     property bool dnd: false
+    // bound to Notifications.count in shell.qml
+    property int notifCount: 0
     // set by the wf-recorder probe, read by the shell
     property bool recording: false
     property var usbDevices: []
@@ -776,11 +778,25 @@ PanelWindow {
         Sep {}
 
         Btn {
-            label: bar.dnd ? "󰂛" : "󱅫"
+            label: (bar.dnd ? "󰂛" : "󱅫") + (bar.notifCount > 0 ? "  " + bar.notifCount : "")
             fg: bar.dnd ? Theme.gray : Theme.red
+            tip: ["Notifications  \u00b7  " + bar.notifCount + "  \u00b7  right-click: Do Not Disturb", System.healthText].filter(x => x !== "").join("\n")
             onClicked: mouse => mouse.button === Qt.RightButton
                 ? bar.dndToggle()
                 : bar.notificationsToggle()
+
+            Rectangle {
+                visible: System.healthText !== ""
+                x: 18
+                y: 2
+                width: 10
+                height: 10
+                radius: 5
+                // the ring keeps a red dot readable on the red bell
+                border.width: 2
+                border.color: Theme.bg
+                color: System.failedUnits > 0 ? Theme.red : Theme.yellow
+            }
         }
     }
 
