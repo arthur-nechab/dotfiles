@@ -70,7 +70,7 @@ PanelWindow {
 
     Rectangle {
         anchors.fill: parent
-        radius: 14
+        radius: 12
         color: Qt.alpha(Theme.bg, Theme.panelAlpha)
 
         Behavior on color {
@@ -86,7 +86,7 @@ PanelWindow {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 110
                 height: 110
-                radius: 10
+                radius: 8
                 color: Theme.surface
 
                 Image {
@@ -192,7 +192,7 @@ PanelWindow {
                                         ? (panel.player && panel.player.isPlaying ? "\u{f03e4}" : "\u{f040a}")
                                         : modelData.glyph
                                     color: Theme.fg
-                                    font.pixelSize: 18
+                                    font.pixelSize: 20
                                     font.bold: true
                                 }
                             }

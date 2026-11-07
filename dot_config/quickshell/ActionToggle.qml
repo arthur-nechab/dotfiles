@@ -93,7 +93,7 @@ MouseArea {
     Rectangle {
         anchors.fill: parent
         anchors.margins: 2
-        radius: 10
+        radius: 8
         color: toggle.containsMouse ? Theme.surface : "transparent"
         border.width: toggle.active ? 2 : 1
         border.color: toggle.active ? toggle.accent : Theme.surface

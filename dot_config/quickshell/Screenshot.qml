@@ -269,7 +269,7 @@ Scope {
                 y: overlay.ly - 24 >= 0 ? overlay.ly - 24 : overlay.ly + root.selH + 4
                 width: size.implicitWidth + 12
                 height: 20
-                radius: 6
+                radius: 4
                 color: Theme.bg
 
                 Label {

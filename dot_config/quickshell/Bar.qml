@@ -64,7 +64,7 @@ PanelWindow {
 
         implicitWidth: row.implicitWidth + 20
         implicitHeight: 34
-        radius: 10
+        radius: 12
         color: Qt.alpha(Theme.bg, Theme.opacity)
 
         Behavior on color {
@@ -116,13 +116,13 @@ PanelWindow {
         property color tint
 
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 5
+        spacing: 4
 
         Label {
             anchors.verticalCenter: parent.verticalCenter
             text: parent.icon
             color: parent.tint
-            font.pixelSize: 16
+            font.pixelSize: 15
             font.bold: true
         }
 
@@ -130,14 +130,14 @@ PanelWindow {
             anchors.verticalCenter: parent.verticalCenter
             text: parent.value
             color: parent.tint
-            font.pixelSize: 14
+            font.pixelSize: 13
             font.bold: true
         }
     }
 
     component Sep: Text {
         anchors.verticalCenter: parent ? parent.verticalCenter : undefined
-        width: 13
+        width: 12
         horizontalAlignment: Text.AlignHCenter
         text: "|"
         color: Qt.alpha(Theme.gray, 0.4)
@@ -444,7 +444,7 @@ PanelWindow {
                             anchors.centerIn: parent
                             text: ws.wsId
                             color: ws.obj && ws.obj.focused ? Theme.yellow : (ws.obj && ws.obj.active ? Theme.fg : Theme.gray)
-                            font.pixelSize: 14
+                            font.pixelSize: 13
                             font.bold: true
                         }
                     }
@@ -472,7 +472,7 @@ PanelWindow {
             Row {
                 id: metrics
 
-                spacing: 13
+                spacing: 12
 
                 Metric {
                     icon: "\u{f0ee0}"

@@ -83,7 +83,7 @@ PanelWindow {
 
     Rectangle {
         anchors.fill: parent
-        radius: 14
+        radius: 12
         color: Qt.alpha(Theme.bg, 0.95)
 
         Behavior on color {
@@ -142,7 +142,7 @@ PanelWindow {
 
                     Rectangle {
                         anchors.fill: parent
-                        radius: 14
+                        radius: 8
                         color: parent.active ? Theme.surface : "transparent"
                         border.width: menu.current === parent.index ? 1 : 0
                         border.color: modelData.color
@@ -156,7 +156,7 @@ PanelWindow {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: modelData.icon
                             color: modelData.color
-                            font.pixelSize: 36
+                            font.pixelSize: 28
                         }
 
                         Label {

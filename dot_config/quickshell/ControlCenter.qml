@@ -476,7 +476,7 @@ PanelWindow {
 
         Rectangle {
             anchors.fill: parent
-            radius: 6
+            radius: 8
             color: parent.containsMouse || parent.selected ? Theme.surface : "transparent"
             border.width: parent.selected ? 1 : 0
             border.color: Theme.gray
@@ -596,7 +596,7 @@ PanelWindow {
                 anchors.centerIn: parent
                 text: vol.muted ? vol.offGlyph : vol.onGlyph
                 color: vol.muted ? Theme.red : vol.accent
-                font.pixelSize: 16
+                font.pixelSize: 15
                 font.bold: true
             }
         }
@@ -700,7 +700,7 @@ PanelWindow {
 
     Rectangle {
         anchors.fill: parent
-        radius: 14
+        radius: 12
         color: Qt.alpha(Theme.bg, Theme.panelAlpha)
 
         Behavior on color {
@@ -757,7 +757,7 @@ PanelWindow {
                 spacing: 12
                 visible: cc.tab === "audio"
 
-                Section { text: "OUTPUT" }
+                Section { text: "Output" }
 
                 VolumeRow {
                     node: Pipewire.defaultAudioSink
@@ -778,7 +778,7 @@ PanelWindow {
                     }
                 }
 
-                Section { text: "MICROPHONE" }
+                Section { text: "Microphone" }
 
                 VolumeRow {
                     node: Pipewire.defaultAudioSource
@@ -801,7 +801,7 @@ PanelWindow {
                 }
 
                 Section {
-                    text: "PLAYBACK"
+                    text: "Playback"
                     visible: cc.playback.length > 0
                 }
 
@@ -825,7 +825,7 @@ PanelWindow {
                 }
 
                 Section {
-                    text: "RECORDING"
+                    text: "Recording"
                     visible: cc.capture.length > 0
                 }
 
@@ -872,7 +872,7 @@ PanelWindow {
                     }
                 }
 
-                Section { text: "DEVICES" }
+                Section { text: "Devices" }
 
                 Repeater {
                     model: cc.devices
@@ -927,7 +927,7 @@ PanelWindow {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: cc.btGlyph(modelData.icon, modelData.connected)
                                 color: modelData.connected ? Theme.aqua : Theme.gray
-                                font.pixelSize: 16
+                                font.pixelSize: 15
                                 font.bold: true
                             }
 
@@ -1054,12 +1054,11 @@ PanelWindow {
                             width: parent.width
                             elide: Text.ElideRight
                             text: cc.wifiDevice === ""
-                                ? "NO WI-FI ADAPTER"
-                                : cc.wifiDevice.toUpperCase() + " · " + (cc.wifiPowered ? cc.wifiState.toUpperCase() : "OFF")
+                                ? "No Wi-Fi adapter"
+                                : cc.wifiDevice + " · " + (cc.wifiPowered ? cc.wifiState : "off")
                                   + (cc.currentNet ? " · " + Math.round(cc.currentNet.rssi) + " dBm" : "")
                             color: Theme.gray
                             font.pixelSize: 11
-                            font.letterSpacing: 1
                             font.bold: true
                         }
                     }
@@ -1101,7 +1100,7 @@ PanelWindow {
                     Section {
                         anchors.verticalCenter: parent.verticalCenter
                         width: parent.width - 176
-                        text: "NETWORKS"
+                        text: "Networks"
                     }
 
                     Pill {
@@ -1161,7 +1160,7 @@ PanelWindow {
 
                         Rectangle {
                             anchors.fill: parent
-                            radius: 6
+                            radius: 8
                             color: parent.containsMouse || parent.selected ? Theme.surface : "transparent"
                             border.width: parent.selected ? 1 : 0
                             border.color: Theme.gray
@@ -1229,7 +1228,7 @@ PanelWindow {
 
                         Label {
                             anchors.left: parent.left
-                            anchors.leftMargin: 30
+                            anchors.leftMargin: 32
                             y: 16 - height / 2
                             width: parent.width - 130
                             elide: Text.ElideRight
@@ -1290,7 +1289,7 @@ PanelWindow {
 
                     Rectangle {
                         anchors.fill: parent
-                        radius: 6
+                        radius: 8
                         color: parent.containsMouse ? Theme.surface : "transparent"
                     }
 
@@ -1305,7 +1304,7 @@ PanelWindow {
 
                     Label {
                         anchors.left: parent.left
-                        anchors.leftMargin: 30
+                        anchors.leftMargin: 32
                         y: 16 - height / 2
                         text: "Hidden network\u2026"
                         color: Theme.gray

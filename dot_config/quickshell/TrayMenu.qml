@@ -22,7 +22,7 @@ BarPopup {
     Rectangle {
         anchors.fill: parent
         anchors.margins: 10
-        radius: 10
+        radius: 12
         color: Theme.bg
 
         Column {
@@ -51,7 +51,7 @@ BarPopup {
 
                     Rectangle {
                         anchors.fill: parent
-                        radius: 6
+                        radius: 8
                         visible: !modelData.isSeparator
                         color: parent.containsMouse ? Theme.surface : "transparent"
                     }

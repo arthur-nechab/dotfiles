@@ -16,7 +16,7 @@ BarPopup {
         anchors.fill: parent
         anchors.margins: 10
         anchors.topMargin: 10
-        radius: 10
+        radius: 12
         color: Theme.bg
 
         Column {
@@ -56,8 +56,7 @@ BarPopup {
                     Label {
                         text: sensorGroup.groupName
                         color: Theme.gray
-                        font.pixelSize: 10
-                        font.letterSpacing: 1
+                        font.pixelSize: 11
                         font.bold: true
                         topPadding: 4
                         bottomPadding: 1

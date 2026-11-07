@@ -50,7 +50,7 @@ Item {
         Rectangle {
             width: parent.width
             height: 40
-            radius: 10
+            radius: 8
             color: Theme.surface
 
             Row {
@@ -63,7 +63,7 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     text: root.icon
                     color: root.iconColor
-                    font.pixelSize: 16
+                    font.pixelSize: 15
                     font.bold: true
                 }
 

@@ -389,9 +389,9 @@ Singleton {
                 wanted.push(String(e));
             // Netatmo names the room in French, the shell speaks English
             const rename = {
-                "Intérieur": "INDOOR",
-                "Extérieur": "OUTDOOR",
-                "Pluviomètre": "RAIN GAUGE"
+                "Intérieur": "Indoor",
+                "Extérieur": "Outdoor",
+                "Pluviomètre": "Rain gauge"
             };
             // "Mazet (Intérieur) Temperature" splits into a group and a short label
             root.sensors = data.filter(s => wanted.indexOf(s.entity_id) >= 0).map(s => {
@@ -399,7 +399,7 @@ Singleton {
                 const m = full.match(/^.*?\((.+?)\)\s*(.*)$/);
                 const raw = m ? m[1] : "";
                 return {
-                    group: rename[raw] ?? raw.toUpperCase(),
+                    group: rename[raw] ?? raw,
                     name: m && m[2] !== "" ? m[2] : full,
                     state: s.state,
                     unit: s.attributes.unit_of_measurement ?? ""

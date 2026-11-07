@@ -88,7 +88,7 @@ PanelWindow {
     TextMetrics {
         id: labelMetrics
         font.family: Theme.uiFont
-        font.pixelSize: 14
+        font.pixelSize: 13
         font.bold: true
         text: osd.label
     }
@@ -122,7 +122,7 @@ PanelWindow {
 
     Rectangle {
         anchors.fill: parent
-        radius: 14
+        radius: 12
         color: Qt.alpha(Theme.bg, 0.92)
 
         Behavior on color {
@@ -137,7 +137,7 @@ PanelWindow {
                 anchors.verticalCenter: parent.verticalCenter
                 text: osd.icon
                 color: osd.accent
-                font.pixelSize: 22
+                font.pixelSize: 20
                 font.bold: true
             }
 
@@ -154,7 +154,7 @@ PanelWindow {
                 width: osd.bare ? implicitWidth : 52
                 text: osd.label
                 color: Theme.fg
-                font.pixelSize: 14
+                font.pixelSize: 13
                 font.bold: true
             }
         }

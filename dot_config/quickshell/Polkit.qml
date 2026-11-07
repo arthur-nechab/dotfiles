@@ -29,7 +29,7 @@ Scope {
 
         Rectangle {
             anchors.fill: parent
-            radius: 14
+            radius: 12
             color: Qt.alpha(Theme.bg, 0.97)
 
             Behavior on color {
@@ -44,7 +44,7 @@ Scope {
                 Label {
                     text: "Authentication required"
                     color: Theme.fg
-                    font.pixelSize: 16
+                    font.pixelSize: 15
                     font.bold: true
                 }
 
@@ -69,7 +69,7 @@ Scope {
                 Rectangle {
                     width: parent.width
                     height: 40
-                    radius: 10
+                    radius: 8
                     color: Theme.surface
 
                     TextInput {

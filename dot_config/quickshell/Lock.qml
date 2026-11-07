@@ -85,7 +85,7 @@ Scope {
                         passwordCharacter: "●"
                         color: "#ffffff"
                         font.family: Theme.uiFont
-                        font.pixelSize: 16
+                        font.pixelSize: 15
                         enabled: !pam.active || pam.responseRequired
                         focus: true
 

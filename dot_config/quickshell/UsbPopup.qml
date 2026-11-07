@@ -36,7 +36,7 @@ BarPopup {
     Rectangle {
         anchors.fill: parent
         anchors.margins: 10
-        radius: 10
+        radius: 12
         color: Theme.bg
 
         Column {
@@ -90,7 +90,7 @@ BarPopup {
                             anchors.verticalCenter: parent.verticalCenter
                             text: dev.mounted ? "" : ""
                             color: dev.mounted ? Theme.green : Theme.gray
-                            font.pixelSize: 16
+                            font.pixelSize: 15
                         }
 
                         Column {

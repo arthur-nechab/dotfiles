@@ -60,7 +60,7 @@ BarPopup {
         anchors.fill: parent
         anchors.margins: 10
         anchors.topMargin: 10
-        radius: 10
+        radius: 12
         color: Theme.bg
 
         Column {
@@ -83,7 +83,7 @@ BarPopup {
                     anchors.centerIn: parent
                     text: Qt.formatDate(new Date(calendar.shownYear, calendar.shownMonth, 1), "MMMM yyyy")
                     color: Theme.yellow
-                    font.pixelSize: 14
+                    font.pixelSize: 13
                     font.bold: true
                 }
 
@@ -124,7 +124,7 @@ BarPopup {
                         anchors.centerIn: parent
                         width: 22
                         height: 22
-                        radius: 6
+                        radius: 8
                         visible: parent.day === calendar.selected
                         color: Theme.surface
                     }
@@ -135,7 +135,7 @@ BarPopup {
                         color: model.today ? Theme.yellow : (model.month === calendar.shownMonth ? Theme.fg : Theme.gray)
                         // days of the next and previous month are inactive: dimmed, exempt from the 4.5:1 floor
                         opacity: model.month === calendar.shownMonth ? 1 : 0.55
-                        font.pixelSize: 14
+                        font.pixelSize: 13
                         font.bold: true
                     }
 

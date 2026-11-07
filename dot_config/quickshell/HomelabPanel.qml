@@ -95,7 +95,6 @@ PanelWindow {
             text: parent.title
             color: Theme.gray
             font.pixelSize: 12
-            font.letterSpacing: 1
             font.bold: true
         }
     }
@@ -107,7 +106,7 @@ PanelWindow {
 
         width: parent.width
         height: 62
-        radius: 10
+        radius: 8
         color: "transparent"
         border.width: 1
         border.color: Theme.surface
@@ -131,7 +130,7 @@ PanelWindow {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: modelData.v
                         color: modelData.c
-                        font.pixelSize: 18
+                        font.pixelSize: 20
                         font.bold: true
                     }
 
@@ -139,8 +138,7 @@ PanelWindow {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: modelData.l
                         color: Theme.gray
-                        font.pixelSize: 10
-                        font.letterSpacing: 1
+                        font.pixelSize: 11
                         font.bold: true
                     }
                 }
@@ -165,7 +163,7 @@ PanelWindow {
         Rectangle {
             anchors.fill: parent
             anchors.margins: -4
-            radius: 6
+            radius: 8
             color: parent.containsMouse ? Theme.surface : "transparent"
         }
 
@@ -194,7 +192,7 @@ PanelWindow {
 
     Rectangle {
         anchors.fill: parent
-        radius: 14
+        radius: 12
         color: Qt.alpha(Theme.bg, Theme.panelAlpha)
 
         Behavior on color {
@@ -223,7 +221,7 @@ PanelWindow {
             Column {
                 id: body
                 width: parent.width
-                spacing: 18
+                spacing: 16
 
                 Item {
                     width: parent.width
@@ -287,7 +285,7 @@ PanelWindow {
                             Rectangle {
                                 anchors.fill: parent
                                 anchors.margins: 2
-                                radius: 10
+                                radius: 8
                                 color: parent.containsMouse ? Theme.surface : "transparent"
                                 border.width: 1
                                 border.color: Theme.surface
@@ -318,7 +316,7 @@ PanelWindow {
                 }
 
                 Section {
-                    title: "ALERTS"
+                    title: "Alerts"
                     visible: Homelab.firing > 0
 
                     Repeater {
@@ -339,7 +337,7 @@ PanelWindow {
                             Rectangle {
                                 anchors.fill: parent
                                 anchors.margins: -4
-                                radius: 6
+                                radius: 8
                                 color: parent.containsMouse ? Theme.surface : "transparent"
                             }
 
@@ -399,7 +397,7 @@ PanelWindow {
                 }
 
                 Section {
-                    title: "GATUS"
+                    title: "Gatus"
                     visible: Homelab.hasGatus
                     spacing: 6
 
@@ -419,12 +417,12 @@ PanelWindow {
                     StatCard {
                         visible: parent.reachable
                         stats: [
-                            { v: String(Homelab.gatusUp), l: "UP", c: Theme.green },
-                            { v: String(Homelab.gatusDown), l: "DOWN",
+                            { v: String(Homelab.gatusUp), l: "Up", c: Theme.green },
+                            { v: String(Homelab.gatusDown), l: "Down",
                               c: Homelab.gatusDown > 0 ? Theme.red : Theme.gray },
                             { v: Homelab.gatusUptime < 0
                                   ? "-" : Homelab.gatusUptime.toFixed(1) + "%",
-                              l: "UPTIME", c: Theme.fg }
+                              l: "Uptime", c: Theme.fg }
                         ]
                     }
 
@@ -587,7 +585,7 @@ PanelWindow {
 
                             Row {
                                 required property var modelData
-                                spacing: 5
+                                spacing: 4
 
                                 Rectangle {
                                     anchors.verticalCenter: parent.verticalCenter
@@ -610,7 +608,7 @@ PanelWindow {
                 }
 
                 Section {
-                    title: "OLLAMA"
+                    title: "Ollama"
                     spacing: 10
 
                     // same card as gatus: ram on the left, vram captioned by the loaded model
@@ -622,7 +620,7 @@ PanelWindow {
                             { v: System.ram.usedGb.toFixed(1) + " / " + System.ram.totalGb.toFixed(0) + " GB",
                               l: "RAM", c: Theme.blue },
                             { v: System.gpu.vramUsedGb.toFixed(1) + " / " + System.gpu.vramTotalGb.toFixed(0) + " GB",
-                              l: System.llm.models[0].name.toUpperCase()
+                              l: System.llm.models[0].name
                                  + (System.llm.models.length > 1 ? " +" + (System.llm.models.length - 1) : ""),
                               c: Theme.purple }
                         ] : []
@@ -638,7 +636,7 @@ PanelWindow {
                 }
 
                 Section {
-                    title: "CLAUDE CODE"
+                    title: "Claude Code"
                     spacing: 10
 
                     Line {
@@ -671,7 +669,7 @@ PanelWindow {
                             Label {
                                 anchors.left: parent.left
                                 anchors.top: parent.top
-                                anchors.topMargin: 17
+                                anchors.topMargin: 16
                                 visible: parent.remaining !== ""
                                 text: "resets in " + parent.remaining
                                 color: Theme.gray
@@ -706,7 +704,7 @@ PanelWindow {
                 }
 
                 Section {
-                    title: "SCRUTINY"
+                    title: "Scrutiny"
                     visible: Homelab.hasScrutiny && Homelab.failedDisks.length > 0
 
                     Repeater {
@@ -722,7 +720,7 @@ PanelWindow {
                 }
 
                 Section {
-                    title: "HOSTS"
+                    title: "Hosts"
                     visible: Homelab.hasProxmox
                     spacing: 8
 
@@ -749,7 +747,7 @@ PanelWindow {
                                 Label {
                                     text: modelData.name
                                     color: Theme.fg
-                                    font.pixelSize: 14
+                                    font.pixelSize: 13
                                     font.bold: true
                                 }
 
@@ -782,7 +780,7 @@ PanelWindow {
 
                                 Meter {
                                     width: (parent.width - 16) / 3
-                                    label: "DISK"
+                                    label: "Disk"
                                     percent: modelData.diskPercent
                                 }
                             }
@@ -804,7 +802,7 @@ PanelWindow {
 
             Rectangle {
                 anchors.fill: parent
-                radius: 9
+                radius: 8
                 color: parent.containsMouse ? Theme.surface : "transparent"
             }
 
@@ -818,7 +816,7 @@ PanelWindow {
 
                 text: "\u{f0450}"
                 color: age > 120 ? Theme.orange : Theme.gray
-                font.pixelSize: 14
+                font.pixelSize: 13
                 font.bold: true
             }
         }

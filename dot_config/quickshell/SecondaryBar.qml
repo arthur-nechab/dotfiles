@@ -40,7 +40,7 @@ PanelWindow {
 
         implicitWidth: row.implicitWidth + 16
         implicitHeight: 30
-        radius: 10
+        radius: 12
         color: Qt.alpha(Theme.bg, Theme.opacity)
 
         Behavior on color {
@@ -62,7 +62,7 @@ PanelWindow {
             anchors.verticalCenter: parent.verticalCenter
             text: "9"
             color: bar.ws && bar.ws.focused ? Theme.yellow : (bar.ws && bar.ws.active ? Theme.fg : Theme.gray)
-            font.pixelSize: 14
+            font.pixelSize: 13
             font.bold: true
         }
     }

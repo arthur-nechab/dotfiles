@@ -98,7 +98,7 @@ PanelWindow {
 
     Rectangle {
         anchors.fill: parent
-        radius: 14
+        radius: 12
         color: Qt.alpha(Theme.bg, 0.95)
 
         Behavior on color {
@@ -134,14 +134,14 @@ PanelWindow {
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: 10
+                    radius: 8
                     color: Theme.surface
                     border.width: index === grid.currentIndex ? 2 : 0
                     border.color: Theme.yellow
 
                     Image {
                         anchors.fill: parent
-                        anchors.margins: 3
+                        anchors.margins: 4
                         source: "file://" + modelData.thumb
                         fillMode: Image.PreserveAspectCrop
                         asynchronous: true
@@ -153,7 +153,7 @@ PanelWindow {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.bottom: parent.bottom
-                    anchors.margins: 3
+                    anchors.margins: 4
                     height: 26
                     color: Qt.rgba(0, 0, 0, 0.6)
 

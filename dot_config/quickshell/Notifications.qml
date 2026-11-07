@@ -185,7 +185,7 @@ Scope {
                                 width: parent.width
                                 text: modelData.summary
                                 color: Theme.fg
-                                font.pixelSize: 14
+                                font.pixelSize: 13
                                 font.bold: true
                                 elide: Text.ElideRight
                             }
@@ -342,7 +342,7 @@ Scope {
 
         Rectangle {
             anchors.fill: parent
-            radius: 14
+            radius: 12
             color: Qt.alpha(Theme.bg, 0.95)
 
             Behavior on color {
@@ -396,7 +396,7 @@ Scope {
                             anchors.centerIn: parent
                             text: "\u{f0a7a}"
                             color: parent.containsMouse ? Theme.red : Theme.gray
-                            font.pixelSize: 16
+                            font.pixelSize: 15
                         }
                     }
                 }
@@ -419,7 +419,7 @@ Scope {
 
                             width: health.width
                             height: Math.max(56, cardText.implicitHeight + 16)
-                            radius: 10
+                            radius: 8
                             color: Theme.surface
 
                             Rectangle {
@@ -434,7 +434,7 @@ Scope {
                                     anchors.centerIn: parent
                                     text: card.modelData.icon
                                     color: card.tint
-                                    font.pixelSize: 17
+                                    font.pixelSize: 20
                                 }
                             }
 
@@ -501,7 +501,7 @@ Scope {
 
                         Rectangle {
                             anchors.fill: parent
-                            radius: 10
+                            radius: 8
                             color: row.containsMouse ? Qt.alpha(Theme.surface, 0.7) : Theme.surface
                             border.width: row.selected ? 1 : 0
                             border.color: Theme.gray

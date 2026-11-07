@@ -136,7 +136,7 @@ PanelWindow {
 
     Rectangle {
         anchors.fill: parent
-        radius: 14
+        radius: 12
         color: Qt.alpha(Theme.bg, 0.95)
 
         Behavior on color {
@@ -198,7 +198,7 @@ PanelWindow {
                         width: parent.width
                         // newlines would let one entry eat the whole row
                         text: entry.value.replace(/\s+/g, " ").trim()
-                        font.pixelSize: 14
+                        font.pixelSize: 13
                         font.bold: true
                         elide: Text.ElideRight
                     }
@@ -221,7 +221,7 @@ PanelWindow {
             anchors.bottom: parent.bottom
             anchors.margins: 14
             height: 100
-            radius: 10
+            radius: 8
             color: Theme.surface
 
             Behavior on color {
