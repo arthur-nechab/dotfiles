@@ -219,7 +219,7 @@ PanelWindow {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            anchors.margins: 14
+            anchors.margins: 12
             height: 100
             radius: 8
             color: Theme.surface
@@ -230,7 +230,7 @@ PanelWindow {
 
             Label {
                 anchors.fill: parent
-                anchors.margins: 10
+                anchors.margins: 8
                 visible: board.current !== null && !board.current.image
                 text: board.current && !board.current.image ? board.current.value : ""
                 font.pixelSize: 12
@@ -241,7 +241,7 @@ PanelWindow {
 
             Image {
                 anchors.fill: parent
-                anchors.margins: 6
+                anchors.margins: 4
                 visible: board.current !== null && board.current.image
                 source: board.current && board.current.image ? "file://" + board.current.path : ""
                 fillMode: Image.PreserveAspectFit

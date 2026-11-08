@@ -44,7 +44,7 @@ Item {
 
     Column {
         anchors.fill: parent
-        anchors.margins: 14
+        anchors.margins: 12
         spacing: 12
 
         Rectangle {
@@ -57,7 +57,7 @@ Item {
                 anchors.fill: parent
                 anchors.leftMargin: 12
                 anchors.rightMargin: 12
-                spacing: 10
+                spacing: 8
 
                 Label {
                     anchors.verticalCenter: parent.verticalCenter
@@ -162,8 +162,8 @@ Item {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 14
+                    anchors.leftMargin: 8
+                    anchors.rightMargin: 12
                     // a row outlives its entry for a frame when the model changes
                     active: rowArea.modelData !== null && rowArea.modelData !== undefined
                     sourceComponent: root.row

@@ -100,7 +100,7 @@ Scope {
 
                 Row {
                     anchors.right: parent.right
-                    spacing: 10
+                    spacing: 8
 
                     MouseArea {
                         width: 90

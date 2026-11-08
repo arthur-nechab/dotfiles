@@ -79,8 +79,8 @@ PanelWindow {
 
         Row {
             anchors.fill: parent
-            anchors.margins: 14
-            spacing: 14
+            anchors.margins: 12
+            spacing: 12
 
             ClippingRectangle {
                 anchors.verticalCenter: parent.verticalCenter
@@ -100,7 +100,7 @@ PanelWindow {
             Column {
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - 124
-                spacing: 6
+                spacing: 4
 
                 MouseArea {
                     width: parent.width

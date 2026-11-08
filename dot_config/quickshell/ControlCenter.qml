@@ -484,7 +484,7 @@ PanelWindow {
 
         Label {
             anchors.left: parent.left
-            anchors.leftMargin: 6
+            anchors.leftMargin: 4
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width - 12
             elide: Text.ElideRight
@@ -510,7 +510,7 @@ PanelWindow {
 
         Row {
             width: parent.width
-            spacing: 6
+            spacing: 4
 
             IconImage {
                 anchors.verticalCenter: parent.verticalCenter
@@ -535,7 +535,7 @@ PanelWindow {
 
         Row {
             width: parent.width
-            spacing: 10
+            spacing: 8
 
             MouseArea {
                 anchors.verticalCenter: parent.verticalCenter
@@ -584,7 +584,7 @@ PanelWindow {
         readonly property bool muted: ready && node.audio.muted
 
         width: parent.width
-        spacing: 10
+        spacing: 8
 
         MouseArea {
             anchors.verticalCenter: parent.verticalCenter
@@ -713,7 +713,7 @@ PanelWindow {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 14
+            anchors.margins: 12
             spacing: 12
 
             Row {
@@ -921,7 +921,7 @@ PanelWindow {
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.left: parent.left
                             anchors.leftMargin: 8
-                            spacing: 10
+                            spacing: 8
 
                             Label {
                                 anchors.verticalCenter: parent.verticalCenter
@@ -965,7 +965,7 @@ PanelWindow {
                         Pill {
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.right: parent.right
-                            anchors.rightMargin: 6
+                            anchors.rightMargin: 4
                             width: 70
                             visible: parent.confirming
                             label: "Forget"
@@ -979,7 +979,7 @@ PanelWindow {
                         Row {
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.right: parent.right
-                            anchors.rightMargin: 10
+                            anchors.rightMargin: 8
                             spacing: 4
                             visible: modelData.batteryAvailable && !parent.confirming
 
@@ -1016,7 +1016,7 @@ PanelWindow {
 
             Column {
                 width: parent.width
-                spacing: 10
+                spacing: 8
                 visible: cc.tab === "network"
 
                 Row {
@@ -1170,7 +1170,7 @@ PanelWindow {
                             anchors.left: parent.left
                             anchors.right: parent.right
                             anchors.bottom: parent.bottom
-                            anchors.margins: 6
+                            anchors.margins: 4
                             height: 28
                             radius: 8
                             visible: parent.asking
@@ -1216,7 +1216,7 @@ PanelWindow {
 
                         Label {
                             anchors.left: parent.left
-                            anchors.leftMargin: 6
+                            anchors.leftMargin: 4
                             y: 16 - height / 2
                             // four bars, one per 15 dBm below -30; an array, not
                             // charAt, these glyphs are two utf-16 units each
@@ -1254,7 +1254,7 @@ PanelWindow {
 
                         Label {
                             anchors.right: parent.right
-                            anchors.rightMargin: 6
+                            anchors.rightMargin: 4
                             y: 16 - height / 2
                             visible: !parent.confirming
                             text: modelData.current
@@ -1295,7 +1295,7 @@ PanelWindow {
 
                     Label {
                         anchors.left: parent.left
-                        anchors.leftMargin: 6
+                        anchors.leftMargin: 4
                         y: 16 - height / 2
                         text: "\u{f0928}"
                         color: Theme.gray
@@ -1322,7 +1322,7 @@ PanelWindow {
 
                             anchors.left: parent.left
                             anchors.right: parent.right
-                            anchors.margins: 6
+                            anchors.margins: 4
                             y: modelData.y
                             height: 28
                             radius: 8

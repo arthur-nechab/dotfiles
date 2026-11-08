@@ -131,7 +131,7 @@ PanelWindow {
 
         Row {
             anchors.centerIn: parent
-            spacing: 14
+            spacing: 12
 
             Label {
                 anchors.verticalCenter: parent.verticalCenter

@@ -202,7 +202,7 @@ Scope {
                             }
 
                             Row {
-                                spacing: 6
+                                spacing: 4
                                 visible: modelData.actions.some(x => x.text !== "")
 
                                 Repeater {
@@ -351,8 +351,8 @@ Scope {
 
             Column {
                 anchors.fill: parent
-                anchors.margins: 14
-                spacing: 10
+                anchors.margins: 12
+                spacing: 8
 
                 Item {
                     width: parent.width
@@ -406,7 +406,7 @@ Scope {
 
                     visible: System.healthItems.length > 0
                     width: parent.width
-                    spacing: 6
+                    spacing: 4
 
                     Repeater {
                         model: System.healthItems
@@ -475,7 +475,7 @@ Scope {
                     width: parent.width
                     height: Math.max(0, parent.height - 34 - healthH)
                     clip: true
-                    spacing: 6
+                    spacing: 4
                     model: root.grouped
                     boundsBehavior: Flickable.StopAtBounds
 
@@ -512,9 +512,9 @@ Scope {
                             anchors.left: parent.left
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
-                            anchors.leftMargin: 10
-                            anchors.rightMargin: 10
-                            spacing: 10
+                            anchors.leftMargin: 8
+                            anchors.rightMargin: 8
+                            spacing: 8
 
                             // an image thumbnail, the app icon, or a plain bell
                             NotifIcon {

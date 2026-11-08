@@ -541,7 +541,7 @@ PanelWindow {
             Row {
                 id: mediaRow
                 anchors.centerIn: parent
-                spacing: 6
+                spacing: 4
 
                 Row {
                     anchors.verticalCenter: parent.verticalCenter

@@ -83,7 +83,7 @@ PanelWindow {
         property string title: ""
 
         width: parent.width
-        spacing: 6
+        spacing: 4
 
         Rectangle {
             width: parent.width
@@ -230,7 +230,7 @@ PanelWindow {
                     Row {
                         anchors.horizontalCenter: parent.horizontalCenter
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 6
+                        spacing: 4
 
                         ActionToggle {
                             id: netbirdToggle
@@ -399,7 +399,7 @@ PanelWindow {
                 Section {
                     title: "Gatus"
                     visible: Homelab.hasGatus
-                    spacing: 6
+                    spacing: 4
 
                     // no endpoint up and none down means the probe never answered,
                     // which is not the same thing as everything being fine
@@ -609,7 +609,7 @@ PanelWindow {
 
                 Section {
                     title: "Ollama"
-                    spacing: 10
+                    spacing: 8
 
                     // same card as gatus: ram on the left, vram captioned by the loaded model
                     // on the right; without a model the card only says so
@@ -637,7 +637,7 @@ PanelWindow {
 
                 Section {
                     title: "Claude Code"
-                    spacing: 10
+                    spacing: 8
 
                     Line {
                         visible: Claude.authError
@@ -794,7 +794,7 @@ PanelWindow {
         MouseArea {
             anchors.top: parent.top
             anchors.right: parent.right
-            anchors.margins: 6
+            anchors.margins: 4
             width: freshness.implicitWidth + 26
             height: 32
             hoverEnabled: true

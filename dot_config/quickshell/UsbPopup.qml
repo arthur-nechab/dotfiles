@@ -35,7 +35,7 @@ BarPopup {
 
     Rectangle {
         anchors.fill: parent
-        anchors.margins: 10
+        anchors.margins: 8
         radius: 12
         color: Theme.bg
 

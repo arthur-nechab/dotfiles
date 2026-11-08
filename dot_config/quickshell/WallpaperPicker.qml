@@ -110,7 +110,7 @@ PanelWindow {
 
             focus: true
             anchors.fill: parent
-            anchors.margins: 14
+            anchors.margins: 12
             clip: true
             cellWidth: 288
             cellHeight: 178

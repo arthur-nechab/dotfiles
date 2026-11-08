@@ -122,7 +122,7 @@ PanelWindow {
             id: row
 
             anchors.centerIn: parent
-            spacing: 14
+            spacing: 12
 
             Repeater {
                 model: menu.actions
