@@ -728,9 +728,7 @@ PanelWindow {
             fg: Theme.aqua
             tip: !adapter || !adapter.enabled ? "Bluetooth off"
                 : (device ? device.name + (device.batteryAvailable ? "  \u00b7  " + Math.round(device.battery * 100) + "%" : "") : "Not connected")
-            onClicked: mouse => mouse.button === Qt.RightButton
-                ? bar.run("ghostty -e bluetuith")
-                : bar.bluetoothToggle()
+            onClicked: mouse => { if (mouse.button !== Qt.RightButton) bar.bluetoothToggle(); }
         }
 
         Btn {
