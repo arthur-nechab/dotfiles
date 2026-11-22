@@ -1,33 +1,39 @@
 #!/usr/bin/env bash
-# bead-finish <id>: land a bead branch, then remove its worktree and branch. Run it from the main checkout.
-# It closes the bead once the branch has landed.
+# bead-finish <id>: land a bead branch, close the bead, then remove its worktree, its branch and its session.
+# Run it from the main checkout.
 # git config bead.finish picks how the branch lands: merge (default) merges it into main locally; mr, for a repo whose
 # main is protected, pushes it for a merge request and cleans up on a later run, once the request is merged.
 set -eu
 id=$1
-herdr=${HERDR_BIN_PATH:-herdr}
 mode=$(git config --get bead.finish || echo merge)
 path=$(git worktree list --porcelain | awk -v b="branch refs/heads/$id" '/^worktree /{p=substr($0, 10)} $0 == b {print p}')
 [ -n "$path" ] || { echo "bead-finish: $id has no worktree" >&2; exit 1; }
 # Uncommitted work in the worktree would be lost with it, or left out of the merge request.
 [ -z "$(git -C "$path" status --porcelain)" ] || { echo "bead-finish: $path has uncommitted changes" >&2; exit 1; }
 
-remove() {
-  ws=$("$herdr" workspace list | jq -r --arg p "$path" '.result.workspaces[] | select(.worktree.checkout_path == $p) | .workspace_id')
-  if [ -n "$ws" ]; then
-    "$herdr" worktree remove --workspace "$ws" >/dev/null
-  else
-    git worktree remove "$path"
+# Last step: when the caller runs in the bead's session, closing it ends this script.
+close_session() {
+  if command -v rex >/dev/null; then
+    # No autostart: a caller in herdr must not start a Rex server.
+    for s in $(rex --autostart=false ls --json 2>/dev/null | jq -r --arg id "$id" '.sessions[] | select(.label == $id) | .session_id'); do
+      rex session kill "$s" >/dev/null
+    done
+  fi
+  if [ -n "$herdr_ws" ]; then
+    "$herdr" workspace close "$herdr_ws" >/dev/null
   fi
 }
+
+herdr=${HERDR_BIN_PATH:-herdr}
+# Read before the worktree goes: herdr finds the workspace by its checkout path.
+herdr_ws=$("$herdr" workspace list 2>/dev/null | jq -r --arg p "$path" '.result.workspaces[]? | select(.worktree.checkout_path == $p) | .workspace_id' || true)
 
 case $mode in
   merge)
     [ "$(git branch --show-current)" = main ] || { echo "bead-finish: run it from the main checkout, on main" >&2; exit 1; }
     git merge --no-edit "$id"
-    # Before remove: when the caller runs in this worktree, remove ends its session.
     bd close "$id" --reason "merged into main"
-    remove
+    git worktree remove "$path"
     # -d, not -D: git refuses if the merge did not land.
     git branch -d "$id"
     ;;
@@ -42,7 +48,7 @@ case $mode in
       exit 0
     fi
     bd close "$id" --reason "merged into $base"
-    remove
+    git worktree remove "$path"
     # -D: after a squash git cannot see the branch as merged; the tree check above stands in for -d.
     git branch -D "$id"
     ;;
@@ -51,3 +57,4 @@ case $mode in
     exit 1
     ;;
 esac
+close_session

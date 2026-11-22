@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# bead-worktree <id> [name]: open a worktree for a bead and start Claude on it. Run it from the repo.
+# The multiplexer of the caller opens it: Rex, else herdr, else none and the script prints the worktree path.
+set -eu
+id=$1
+name=$(printf %s "${2:-$id}" | tr "[:upper:]" "[:lower:]")
+# A typo must not create a branch.
+bd show "$id" >/dev/null
+if git worktree list --porcelain | grep -qFx "branch refs/heads/$id"; then
+  echo "bead-worktree: $id already has a worktree" >&2
+  exit 1
+fi
+# The common dir, not the toplevel: the caller can run in another bead's worktree.
+path=$HOME/.worktrees/$(basename "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")")/$id
+git worktree add --quiet -b "$id" "$path"
+# Without a session the worktree blocks a retry. It holds no commit yet, so nothing is lost.
+trap 'git worktree remove --force "$path"; git branch -D "$id"' ERR
+# Claude asks once to trust each new worktree folder: that choice stays with the user.
+cmd="claude -n $(printf %q "$name") $(printf %q "Work on bead $id. Read it first with: bd show $id")"
+
+if [ -n "${REX_SESSION:-}" ]; then
+  created=$(rex new "$id" -c "$path" --json)
+  session=$(jq -er '.session_id' <<<"$created")
+  block=$(jq -er '.initial_windows[0].block_ids[0]' <<<"$created")
+  # Typed into the shell, not run as the block command: the shell stays when Claude exits.
+  rex send -s "$session" -b "$block" "$cmd"$'\n'
+  # Show the new session in the app that shows the caller's session.
+  client=$(rex client ls --json | jq -r --arg s "$REX_SESSION" 'first(.clients[] | select(.session_ids // [] | index($s)) | .client_id) // empty')
+  [ -z "$client" ] || rex -C "$client" do session.select session_id="$session" >/dev/null 2>&1 || true
+  echo "$block"
+elif [ "${HERDR_ENV:-}" = 1 ]; then
+  herdr=${HERDR_BIN_PATH:-herdr}
+  ws=$("$herdr" worktree open --cwd "$PWD" --path "$path" --label "$id" --focus)
+  pane=$(jq -er '.result.root_pane.pane_id' <<<"$ws")
+  "$herdr" pane run "$pane" "$cmd" >/dev/null
+  echo "$pane"
+else
+  echo "$path"
+fi
