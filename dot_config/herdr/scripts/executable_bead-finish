@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # bead-finish <id>: land a bead branch, then remove its worktree and branch. Run it from the main checkout.
+# It closes the bead once the branch has landed.
 # git config bead.finish picks how the branch lands: merge (default) merges it into main locally; mr, for a repo whose
 # main is protected, pushes it for a merge request and cleans up on a later run, once the request is merged.
 set -eu
@@ -24,6 +25,8 @@ case $mode in
   merge)
     [ "$(git branch --show-current)" = main ] || { echo "bead-finish: run it from the main checkout, on main" >&2; exit 1; }
     git merge --no-edit "$id"
+    # Before remove: when the caller runs in this worktree, remove ends its session.
+    bd close "$id" --reason "merged into main"
     remove
     # -d, not -D: git refuses if the merge did not land.
     git branch -d "$id"
@@ -38,6 +41,7 @@ case $mode in
       echo "bead-finish: $id is pushed; run it again once the merge request is merged"
       exit 0
     fi
+    bd close "$id" --reason "merged into $base"
     remove
     # -D: after a squash git cannot see the branch as merged; the tree check above stands in for -d.
     git branch -D "$id"
