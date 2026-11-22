@@ -16,7 +16,6 @@ Scope {
     // do not disturb: still tracked, just never shown as a popup
     property bool dnd: false
     readonly property int count: server.trackedNotifications.values.length
-    readonly property real healthH: health.visible ? health.height + 10 : 0
 
     // keyboard cursor over the grouped rows, shown only once the arrows moved
     property int sel: 0
@@ -280,7 +279,7 @@ Scope {
         visible: false
         implicitWidth: 420
         // hug the list, up to a screen-friendly cap
-        implicitHeight: Math.min(640, 72 + Math.max(24, list.contentHeight) + healthH)
+        implicitHeight: Math.min(640, 72 + Math.max(24, list.contentHeight))
         exclusionMode: ExclusionMode.Ignore
         WlrLayershell.layer: WlrLayer.Top
         WlrLayershell.namespace: "quickshell-notification-center"
@@ -401,68 +400,6 @@ Scope {
                     }
                 }
 
-                Column {
-                    id: health
-
-                    visible: System.healthItems.length > 0
-                    width: parent.width
-                    spacing: 4
-
-                    Repeater {
-                        model: System.healthItems
-
-                        Rectangle {
-                            id: card
-
-                            required property var modelData
-                            readonly property color tint: modelData.bad ? Theme.red : Theme.yellow
-
-                            width: health.width
-                            height: Math.max(56, cardText.implicitHeight + 16)
-                            radius: 8
-                            color: Theme.surface
-
-                            Rectangle {
-                                x: 10
-                                anchors.verticalCenter: parent.verticalCenter
-                                width: 36
-                                height: 36
-                                radius: 8
-                                color: Qt.alpha(card.tint, 0.15)
-
-                                Label {
-                                    anchors.centerIn: parent
-                                    text: card.modelData.icon
-                                    color: card.tint
-                                    font.pixelSize: 20
-                                }
-                            }
-
-                            Column {
-                                id: cardText
-                                x: 56
-                                width: parent.width - 66
-                                anchors.verticalCenter: parent.verticalCenter
-                                spacing: 2
-
-                                Label {
-                                    text: card.modelData.title
-                                    font.pixelSize: 13
-                                    font.bold: true
-                                }
-
-                                Label {
-                                    width: parent.width
-                                    text: card.modelData.detail
-                                    color: Theme.gray
-                                    font.pixelSize: 12
-                                    wrapMode: Text.Wrap
-                                }
-                            }
-                        }
-                    }
-                }
-
                 Label {
                     visible: server.trackedNotifications.values.length === 0
                     text: "No notifications"
@@ -473,7 +410,7 @@ Scope {
                 ListView {
                     id: list
                     width: parent.width
-                    height: Math.max(0, parent.height - 34 - healthH)
+                    height: Math.max(0, parent.height - 34)
                     clip: true
                     spacing: 4
                     model: root.grouped

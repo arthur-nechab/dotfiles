@@ -210,8 +210,8 @@ Singleton {
     readonly property int failedUnits: failedNames.length
     property real snapshotAgeHours: -1
     readonly property var healthItems: [
-        ...(failedUnits > 0 ? [{ title: "Failed units", detail: failedNames.join(", "), bad: true, icon: "\u{f0026}" }] : []),
-        ...(snapshotAgeHours > 6 ? [{ title: "Old snapshot", detail: Math.round(snapshotAgeHours) + " h old", bad: false, icon: "\u{f0150}" }] : [])
+        ...(failedUnits > 0 ? [{ title: "Failed units", detail: failedNames.join(", ") }] : []),
+        ...(snapshotAgeHours > 6 ? [{ title: "Old snapshot", detail: Math.round(snapshotAgeHours) + " h old" }] : [])
     ]
     readonly property string healthText: healthItems.map(x => x.title + "  " + x.detail).join("\n")
 
@@ -225,7 +225,6 @@ Singleton {
             onStreamFinished: {
                 const v = this.text.split("\n").filter(x => x !== "");
                 root.snapshotAgeHours = Number(v[0]) >= 0 ? Math.round(Number(v[0]) / 60) : -1;
-                // a fresh array every minute would rebuild the cards under an open panel
                 const names = v.slice(1);
                 if (names.join() !== root.failedNames.join())
                     root.failedNames = names;

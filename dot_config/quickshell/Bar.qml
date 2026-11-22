@@ -776,25 +776,19 @@ PanelWindow {
         Sep {}
 
         Btn {
+            label: "󰀦"
+            fg: System.failedUnits > 0 ? Theme.red : Theme.yellow
+            visible: System.healthText !== ""
+            tip: System.healthText
+        }
+
+        Btn {
             label: (bar.dnd ? "󰂛" : "󱅫") + (bar.notifCount > 0 ? "  " + bar.notifCount : "")
             fg: bar.dnd ? Theme.gray : Theme.red
-            tip: ["Notifications  \u00b7  " + bar.notifCount + "  \u00b7  right-click: Do Not Disturb", System.healthText].filter(x => x !== "").join("\n")
+            tip: "Notifications  \u00b7  " + bar.notifCount
             onClicked: mouse => mouse.button === Qt.RightButton
                 ? bar.dndToggle()
                 : bar.notificationsToggle()
-
-            Rectangle {
-                visible: System.healthText !== ""
-                x: 18
-                y: 2
-                width: 10
-                height: 10
-                radius: 5
-                // the ring keeps a red dot readable on the red bell
-                border.width: 2
-                border.color: Theme.bg
-                color: System.failedUnits > 0 ? Theme.red : Theme.yellow
-            }
         }
     }
 
