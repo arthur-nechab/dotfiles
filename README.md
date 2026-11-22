@@ -62,7 +62,7 @@ them. The names are the Arch package names.
 | Audio, network, hardware | `wireplumber`, `pipewire`, `brightnessctl`, `iwd`, `bluez-utils`, `iputils`, `cava`, `nvidia-utils`, `udisks2` |
 | Screenshot, recording, clipboard, OCR | `grim`, `slurp`, `swappy`, `wf-recorder`, `wl-clipboard`, `clipse`, `tesseract` |
 | Launcher calculator | `libqalculate` |
-| Apps opened from the bar and keybinds | `ghostty`, `nautilus`, `btop`, `yazi`, `impala`, `pwvucontrol`, `cloudflare-speed-cli` |
+| Apps opened from the bar and keybinds | `ghostty`, `nautilus`, `btop`, `yazi`, `impala`, `pavucontrol`, `cloudflare-speed-cli` |
 | Notifications, desktop glue, scripts | `libnotify`, `xdg-utils`, `gtk3`, `desktop-file-utils`, `python-pillow`, `curl`, `jq` |
 
 ## 📂 XDG Directories

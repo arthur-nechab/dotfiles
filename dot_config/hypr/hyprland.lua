@@ -457,7 +457,7 @@ for _, l in ipairs(sh.layers) do
 end
 
 -- ── Window rules ─────────────────────────────────────────────────────
-hl.window_rule({ match = { class = "com.saivert.pwvucontrol" }, float = true })
+hl.window_rule({ match = { class = "org.pulseaudio.pavucontrol" }, float = true })
 -- dialogs: a floating window opens centred, never under the bar; the portal
 -- file chooser is tiled by default and reads better as a floating sheet
 hl.window_rule({ match = { float = true, title = "negative:^vlc$" }, center = true })

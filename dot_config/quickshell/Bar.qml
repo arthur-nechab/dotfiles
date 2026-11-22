@@ -711,7 +711,7 @@ PanelWindow {
             fg: muted ? Theme.red : Theme.purple
             tip: (sink ? (sink.description || sink.nickname || sink.name) : "No output device") + "  \u00b7  " + Math.round(vol * 100) + "%"
             onClicked: mouse => mouse.button === Qt.RightButton
-                ? bar.run("pwvucontrol")
+                ? bar.run("pavucontrol")
                 : bar.audioToggle()
             onWheel: wheel => {
                 if (!sink || !sink.audio) return;
