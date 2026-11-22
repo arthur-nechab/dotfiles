@@ -47,7 +47,7 @@ Scope {
         required property var n
         property int size: 32
         property int bell: 16
-        readonly property bool hasArt: n.image !== "" || n.appIcon !== ""
+        readonly property bool hasArt: !!(n?.image || n?.appIcon)
 
         width: size
         height: size
@@ -57,7 +57,7 @@ Scope {
         IconImage {
             anchors.fill: parent
             visible: icon.hasArt
-            source: icon.n.image !== "" ? icon.n.image : Quickshell.iconPath(icon.n.appIcon, "")
+            source: icon.n?.image ? icon.n.image : Quickshell.iconPath(icon.n?.appIcon ?? "", "")
         }
 
         Label {
@@ -80,6 +80,9 @@ Scope {
 
         onNotification: n => {
             n.tracked = true;
+            // an app can close it while a popup shows it: the object dies with it
+            const id = n.id;
+            n.closed.connect(() => root.drop(id));
             const m = Object.assign({}, root.seen);
             m[n.id] = Date.now();
             root.seen = m;
