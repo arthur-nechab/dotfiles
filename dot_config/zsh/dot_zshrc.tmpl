@@ -102,6 +102,7 @@ function extract() {
 }
 
 function myip() { curl -s -S -4 https://icanhazip.com; }
+function hc() { curl -s -o /dev/null -w '%{http_code}\n' "$@"; }
 
 alias ap='ansible-playbook'
 alias avc='ansible-vault create'
