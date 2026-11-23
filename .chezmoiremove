@@ -1,0 +1,15 @@
+.config/herdr/scripts/bead-finish
+.config/herdr/scripts/bead-worktree
+.config/herdr/plugins/config/herdr-bar
+.config/herdr/plugins/rename-sync
+.config/quickshell/themes/ayu-mirage.json
+.config/quickshell/themes/monokai.json
+.config/quickshell/themes/tokyonight-storm.json
+.config/quickshell/themes/twilight.json
+.config/rofi
+.config/swaync
+.config/waybar
+.config/scripts/launch-hyprpaper
+.config/scripts/mic-status
+.config/scripts/powermenu
+.config/scripts/wallpaper-picker
