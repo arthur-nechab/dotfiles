@@ -3,6 +3,10 @@ README.md
 .local/state/noctalia/
 Library/
 
+{{- if ne .system.osid "linux-arch" }}
+.config/pacman/
+{{- end }}
+
 {{- if eq .chezmoi.os "darwin" }}
 .config/fastfetch/
 .config/gtk-3.0/
