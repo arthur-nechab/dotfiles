@@ -14,3 +14,67 @@ uv = "latest"
 yazi = "latest"
 yq = "latest"
 zoxide = "latest"
+
+[tasks.update]
+description = "Upgrade system packages, mise and its tools"
+interactive = true # the nested update:system needs the terminal
+# mise appends extra arguments to the last line: main rejects them before any upgrade
+run = """
+set -e
+main() {
+  [ $# -eq 0 ] || { echo "update: no argument allowed, preview with: mise run -n update" >&2; exit 2; }
+  "{{mise_bin}}" run update:system
+  "{{mise_bin}}" run update:tools
+  if command -v yay >/dev/null; then
+    [ -d "/usr/lib/modules/$(uname -r)" ] || echo "update: reboot, the running kernel was upgraded"
+    if command -v pacdiff >/dev/null; then pacdiff -o || true; fi
+    # lists firmware updates, flashes nothing; exits 2 when there is none
+    if command -v fwupdmgr >/dev/null; then
+      rc=0
+      out=$(fwupdmgr get-updates 2>&1) || rc=$?
+      [ "$rc" -eq 2 ] || printf '%s\\n' "$out"
+    fi
+  fi
+}
+main
+"""
+
+[tasks."update:system"]
+description = "Upgrade system packages"
+interactive = true # sudo and yay prompts
+run = """
+set -e
+main() {
+  [ $# -eq 0 ] || { echo "update:system: no argument allowed" >&2; exit 2; }
+  if command -v yay >/dev/null; then
+    yay -Pw || true # unread Arch news, an offline feed must not block the upgrade
+    yay -Syu
+  elif command -v apt-get >/dev/null; then
+    sudo apt update --error-on=any # a failed repository exits 0 without it
+    sudo apt full-upgrade
+    # answering no must not skip update:tools
+    sudo apt autoremove || echo "update: apt autoremove did not finish" >&2
+  elif command -v brew >/dev/null; then
+    brew update
+    brew upgrade
+  else
+    echo "update: no package manager" >&2
+    exit 1
+  fi
+}
+main
+"""
+
+[tasks."update:tools"]
+description = "Upgrade mise, its tools and rustup"
+dir = "~" # do not upgrade the tools of the current project
+run = """
+set -e
+main() {
+  [ $# -eq 0 ] || { echo "update:tools: no argument allowed" >&2; exit 2; }
+  "$HOME/.local/bin/mise" self-update -y
+  "$HOME/.local/bin/mise" upgrade
+  if command -v rustup >/dev/null; then rustup -q update --no-self-update; fi
+}
+main
+"""
